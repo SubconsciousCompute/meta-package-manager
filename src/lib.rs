@@ -50,6 +50,17 @@ type PackError<T> = Result<T, Error>;
 struct Package {
     name: String,
     version: Option<Version>,
+impl Package {
+    pub fn new(name: String) -> Self {
+        Package {
+            name,
+            version: None,
+        }
+    }
+    pub fn with_version(mut self, ver: Version) -> Self {
+        self.version.replace(ver);
+        self
+    }
 }
 
 #[derive(Debug)]

@@ -1,5 +1,6 @@
 use std::{
     borrow::Cow,
+    fmt::Display,
     process::{Command, ExitStatus, Output, Stdio},
 };
 
@@ -52,24 +53,34 @@ pub type PackError<T> = Result<T, Error>;
 #[derive(Debug)]
 pub struct Package<'a> {
     name: Cow<'a, str>,
-    version: Option<Version>,
+    // Temporary untyped version
+    version: Option<Cow<'a, str>>,
 }
 
-impl Package<'_> {
+impl<'a> Package<'a> {
     pub fn name(&self) -> &str {
         &self.name
     }
-    pub fn version(&self) -> Option<&Version> {
-        self.version.as_ref()
+    pub fn has_version(&self) -> bool {
+        self.version.is_some()
     }
-    pub fn with_version(mut self, ver: Version) -> Self {
-        self.version.replace(ver);
+    pub fn version(&self) -> Option<&str> {
+        self.version.as_deref()
+    }
+    pub fn with_version<V>(mut self, ver: V) -> Self
+    where
+        V: Into<Cow<'a, str>>,
+    {
+        self.version.replace(ver.into());
         self
     }
 }
 
-impl<'a> From<&'a str> for Package<'a> {
-    fn from(value: &'a str) -> Self {
+impl<'a, T> From<T> for Package<'a>
+where
+    T: Into<Cow<'a, str>>,
+{
+    fn from(value: T) -> Self {
         Self {
             name: value.into(),
             version: None,
@@ -77,17 +88,15 @@ impl<'a> From<&'a str> for Package<'a> {
     }
 }
 
-impl From<String> for Package<'_> {
-    fn from(value: String) -> Self {
-        Self {
-            name: value.into(),
-            version: None,
+impl Display for Package<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(v) = self.version.as_ref() {
+            write!(f, "{}@{}", self.name, v)
+        } else {
+            write!(f, "{}", self.name)
         }
     }
 }
-
-#[derive(Debug)]
-pub struct Version(u8, u8, u8);
 
 pub enum Operation {
     Install,

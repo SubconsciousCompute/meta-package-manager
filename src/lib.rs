@@ -4,6 +4,8 @@ use std::{
     process::{Command, ExitStatus, Output, Stdio},
 };
 
+use url::Url as ParsedUrl;
+
 // Module containing example implementation of HomeBrew
 pub mod brew;
 
@@ -44,6 +46,8 @@ pub trait PackageManager {
         // safe to unwrap when package manager is known to be available (see is_installed fn)
         Command::new(self.cmd()).args(cmds).status().unwrap()
     }
+
+    fn add_repo(&self, repo: Url) -> PackError<()>;
 }
 
 pub struct Error;
@@ -102,4 +106,22 @@ pub enum Operation {
     Install,
     Uninstall,
     Update,
+}
+
+/// A strongly typed URL to ensure URL validity
+///
+/// This struct merely is a wrapper for Url from the url crate
+/// and exposes only the necessarry functionality.
+pub struct Url(ParsedUrl);
+
+impl Url {
+    /// Parse string into URL
+    pub fn parse(url: &str) -> PackError<Url> {
+        let parsed = ParsedUrl::parse(url).map_err(|_| Error)?;
+        Ok(Url(parsed))
+    }
+    /// Get parsed URL as &str
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
 }

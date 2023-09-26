@@ -59,4 +59,8 @@ impl PackageManager for HomeBrew {
         let outstr = std::str::from_utf8(&out.stdout).unwrap();
         outstr.lines().map(|s| Self::parse_package(s)).collect()
     }
+
+    fn add_repo(&self, repo: crate::Url) -> PackError<()> {
+        todo!()
+    }
 }

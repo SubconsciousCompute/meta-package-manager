@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use super::{Error, Operation, PackError, Package, PackageManager};
 
 // Example implementation of HomeBrew package manager
@@ -37,7 +39,12 @@ impl PackageManager for HomeBrew {
             Operation::Uninstall => Self::UNINSTALL_CMD,
             Operation::Update => Self::UPDATE_CMD,
         };
-        self.execute_cmds_status(&[cmd, pack.name()])
+        let name: Cow<str> = if pack.has_version() {
+            pack.to_string().into()
+        } else {
+            pack.name().into()
+        };
+        self.execute_cmds_status(&[cmd, &name])
             .success()
             .then_some(())
             .ok_or(Error)

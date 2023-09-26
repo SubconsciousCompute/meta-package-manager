@@ -27,10 +27,7 @@ impl PackageManager for HomeBrew {
         let outstr = std::str::from_utf8(&out.stdout).unwrap();
         outstr
             .lines()
-            .map(|s| Package {
-                name: s.into(),
-                version: None, // skip version for now
-            })
+            .map(|s| Package::from(s.to_owned()))
             .collect()
     }
 
@@ -40,7 +37,7 @@ impl PackageManager for HomeBrew {
             Operation::Uninstall => Self::UNINSTALL_CMD,
             Operation::Update => Self::UPDATE_CMD,
         };
-        self.execute_cmds_status(&[cmd, &pack.name])
+        self.execute_cmds_status(&[cmd, pack.name()])
             .success()
             .then_some(())
             .ok_or(Error)
@@ -51,10 +48,7 @@ impl PackageManager for HomeBrew {
         let outstr = std::str::from_utf8(&out.stdout).unwrap();
         outstr
             .lines()
-            .map(|s| Package {
-                name: s.into(),
-                version: None,
-            })
+            .map(|s| Package::from(s.to_owned()))
             .collect()
     }
 }

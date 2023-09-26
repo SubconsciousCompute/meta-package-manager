@@ -1,4 +1,7 @@
-use std::process::{Command, ExitStatus, Output, Stdio};
+use std::{
+    borrow::Cow,
+    process::{Command, ExitStatus, Output, Stdio},
+};
 
 // Module containing example implementation of HomeBrew
 pub mod brew;
@@ -47,21 +50,39 @@ pub struct Error;
 pub type PackError<T> = Result<T, Error>;
 
 #[derive(Debug)]
-pub struct Package {
-    pub name: String,
-    pub version: Option<Version>,
+pub struct Package<'a> {
+    name: Cow<'a, str>,
+    version: Option<Version>,
 }
 
-impl Package {
-    pub fn new(name: String) -> Self {
-        Package {
-            name,
-            version: None,
-        }
+impl Package<'_> {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+    pub fn version(&self) -> Option<&Version> {
+        self.version.as_ref()
     }
     pub fn with_version(mut self, ver: Version) -> Self {
         self.version.replace(ver);
         self
+    }
+}
+
+impl<'a> From<&'a str> for Package<'a> {
+    fn from(value: &'a str) -> Self {
+        Self {
+            name: value.into(),
+            version: None,
+        }
+    }
+}
+
+impl From<String> for Package<'_> {
+    fn from(value: String) -> Self {
+        Self {
+            name: value.into(),
+            version: None,
+        }
     }
 }
 

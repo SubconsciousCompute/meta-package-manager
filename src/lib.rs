@@ -1,10 +1,10 @@
 use std::process::{Command, ExitStatus, Output, Stdio};
 
 // Module containing example implementation of HomeBrew
-mod brew;
+pub mod brew;
 
 // Primary interface. Multiple package managers can be grouped together as dyn PackageManager.
-trait PackageManager {
+pub trait PackageManager {
     // Package manager name
     fn name(&self) -> &'static str;
 
@@ -42,14 +42,16 @@ trait PackageManager {
     }
 }
 
-struct Error;
+pub struct Error;
 
-type PackError<T> = Result<T, Error>;
+pub type PackError<T> = Result<T, Error>;
 
 #[derive(Debug)]
-struct Package {
-    name: String,
-    version: Option<Version>,
+pub struct Package {
+    pub name: String,
+    pub version: Option<Version>,
+}
+
 impl Package {
     pub fn new(name: String) -> Self {
         Package {
@@ -64,9 +66,9 @@ impl Package {
 }
 
 #[derive(Debug)]
-struct Version(u8, u8, u8);
+pub struct Version(u8, u8, u8);
 
-enum Operation {
+pub enum Operation {
     Install,
     Uninstall,
     Update,

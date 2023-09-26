@@ -30,7 +30,7 @@ pub trait PackageManager {
     fn list_installed(&self) -> Vec<Package>;
 
     // Install, uninstall and update
-    fn execute(&self, pack: &Package, op: Operation) -> PackError<()>;
+    fn execute_op(&self, pack: &Package, op: Operation) -> PackError<()>;
 
     // Run arbitrary commands against the package manager and get output
     fn execute_cmds(&self, cmds: &[&str]) -> Output {

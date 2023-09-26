@@ -31,7 +31,7 @@ impl PackageManager for HomeBrew {
             .collect()
     }
 
-    fn execute(&self, pack: &Package, op: Operation) -> PackError<()> {
+    fn execute_op(&self, pack: &Package, op: Operation) -> PackError<()> {
         let cmd = match op {
             Operation::Install => Self::INSTALL_CMD,
             Operation::Uninstall => Self::UNINSTALL_CMD,

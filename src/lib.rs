@@ -8,7 +8,9 @@ use url::Url as ParsedUrl;
 
 pub mod brew;
 
-/// Primary interface. Multiple package managers can be grouped together as dyn PackageManager.
+/// Primary interface for implementing a package manager
+///
+/// Multiple package managers can be grouped together as dyn PackageManager.
 pub trait PackageManager {
     /// Package manager name
     fn name(&self) -> &'static str;

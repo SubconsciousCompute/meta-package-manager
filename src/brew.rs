@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use super::{Error, Operation, PackError, Package, PackageManager};
+use super::{Error, Operation, PackError, Package, PackageManager, Repo};
 
 pub struct HomeBrew;
 
@@ -12,6 +12,7 @@ impl HomeBrew {
     const INSTALL_CMD: &'static str = "install";
     const UNINSTALL_CMD: &'static str = "uninstall";
     const UPDATE_CMD: &'static str = "update";
+    const REPO_CMD: &'static str = "tap";
 
     fn parse_package<'a, 'b>(line: &'a str) -> Package<'b> {
         if let Some((name, version)) = line.split_once('@') {
@@ -59,7 +60,10 @@ impl PackageManager for HomeBrew {
         outstr.lines().map(|s| Self::parse_package(s)).collect()
     }
 
-    fn add_repo(&self, repo: crate::Url) -> PackError<()> {
-        todo!()
+    fn add_repo(&self, repo: Repo) -> PackError<()> {
+        self.execute_cmds_status(&[Self::REPO_CMD, repo.as_str()])
+            .success()
+            .then_some(())
+            .ok_or(Error)
     }
 }

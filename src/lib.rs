@@ -49,7 +49,7 @@ pub trait PackageManager {
     }
 
     /// Add third-party repository to the package manager's repository list
-    fn add_repo(&self, repo: Url) -> PackError<()>;
+    fn add_repo(&self, repo: Repo) -> PackError<()>;
 }
 
 /// Temporary error type
@@ -121,6 +121,20 @@ pub enum Operation {
     Install,
     Uninstall,
     Update,
+}
+
+pub enum Repo<'a> {
+    Url(Url),
+    Other(&'a str),
+}
+
+impl Repo<'_> {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Repo::Url(u) => u.as_str(),
+            Repo::Other(o) => o,
+        }
+    }
 }
 
 /// A strongly typed URL to ensure URL validity

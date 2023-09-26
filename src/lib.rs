@@ -6,18 +6,17 @@ use std::{
 
 use url::Url as ParsedUrl;
 
-// Module containing example implementation of HomeBrew
 pub mod brew;
 
-// Primary interface. Multiple package managers can be grouped together as dyn PackageManager.
+/// Primary interface. Multiple package managers can be grouped together as dyn PackageManager.
 pub trait PackageManager {
-    // Package manager name
+    /// Package manager name
     fn name(&self) -> &'static str;
 
-    // Package manager command
+    /// Package manager command
     fn cmd(&self) -> &'static str;
 
-    // Check if package manager is installed on system
+    /// Check if package manager is installed on the system
     fn is_installed(&self) -> bool {
         Command::new(self.cmd())
             .stdout(Stdio::null())
@@ -26,51 +25,63 @@ pub trait PackageManager {
             .is_ok()
     }
 
-    // General package search
+    /// General package search
     fn search(&self, pack: &str) -> Vec<Package>;
 
-    // List installed packages
+    /// List installed packages
     fn list_installed(&self) -> Vec<Package>;
 
-    // Install, uninstall and update
+    /// Execute operation on a package, such as install, uninstall and update
     fn execute_op(&self, pack: &Package, op: Operation) -> PackError<()>;
 
-    // Run arbitrary commands against the package manager and get output
+    /// Run arbitrary commands against the package manager and get output
     fn execute_cmds(&self, cmds: &[&str]) -> Output {
         // safe to unwrap when package manager is known to be available (see is_installed fn)
         Command::new(self.cmd()).args(cmds).output().unwrap()
     }
 
-    // Run arbitrary commands against the package manager and wait for ExitStatus
+    /// Run arbitrary commands against the package manager and wait for ExitStatus
     fn execute_cmds_status(&self, cmds: &[&str]) -> ExitStatus {
         // safe to unwrap when package manager is known to be available (see is_installed fn)
         Command::new(self.cmd()).args(cmds).status().unwrap()
     }
 
+    /// Add third-party repository to the package manager's repository list
     fn add_repo(&self, repo: Url) -> PackError<()>;
 }
 
+/// Temporary error type
 pub struct Error;
 
+/// Temporary error type alias
 pub type PackError<T> = Result<T, Error>;
 
+/// A representation of a package
+///
+/// This struct contains package's name and version information (optional).
+/// It can be constructed with any type that implements `Into<Cow<sr>>`, for example, `&str` and `String`.
+/// `Package::from("python")` or with version, `Package::from("python").with_version("3.10.0")`.
 #[derive(Debug)]
 pub struct Package<'a> {
     name: Cow<'a, str>,
-    // Temporary untyped version
+    // Untyped version, might be replaced with a strongly typed one
     version: Option<Cow<'a, str>>,
 }
 
 impl<'a> Package<'a> {
+    /// Package name
     pub fn name(&self) -> &str {
         &self.name
     }
+    /// Check if package has version information.
     pub fn has_version(&self) -> bool {
         self.version.is_some()
     }
+    /// Get version information if present
     pub fn version(&self) -> Option<&str> {
         self.version.as_deref()
     }
+    /// Add or replace package's version
     pub fn with_version<V>(mut self, ver: V) -> Self
     where
         V: Into<Cow<'a, str>>,
@@ -95,6 +106,7 @@ where
 impl Display for Package<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(v) = self.version.as_ref() {
+            // might be changed later for a better format
             write!(f, "{}@{}", self.name, v)
         } else {
             write!(f, "{}", self.name)
@@ -102,6 +114,7 @@ impl Display for Package<'_> {
     }
 }
 
+/// Operation type to execute using [``Package::execute_op``]
 pub enum Operation {
     Install,
     Uninstall,

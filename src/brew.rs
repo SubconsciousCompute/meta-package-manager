@@ -2,7 +2,6 @@ use std::borrow::Cow;
 
 use super::{Error, Operation, PackError, Package, PackageManager};
 
-// Example implementation of HomeBrew package manager
 pub struct HomeBrew;
 
 impl HomeBrew {

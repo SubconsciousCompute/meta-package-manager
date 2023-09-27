@@ -1,17 +1,10 @@
-use crate::{Commands, Package, PackageManager, SubCommand};
+use crate::{Commands, PackageManager, SubCommand};
 
 pub struct HomeBrew;
 
 impl HomeBrew {
     pub fn new() -> Self {
         HomeBrew
-    }
-
-    fn parse_package<'a, 'b>(line: &'a str) -> Package<'b> {
-        if let Some((name, version)) = line.split_once('@') {
-            return Package::from(name.trim().to_owned()).with_version(version.trim().to_owned());
-        }
-        Package::from(line.trim().to_owned())
     }
 }
 
@@ -22,19 +15,6 @@ impl PackageManager for HomeBrew {
 
     fn pkg_delimiter(&self) -> char {
         '@'
-    }
-
-    fn search(&self, pack: &str) -> Vec<Package> {
-        let out = self.execute_cmds(&[self.search_cmd(), pack]);
-        // TODO evaluate whether this error should be handled
-        let outstr = std::str::from_utf8(&out.stdout).unwrap();
-        outstr.lines().map(|s| Self::parse_package(s)).collect()
-    }
-
-    fn list_installed(&self) -> Vec<Package> {
-        let out = self.execute_cmds(&[self.list_cmd()]);
-        let outstr = std::str::from_utf8(&out.stdout).unwrap();
-        outstr.lines().map(|s| Self::parse_package(s)).collect()
     }
 }
 

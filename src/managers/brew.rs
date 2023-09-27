@@ -12,6 +12,10 @@ impl HomeBrew {
     const UPDATE_CMD: &'static str = "update";
     const REPO_CMD: &'static str = "tap";
 
+    pub fn new() -> Self {
+        HomeBrew
+    }
+
     fn parse_package<'a, 'b>(line: &'a str) -> Package<'b> {
         if let Some((name, version)) = line.split_once('@') {
             return Package::from(name.trim().to_owned()).with_version(version.trim().to_owned());

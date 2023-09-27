@@ -69,7 +69,11 @@ pub trait PackageManager: Commands {
     }
 
     /// List installed packages
-    fn list_installed(&self) -> Vec<Package>;
+    fn list_installed(&self) -> Vec<Package> {
+        let out = self.execute_cmds(&[self.list_cmd()]);
+        let outstr = std::str::from_utf8(&out.stdout).unwrap();
+        outstr.lines().map(|s| self.parse(s)).collect()
+    }
 
     /// Execute operation on a package, such as install, uninstall and update
     fn execute_op(&self, pack: &Package, op: Operation) -> PackError<()> {

@@ -34,6 +34,22 @@ pub trait PackageManager: Commands {
     /// General package search
     fn search(&self, pack: &str) -> Vec<Package>;
 
+    /// Sync package manaager repositories
+    fn sync(&self) -> PackError<()> {
+        self.execute_cmds_status(&[self.sync_cmd()])
+            .success()
+            .then_some(())
+            .ok_or(Error)
+    }
+
+    /// Update/upgrade all packages
+    fn update_all(&self) -> PackError<()> {
+        self.execute_cmds_status(&[self.update_all_cmd()])
+            .success()
+            .then_some(())
+            .ok_or(Error)
+    }
+
     /// List installed packages
     fn list_installed(&self) -> Vec<Package>;
 

@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     fmt::Display,
-    process::{Command, ExitStatus, Output, Stdio},
+    process::{Child, Command, ExitStatus, Output, Stdio},
 };
 
 use url::Url as ParsedUrl;
@@ -76,6 +76,12 @@ pub trait PackageManager: Commands {
     fn execute_cmds_status(&self, cmds: &[&str]) -> ExitStatus {
         // safe to unwrap when package manager is known to be available (see is_installed fn)
         Command::new(self.cmd()).args(cmds).status().unwrap()
+    }
+
+    /// Run arbitrary commands against the package manager and return handle to the spawned process
+    fn execute_cmds_spawn(&self, cmds: &[&str]) -> Child {
+        // safe to unwrap when package manager is known to be available (see is_installed fn)
+        Command::new(self.cmd()).args(cmds).spawn().unwrap()
     }
 
     /// Add third-party repository to the package manager's repository list

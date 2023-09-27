@@ -31,18 +31,6 @@ impl PackageManager for HomeBrew {
         outstr.lines().map(|s| Self::parse_package(s)).collect()
     }
 
-    fn execute_op(&self, pack: &Package, op: Operation) -> PackError<()> {
-        let cmd = match op {
-            Operation::Install => self.install_cmd(),
-            Operation::Uninstall => self.uninstall_cmd(),
-            Operation::Update => self.update_cmd(),
-        };
-        self.execute_cmds_status(&[cmd, &pack.format(self.pkg_delimiter())])
-            .success()
-            .then_some(())
-            .ok_or(Error)
-    }
-
     fn list_installed(&self) -> Vec<Package> {
         let out = self.execute_cmds(&[self.list_cmd()]);
         let outstr = std::str::from_utf8(&out.stdout).unwrap();

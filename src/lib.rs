@@ -54,7 +54,17 @@ pub trait PackageManager: Commands {
     fn list_installed(&self) -> Vec<Package>;
 
     /// Execute operation on a package, such as install, uninstall and update
-    fn execute_op(&self, pack: &Package, op: Operation) -> PackError<()>;
+    fn execute_op(&self, pack: &Package, op: Operation) -> PackError<()> {
+        let cmd = match op {
+            Operation::Install => self.install_cmd(),
+            Operation::Uninstall => self.uninstall_cmd(),
+            Operation::Update => self.update_cmd(),
+        };
+        self.execute_cmds_status(&[cmd, &pack.format(self.pkg_delimiter())])
+            .success()
+            .then_some(())
+            .ok_or(Error)
+    }
 
     /// Run arbitrary commands against the package manager and get output
     fn execute_cmds(&self, cmds: &[&str]) -> Output {

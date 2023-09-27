@@ -22,6 +22,20 @@ pub trait PackageManager: Commands {
     /// For package managers that require additional formatting, overriding the default trait methods would be the way to go.
     fn pkg_delimiter(&self) -> char;
 
+    /// Returns a package after parsing a line of stdout output from the underlying package manager.
+    ///
+    /// This method is internally used in other default methods like [``PackageManager::search``] to parse packages from the output.
+    ///
+    /// The default implementation merely tries to split the line at the provided delimiter (see [``PackageManager::pkg_delimiter``])
+    /// and trims spaces. It returns a package with version information on success, or else it returns a package with only a package name.
+    /// For package maangers that have unusual or complex output, users are free to override this method. Note: Remember to construct a package with owned values in this method.
+    fn parse<'a, 'b>(&self, line: &'a str) -> Package<'b> {
+        if let Some((name, version)) = line.split_once(self.pkg_delimiter()) {
+            return Package::from(name.trim().to_owned()).with_version(version.trim().to_owned());
+        }
+        Package::from(line.trim().to_owned())
+    }
+
     /// Check if package manager is installed on the system
     fn is_installed(&self) -> bool {
         Command::new(self.cmd())

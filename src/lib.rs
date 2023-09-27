@@ -91,6 +91,18 @@ impl<'a> Package<'a> {
         self.version.replace(ver.into());
         self
     }
+
+    /// Get a formatted string of the package as <name><delimiter><version>
+    ///
+    /// Note: this functions returns a formatted string only if version information is present.
+    /// Otherwise, only a borrowed name string is returned. Which is why this function returns a 'Cow<str>' and not a `String`.
+    pub fn fmt_with_delimiter(&self, delimiter: char) -> Cow<str> {
+        if let Some(v) = self.version() {
+            format!("{}{}{}", self.name, delimiter, v).into()
+        } else {
+            self.name().into()
+        }
+    }
 }
 
 impl<'a, T> From<T> for Package<'a>

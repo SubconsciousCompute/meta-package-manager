@@ -109,7 +109,7 @@ pub trait Commands {
     fn sync_cmd(&self) -> &'static str {
         self.sub_cmd(SubCommand::Sync)
     }
-    fn repo_cmd(&self) -> &'static str {
+    fn add_repo_cmd(&self) -> &'static str {
         self.sub_cmd(SubCommand::AddRepo)
     }
 }

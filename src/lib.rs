@@ -80,27 +80,27 @@ pub trait Commands {
     /// Primary command of the package manager. For example, 'brew', 'apt', and 'dnf'.
     fn cmd(&self) -> &'static str;
     /// Returns the appropriate sub-command for the given sub-command type. Check [``SubCommand``] enum to see all supported commands.
-    fn sub_cmds(&self, sub_cmd: SubCommand) -> &'static str;
+    fn sub_cmd(&self, sub_cmd: SubCommand) -> &'static str;
     fn install_cmd(&self) -> &'static str {
-        self.sub_cmds(SubCommand::Install)
+        self.sub_cmd(SubCommand::Install)
     }
     fn uninstall_cmd(&self) -> &'static str {
-        self.sub_cmds(SubCommand::Uninstall)
+        self.sub_cmd(SubCommand::Uninstall)
     }
     fn update_cmd(&self) -> &'static str {
-        self.sub_cmds(SubCommand::Update)
+        self.sub_cmd(SubCommand::Update)
     }
     fn update_all_cmd(&self) -> &'static str {
-        self.sub_cmds(SubCommand::UpdateAll)
+        self.sub_cmd(SubCommand::UpdateAll)
     }
     fn list_cmd(&self) -> &'static str {
-        self.sub_cmds(SubCommand::List)
+        self.sub_cmd(SubCommand::List)
     }
     fn sync_cmd(&self) -> &'static str {
-        self.sub_cmds(SubCommand::Sync)
+        self.sub_cmd(SubCommand::Sync)
     }
     fn repo_cmd(&self) -> &'static str {
-        self.sub_cmds(SubCommand::AddRepo)
+        self.sub_cmd(SubCommand::AddRepo)
     }
 }
 

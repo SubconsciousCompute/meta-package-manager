@@ -61,7 +61,7 @@ impl Commands for HomeBrew {
     fn cmd(&self) -> &'static str {
         "brew"
     }
-    fn sub_cmds(&self, sub_cmd: SubCommand) -> &'static str {
+    fn sub_cmd(&self, sub_cmd: SubCommand) -> &'static str {
         match sub_cmd {
             SubCommand::Install => "install",
             SubCommand::Uninstall => "uninstall",

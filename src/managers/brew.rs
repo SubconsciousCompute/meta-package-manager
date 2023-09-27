@@ -1,4 +1,4 @@
-use crate::{Commands, Error, Operation, PackError, Package, PackageManager, Repo, SubCommand};
+use crate::{Commands, Package, PackageManager, SubCommand};
 
 pub struct HomeBrew;
 
@@ -35,13 +35,6 @@ impl PackageManager for HomeBrew {
         let out = self.execute_cmds(&[self.list_cmd()]);
         let outstr = std::str::from_utf8(&out.stdout).unwrap();
         outstr.lines().map(|s| Self::parse_package(s)).collect()
-    }
-
-    fn add_repo(&self, repo: Repo) -> PackError<()> {
-        self.execute_cmds_status(&[self.repo_cmd(), repo.as_str()])
-            .success()
-            .then_some(())
-            .ok_or(Error)
     }
 }
 

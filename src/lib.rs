@@ -79,7 +79,12 @@ pub trait PackageManager: Commands {
     }
 
     /// Add third-party repository to the package manager's repository list
-    fn add_repo(&self, repo: Repo) -> PackError<()>;
+    fn add_repo(&self, repo: Repo) -> PackError<()> {
+        self.execute_cmds_status(&[self.add_repo_cmd(), repo.as_str()])
+            .success()
+            .then_some(())
+            .ok_or(Error)
+    }
 }
 
 /// Trait for defining package panager commands in one place

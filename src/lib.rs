@@ -6,7 +6,7 @@ use std::{
 
 use url::Url as ParsedUrl;
 
-pub mod brew;
+pub mod managers;
 
 /// Primary interface for implementing a package manager
 ///

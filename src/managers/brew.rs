@@ -1,6 +1,4 @@
-use std::borrow::Cow;
-
-use super::{Error, Operation, PackError, Package, PackageManager, Repo};
+use crate::{Error, Operation, PackError, Package, PackageManager, Repo};
 
 pub struct HomeBrew;
 

@@ -15,6 +15,13 @@ pub trait PackageManager: Commands {
     /// Package manager name
     fn name(&self) -> &'static str;
 
+    /// Defines a delimeter to use while formatting package name and version
+    ///
+    /// For example, HomeBrew supports `<name>@<version>` and APT supports `<name>=<version>`.
+    /// Their appropriate delimiters would be '@' and '=', respectively.
+    /// For package managers that require additional formatting, overriding the default trait methods would be the way to go.
+    fn pkg_delimiter(&self) -> char;
+
     /// Check if package manager is installed on the system
     fn is_installed(&self) -> bool {
         Command::new(self.cmd())
@@ -136,7 +143,7 @@ impl<'a> Package<'a> {
     ///
     /// Note: this functions returns a formatted string only if version information is present.
     /// Otherwise, only a borrowed name string is returned. Which is why this function returns a 'Cow<str>' and not a `String`.
-    pub fn fmt_with_delimiter(&self, delimiter: char) -> Cow<str> {
+    pub fn format(&self, delimiter: char) -> Cow<str> {
         if let Some(v) = self.version() {
             format!("{}{}{}", self.name, delimiter, v).into()
         } else {

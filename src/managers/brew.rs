@@ -20,6 +20,10 @@ impl PackageManager for HomeBrew {
         "HomeBrew"
     }
 
+    fn pkg_delimiter(&self) -> char {
+        '@'
+    }
+
     fn search(&self, pack: &str) -> Vec<Package> {
         let out = self.execute_cmds(&[self.cmd(), pack]);
         // TODO evaluate whether this error should be handled
@@ -33,7 +37,7 @@ impl PackageManager for HomeBrew {
             Operation::Uninstall => self.uninstall_cmd(),
             Operation::Update => self.update_cmd(),
         };
-        self.execute_cmds_status(&[cmd, &pack.fmt_with_delimiter('@')])
+        self.execute_cmds_status(&[cmd, &pack.format(self.pkg_delimiter())])
             .success()
             .then_some(())
             .ok_or(Error)

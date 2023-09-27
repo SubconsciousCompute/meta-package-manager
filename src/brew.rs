@@ -43,12 +43,7 @@ impl PackageManager for HomeBrew {
             Operation::Uninstall => Self::UNINSTALL_CMD,
             Operation::Update => Self::UPDATE_CMD,
         };
-        let name: Cow<str> = if pack.has_version() {
-            pack.to_string().into()
-        } else {
-            pack.name().into()
-        };
-        self.execute_cmds_status(&[cmd, &name])
+        self.execute_cmds_status(&[cmd, &pack.fmt_with_delimiter('@')])
             .success()
             .then_some(())
             .ok_or(Error)

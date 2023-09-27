@@ -121,7 +121,7 @@ impl Display for Package<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(v) = self.version.as_ref() {
             // might be changed later for a better format
-            write!(f, "{}@{}", self.name, v)
+            write!(f, "{} - {}", self.name, v)
         } else {
             write!(f, "{}", self.name)
         }

@@ -117,6 +117,9 @@ pub trait Commands {
     fn list_cmd(&self) -> &'static str {
         self.sub_cmd(SubCommand::List)
     }
+    fn search_cmd(&self) -> &'static str {
+        self.sub_cmd(SubCommand::Search)
+    }
     fn sync_cmd(&self) -> &'static str {
         self.sub_cmd(SubCommand::Sync)
     }
@@ -134,6 +137,7 @@ pub enum SubCommand {
     List,
     Sync,
     AddRepo,
+    Search,
 }
 
 /// Temporary error type

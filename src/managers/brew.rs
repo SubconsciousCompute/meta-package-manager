@@ -25,7 +25,7 @@ impl PackageManager for HomeBrew {
     }
 
     fn search(&self, pack: &str) -> Vec<Package> {
-        let out = self.execute_cmds(&[self.cmd(), pack]);
+        let out = self.execute_cmds(&[self.search_cmd(), pack]);
         // TODO evaluate whether this error should be handled
         let outstr = std::str::from_utf8(&out.stdout).unwrap();
         outstr.lines().map(|s| Self::parse_package(s)).collect()
@@ -50,6 +50,7 @@ impl Commands for HomeBrew {
             SubCommand::List => "list",
             SubCommand::Sync => "update",
             SubCommand::AddRepo => "tap",
+            SubCommand::Search => "search",
         }
     }
 }

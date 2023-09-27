@@ -46,7 +46,11 @@ pub trait PackageManager: Commands {
     }
 
     /// General package search
-    fn search(&self, pack: &str) -> Vec<Package>;
+    fn search(&self, pack: &str) -> Vec<Package> {
+        let out = self.execute_cmds(&[self.search_cmd(), pack]);
+        let outstr = std::str::from_utf8(&out.stdout).unwrap();
+        outstr.lines().map(|s| self.parse(s)).collect()
+    }
 
     /// Sync package manaager repositories
     fn sync(&self) -> PackError<()> {

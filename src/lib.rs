@@ -63,7 +63,7 @@ pub type PackError<T> = Result<T, Error>;
 /// This struct contains package's name and version information (optional).
 /// It can be constructed with any type that implements `Into<Cow<sr>>`, for example, `&str` and `String`.
 /// `Package::from("python")` or with version, `Package::from("python").with_version("3.10.0")`.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Package<'a> {
     name: Cow<'a, str>,
     // Untyped version, might be replaced with a strongly typed one
@@ -129,12 +129,14 @@ impl Display for Package<'_> {
 }
 
 /// Operation type to execute using [``Package::execute_op``]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Operation {
     Install,
     Uninstall,
     Update,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Repo<'a> {
     Url(Url),
     Other(&'a str),
@@ -153,6 +155,7 @@ impl Repo<'_> {
 ///
 /// This struct merely is a wrapper for Url from the url crate
 /// and exposes only the necessarry functionality.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Url(ParsedUrl);
 
 impl Url {

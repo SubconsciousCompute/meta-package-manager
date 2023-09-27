@@ -1,17 +1,8 @@
-use crate::{Error, Operation, PackError, Package, PackageManager, Repo};
+use crate::{Commands, Error, Operation, PackError, Package, PackageManager, Repo, SubCommand};
 
 pub struct HomeBrew;
 
 impl HomeBrew {
-    const NAME: &'static str = "HomeBrew";
-    const CMD: &'static str = "brew";
-    const LIST_CMD: &'static str = "list";
-    const SEARCH_CMD: &'static str = "search";
-    const INSTALL_CMD: &'static str = "install";
-    const UNINSTALL_CMD: &'static str = "uninstall";
-    const UPDATE_CMD: &'static str = "update";
-    const REPO_CMD: &'static str = "tap";
-
     pub fn new() -> Self {
         HomeBrew
     }
@@ -26,15 +17,11 @@ impl HomeBrew {
 
 impl PackageManager for HomeBrew {
     fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn cmd(&self) -> &'static str {
-        Self::CMD
+        "HomeBrew"
     }
 
     fn search(&self, pack: &str) -> Vec<Package> {
-        let out = self.execute_cmds(&[Self::SEARCH_CMD, pack]);
+        let out = self.execute_cmds(&[self.cmd(), pack]);
         // TODO evaluate whether this error should be handled
         let outstr = std::str::from_utf8(&out.stdout).unwrap();
         outstr.lines().map(|s| Self::parse_package(s)).collect()
@@ -42,9 +29,9 @@ impl PackageManager for HomeBrew {
 
     fn execute_op(&self, pack: &Package, op: Operation) -> PackError<()> {
         let cmd = match op {
-            Operation::Install => Self::INSTALL_CMD,
-            Operation::Uninstall => Self::UNINSTALL_CMD,
-            Operation::Update => Self::UPDATE_CMD,
+            Operation::Install => self.install_cmd(),
+            Operation::Uninstall => self.uninstall_cmd(),
+            Operation::Update => self.update_cmd(),
         };
         self.execute_cmds_status(&[cmd, &pack.fmt_with_delimiter('@')])
             .success()
@@ -53,15 +40,31 @@ impl PackageManager for HomeBrew {
     }
 
     fn list_installed(&self) -> Vec<Package> {
-        let out = self.execute_cmds(&[Self::LIST_CMD]);
+        let out = self.execute_cmds(&[self.list_cmd()]);
         let outstr = std::str::from_utf8(&out.stdout).unwrap();
         outstr.lines().map(|s| Self::parse_package(s)).collect()
     }
 
     fn add_repo(&self, repo: Repo) -> PackError<()> {
-        self.execute_cmds_status(&[Self::REPO_CMD, repo.as_str()])
+        self.execute_cmds_status(&[self.repo_cmd(), repo.as_str()])
             .success()
             .then_some(())
             .ok_or(Error)
+    }
+}
+
+impl Commands for HomeBrew {
+    fn cmd(&self) -> &'static str {
+        "brew"
+    }
+    fn sub_cmds(&self, sub_cmd: SubCommand) -> &'static str {
+        match sub_cmd {
+            SubCommand::Install => "install",
+            SubCommand::Uninstall => "uninstall",
+            SubCommand::Update | SubCommand::UpdateAll => "upgrade",
+            SubCommand::List => "list",
+            SubCommand::Sync => "update",
+            SubCommand::AddRepo => "tap",
+        }
     }
 }

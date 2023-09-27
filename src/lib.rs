@@ -11,12 +11,9 @@ pub mod managers;
 /// Primary interface for implementing a package manager
 ///
 /// Multiple package managers can be grouped together as dyn PackageManager.
-pub trait PackageManager {
+pub trait PackageManager: Commands {
     /// Package manager name
     fn name(&self) -> &'static str;
-
-    /// Package manager command
-    fn cmd(&self) -> &'static str;
 
     /// Check if package manager is installed on the system
     fn is_installed(&self) -> bool {
@@ -50,6 +47,49 @@ pub trait PackageManager {
 
     /// Add third-party repository to the package manager's repository list
     fn add_repo(&self, repo: Repo) -> PackError<()>;
+}
+
+/// Trait for defining package panager commands in one place
+///
+/// Only [``Commands::cmd``] and [``Commands::sub_cmds``] are required, the rest are simply conviniece methods
+/// that internally call [``Commands::sub_cmds``]. The trait [``PackageManager``] depends on this to provide default implementations.
+pub trait Commands {
+    /// Primary command of the package manager. For example, 'brew', 'apt', and 'dnf'.
+    fn cmd(&self) -> &'static str;
+    /// Returns the appropriate sub-command for the given sub-command type. Check [``SubCommand``] enum to see all supported commands.
+    fn sub_cmds(&self, sub_cmd: SubCommand) -> &'static str;
+    fn install_cmd(&self) -> &'static str {
+        self.sub_cmds(SubCommand::Install)
+    }
+    fn uninstall_cmd(&self) -> &'static str {
+        self.sub_cmds(SubCommand::Uninstall)
+    }
+    fn update_cmd(&self) -> &'static str {
+        self.sub_cmds(SubCommand::Update)
+    }
+    fn update_all_cmd(&self) -> &'static str {
+        self.sub_cmds(SubCommand::UpdateAll)
+    }
+    fn list_cmd(&self) -> &'static str {
+        self.sub_cmds(SubCommand::List)
+    }
+    fn sync_cmd(&self) -> &'static str {
+        self.sub_cmds(SubCommand::Sync)
+    }
+    fn repo_cmd(&self) -> &'static str {
+        self.sub_cmds(SubCommand::AddRepo)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum SubCommand {
+    Install,
+    Uninstall,
+    Update,
+    UpdateAll,
+    List,
+    Sync,
+    AddRepo,
 }
 
 /// Temporary error type

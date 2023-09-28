@@ -55,7 +55,7 @@ pub trait PackageManager: Commands {
 
     /// Sync package manaager repositories
     fn sync(&self) -> PackError<()> {
-        self.execute_cmds_status(self.command(Cmd::Sync))
+        self.execute_cmds_status(&self.consolidated(Cmd::Sync, &[]))
             .success()
             .then_some(())
             .ok_or(Error)
@@ -63,7 +63,7 @@ pub trait PackageManager: Commands {
 
     /// Update/upgrade all packages
     fn update_all(&self) -> PackError<()> {
-        self.execute_cmds_status(self.command(Cmd::UpdateAll))
+        self.execute_cmds_status(&self.consolidated(Cmd::UpdateAll, &[]))
             .success()
             .then_some(())
             .ok_or(Error)
@@ -71,7 +71,7 @@ pub trait PackageManager: Commands {
 
     /// List installed packages
     fn list_installed(&self) -> Vec<Package> {
-        let out = self.execute_cmds(self.command(Cmd::List));
+        let out = self.execute_cmds(&self.consolidated(Cmd::List, &[]));
         let outstr = std::str::from_utf8(&out.stdout).unwrap();
         outstr.lines().map(|s| self.parse(s)).collect()
     }

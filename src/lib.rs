@@ -30,7 +30,7 @@ pub trait PackageManager: Commands {
     /// and trims spaces. It returns a package with version information on success, or else it returns a package with only a package name.
     /// For package maangers that have unusual or complex output, users are free to override this method. Note: Remember to construct a package with owned values in this method.
     fn parse<'a, 'b>(&self, line: &'a str) -> Package<'b> {
-        if let Some((name, version)) = line.split_once(self.pkg_delimiter()) {
+        if let Some((name, version)) = line.trim().split_once(self.pkg_delimiter()) {
             return Package::from(name.trim().to_owned()).with_version(version.trim().to_owned());
         }
         Package::from(line.trim().to_owned())

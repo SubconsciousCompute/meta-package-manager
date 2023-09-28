@@ -1,4 +1,4 @@
-use crate::{Commands, PackageManager, SubCommand};
+use crate::{Cmd, Commands, PackageManager};
 
 pub struct HomeBrew;
 
@@ -22,15 +22,15 @@ impl Commands for HomeBrew {
     fn cmd(&self) -> &'static str {
         "brew"
     }
-    fn sub_cmd(&self, sub_cmd: SubCommand) -> &'static str {
-        match sub_cmd {
-            SubCommand::Install => "install",
-            SubCommand::Uninstall => "uninstall",
-            SubCommand::Update | SubCommand::UpdateAll => "upgrade",
-            SubCommand::List => "list",
-            SubCommand::Sync => "update",
-            SubCommand::AddRepo => "tap",
-            SubCommand::Search => "search",
+    fn command(&self, cmd: Cmd) -> &'static [&'static str] {
+        match cmd {
+            Cmd::Install => &["install"],
+            Cmd::Uninstall => &["uninstall"],
+            Cmd::Update | Cmd::UpdateAll => &["upgrade"],
+            Cmd::List => &["list"],
+            Cmd::Sync => &["update"],
+            Cmd::AddRepo => &["tap"],
+            Cmd::Search => &["search"],
         }
     }
 }

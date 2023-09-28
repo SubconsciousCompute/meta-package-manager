@@ -47,14 +47,15 @@ pub trait PackageManager: Commands {
 
     /// General package search
     fn search(&self, pack: &str) -> Vec<Package> {
-        let out = self.execute_cmds(&[self.search_cmd(), pack]);
+        let cmds = self.consolidated(Cmd::Search, &[pack]);
+        let out = self.execute_cmds(&cmds);
         let outstr = std::str::from_utf8(&out.stdout).unwrap();
         outstr.lines().map(|s| self.parse(s)).collect()
     }
 
     /// Sync package manaager repositories
     fn sync(&self) -> PackError<()> {
-        self.execute_cmds_status(&[self.sync_cmd()])
+        self.execute_cmds_status(self.command(Cmd::Sync))
             .success()
             .then_some(())
             .ok_or(Error)
@@ -62,7 +63,7 @@ pub trait PackageManager: Commands {
 
     /// Update/upgrade all packages
     fn update_all(&self) -> PackError<()> {
-        self.execute_cmds_status(&[self.update_all_cmd()])
+        self.execute_cmds_status(self.command(Cmd::UpdateAll))
             .success()
             .then_some(())
             .ok_or(Error)
@@ -70,19 +71,30 @@ pub trait PackageManager: Commands {
 
     /// List installed packages
     fn list_installed(&self) -> Vec<Package> {
-        let out = self.execute_cmds(&[self.list_cmd()]);
+        let out = self.execute_cmds(self.command(Cmd::List));
         let outstr = std::str::from_utf8(&out.stdout).unwrap();
         outstr.lines().map(|s| self.parse(s)).collect()
     }
 
     /// Execute operation on a package, such as install, uninstall and update
     fn execute_op(&self, pack: &Package, op: Operation) -> PackError<()> {
-        let cmd = match op {
-            Operation::Install => self.install_cmd(),
-            Operation::Uninstall => self.uninstall_cmd(),
-            Operation::Update => self.update_cmd(),
+        let command = match op {
+            Operation::Install => Cmd::Install,
+            Operation::Uninstall => Cmd::Uninstall,
+            Operation::Update => Cmd::Update,
         };
-        self.execute_cmds_status(&[cmd, &pack.format(self.pkg_delimiter())])
+        let pkg = pack.format(self.pkg_delimiter());
+        let cmds = self.consolidated(command, &[&pkg]);
+        self.execute_cmds_status(&cmds)
+            .success()
+            .then_some(())
+            .ok_or(Error)
+    }
+
+    /// Add third-party repository to the package manager's repository list
+    fn add_repo(&self, repo: Repo) -> PackError<()> {
+        let cmds = self.consolidated(Cmd::AddRepo, &[repo.as_str()]);
+        self.execute_cmds_status(&cmds)
             .success()
             .then_some(())
             .ok_or(Error)
@@ -105,53 +117,32 @@ pub trait PackageManager: Commands {
         // safe to unwrap when package manager is known to be available (see is_installed fn)
         Command::new(self.cmd()).args(cmds).spawn().unwrap()
     }
-
-    /// Add third-party repository to the package manager's repository list
-    fn add_repo(&self, repo: Repo) -> PackError<()> {
-        self.execute_cmds_status(&[self.add_repo_cmd(), repo.as_str()])
-            .success()
-            .then_some(())
-            .ok_or(Error)
-    }
 }
 
 /// Trait for defining package panager commands in one place
 ///
-/// Only [``Commands::cmd``] and [``Commands::sub_cmds``] are required, the rest are simply conviniece methods
-/// that internally call [``Commands::sub_cmds``]. The trait [``PackageManager``] depends on this to provide default implementations.
+/// Only [``Commands::cmd``] and [``Commands::commands``] are required, the rest are simply conviniece methods
+/// that internally call [``Commands::commands``]. The trait [``PackageManager``] depends on this to provide default implementations.
 pub trait Commands {
     /// Primary command of the package manager. For example, 'brew', 'apt', and 'dnf'.
     fn cmd(&self) -> &'static str;
-    /// Returns the appropriate sub-command for the given sub-command type. Check [``SubCommand``] enum to see all supported commands.
-    fn sub_cmd(&self, sub_cmd: SubCommand) -> &'static str;
-    fn install_cmd(&self) -> &'static str {
-        self.sub_cmd(SubCommand::Install)
-    }
-    fn uninstall_cmd(&self) -> &'static str {
-        self.sub_cmd(SubCommand::Uninstall)
-    }
-    fn update_cmd(&self) -> &'static str {
-        self.sub_cmd(SubCommand::Update)
-    }
-    fn update_all_cmd(&self) -> &'static str {
-        self.sub_cmd(SubCommand::UpdateAll)
-    }
-    fn list_cmd(&self) -> &'static str {
-        self.sub_cmd(SubCommand::List)
-    }
-    fn search_cmd(&self) -> &'static str {
-        self.sub_cmd(SubCommand::Search)
-    }
-    fn sync_cmd(&self) -> &'static str {
-        self.sub_cmd(SubCommand::Sync)
-    }
-    fn add_repo_cmd(&self) -> &'static str {
-        self.sub_cmd(SubCommand::AddRepo)
+    /// Returns the appropriate command/s for the given supported command type. Check [``Cmd``] enum to see all supported commands.
+    fn command(&self, cmd: Cmd) -> &'static [&'static str];
+    /// Takes user provided arguments and returns a Vec of args in the order: `[commands..., user-args..., flags...]`
+    ///
+    /// The appropriate commands and flags are determined with the help of the enum [``Cmd``]
+    /// For finer control, a general purpose function [``consolidated_args``] is also provided.
+    #[inline]
+    fn consolidated<'a>(&self, cmd: Cmd, args: &[&'a str]) -> Vec<&'a str> {
+        let cmd = self.command(cmd);
+        let mut vec = Vec::with_capacity(cmd.len() + args.len());
+        vec.extend(cmd.iter().chain(args.iter()).map(|e| *e));
+        vec
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum SubCommand {
+pub enum Cmd {
     Install,
     Uninstall,
     Update,
@@ -278,4 +269,17 @@ impl Url {
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
+}
+
+/// General purpose version of [``Commands::consolidated``] for consolidating different types of arguments into a single Vec
+#[inline]
+pub fn consolidate_args<'a>(cmds: &[&'a str], args: &[&'a str], flags: &[&'a str]) -> Vec<&'a str> {
+    let mut vec = Vec::with_capacity(cmds.len() + args.len() + flags.len());
+    vec.extend(
+        cmds.iter()
+            .chain(args.iter())
+            .chain(flags.iter())
+            .map(|e| *e),
+    );
+    vec
 }

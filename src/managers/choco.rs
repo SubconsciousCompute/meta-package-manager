@@ -1,4 +1,6 @@
-use crate::{Cmd, Commands, PackageManager};
+use std::borrow::Cow;
+
+use crate::{Cmd, Commands, Package, PackageManager};
 
 pub struct Chocolatey;
 
@@ -8,6 +10,13 @@ impl PackageManager for Chocolatey {
     }
     fn pkg_delimiter(&self) -> char {
         '|'
+    }
+    fn pkg_format(&self, pkg: &Package) -> Cow<str> {
+        if let Some(v) = pkg.version() {
+            format!("{} --version {}", pkg.name, v).into()
+        } else {
+            self.name().into()
+        }
     }
 }
 

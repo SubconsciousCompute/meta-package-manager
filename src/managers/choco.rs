@@ -9,7 +9,6 @@ impl PackageManager for Chocolatey {
     fn pkg_delimiter(&self) -> char {
         '|'
     }
-    }
 }
 
 impl Commands for Chocolatey {

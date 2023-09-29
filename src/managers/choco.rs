@@ -24,7 +24,7 @@ impl Commands for Chocolatey {
     fn cmd(&self) -> &'static str {
         "choco"
     }
-    fn command(&self, cmd: crate::Cmd) -> &'static [&'static str] {
+    fn command(&self, cmd: Cmd) -> &'static [&'static str] {
         match cmd {
             Cmd::Install => &["install"],
             Cmd::Uninstall => &["uninstall"],

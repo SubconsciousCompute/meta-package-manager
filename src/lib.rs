@@ -8,6 +8,9 @@ use url::Url as ParsedUrl;
 
 pub mod managers;
 
+#[cfg(test)]
+mod libtests;
+
 /// Primary interface for implementing a package manager
 ///
 /// Multiple package managers can be grouped together as dyn PackageManager.

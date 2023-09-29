@@ -65,7 +65,7 @@ pub trait PackageManager: Commands {
     }
 
     /// Sync package manaager repositories
-    fn sync(&self) -> PackError<()> {
+    fn sync(&self) -> PackResult<()> {
         self.execute_cmds_status(&self.consolidated(Cmd::Sync, &[]))
             .success()
             .then_some(())
@@ -73,7 +73,7 @@ pub trait PackageManager: Commands {
     }
 
     /// Update/upgrade all packages
-    fn update_all(&self) -> PackError<()> {
+    fn update_all(&self) -> PackResult<()> {
         self.execute_cmds_status(&self.consolidated(Cmd::UpdateAll, &[]))
             .success()
             .then_some(())
@@ -88,7 +88,7 @@ pub trait PackageManager: Commands {
     }
 
     /// Execute operation on a package, such as install, uninstall and update
-    fn execute_op(&self, pack: Package, op: Operation) -> PackError<()> {
+    fn execute_op(&self, pack: Package, op: Operation) -> PackResult<()> {
         let command = match op {
             Operation::Install => Cmd::Install,
             Operation::Uninstall => Cmd::Uninstall,
@@ -103,7 +103,7 @@ pub trait PackageManager: Commands {
     }
 
     /// Add third-party repository to the package manager's repository list
-    fn add_repo(&self, repo: Repo) -> PackError<()> {
+    fn add_repo(&self, repo: Repo) -> PackResult<()> {
         let cmds = self.consolidated(Cmd::AddRepo, &[repo.as_str()]);
         self.execute_cmds_status(&cmds)
             .success()
@@ -181,7 +181,7 @@ pub enum Cmd {
 pub struct Error;
 
 /// Temporary error type alias
-pub type PackError<T> = Result<T, Error>;
+pub type PackResult<T> = Result<T, Error>;
 
 /// A representation of a package
 ///
@@ -273,7 +273,7 @@ pub struct Url(ParsedUrl);
 
 impl Url {
     /// Parse string into URL
-    pub fn parse(url: &str) -> PackError<Url> {
+    pub fn parse(url: &str) -> PackResult<Url> {
         let parsed = ParsedUrl::parse(url).map_err(|_| Error)?;
         Ok(Url(parsed))
     }

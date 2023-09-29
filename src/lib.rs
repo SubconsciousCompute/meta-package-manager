@@ -166,23 +166,14 @@ pub trait Commands {
         );
         vec
     }
-    /// Takes user provided arguments and returns a Vec of args in the order: `[commands..., user-args..., flags...]`
+    /// Retreives defined commands and flags for the given [``Cmd``] type and returns a Vec of args in the order: `[commands..., user-args..., flags...]`
     ///
     /// The appropriate commands and flags are determined with the help of the enum [``Cmd``]
+    /// For supplying additional flags in addition to default ones, see [``Commands::consolidated_ext``]
     /// For finer control, a general purpose function [``consolidated_args``] is also provided.
     #[inline]
     fn consolidated<'a>(&self, cmd: Cmd, args: &[&'a str]) -> Vec<&'a str> {
-        let command = self.command(cmd);
-        let flags = self.flags(cmd);
-        let mut vec = Vec::with_capacity(command.len() + flags.len() + args.len());
-        vec.extend(
-            command
-                .iter()
-                .chain(args.iter())
-                .chain(flags.iter())
-                .map(|e| *e),
-        );
-        vec
+        self.consolidated_ext(cmd, args, &[])
     }
 }
 

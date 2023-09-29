@@ -23,7 +23,9 @@ impl Commands for Chocolatey {
             Cmd::Update => &["upgrade"],
             Cmd::UpdateAll => &["upgrade", "all"],
             Cmd::List => &["list"],
-            Cmd::Sync => &["sync"],
+            // Since chocolatey does not have an analogue for sync command
+            // updating chocolatey was chosen as an alternative
+            Cmd::Sync => &["upgrade", "chocolatey"],
             Cmd::AddRepo => &["source", "add"],
             Cmd::Search => &["search"],
         }

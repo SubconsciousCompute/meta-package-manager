@@ -41,10 +41,24 @@ pub trait PackageManager: Commands {
     /// and trims spaces. It returns a package with version information on success, or else it returns a package with only a package name.
     /// For package maangers that have unusual or complex output, users are free to override this method. Note: Remember to construct a package with owned values in this method.
     fn parse<'a, 'b>(&self, line: &'a str) -> Package<'b> {
-        if let Some((name, version)) = line.trim().split_once(self.pkg_delimiter()) {
+        if let Some((name, version)) = line.split_once(self.pkg_delimiter()) {
             return Package::from(name.trim().to_owned()).with_version(version.trim().to_owned());
         }
         Package::from(line.trim().to_owned())
+    }
+
+    /// Parses output, generally from stdout, to a Vec of Packages.
+    ///
+    /// The default implementation uses [``PackageManager::parse``] for parsing each line into a [`Package`].
+    fn parse_output(&self, out: &[u8]) -> Vec<Package> {
+        let outstr = std::str::from_utf8(out).unwrap();
+        outstr
+            .lines()
+            .filter_map(|s| {
+                let ts = s.trim();
+                (!ts.is_empty()).then_some(self.parse(ts))
+            })
+            .collect()
     }
 
     /// Check if package manager is installed on the system
@@ -60,8 +74,7 @@ pub trait PackageManager: Commands {
     fn search(&self, pack: &str) -> Vec<Package> {
         let cmds = self.consolidated(Cmd::Search, &[pack]);
         let out = self.execute_cmds(&cmds);
-        let outstr = std::str::from_utf8(&out.stdout).unwrap();
-        outstr.lines().map(|s| self.parse(s)).collect()
+        self.parse_output(&out.stdout)
     }
 
     /// Sync package manaager repositories
@@ -83,8 +96,7 @@ pub trait PackageManager: Commands {
     /// List installed packages
     fn list_installed(&self) -> Vec<Package> {
         let out = self.execute_cmds(&self.consolidated(Cmd::List, &[]));
-        let outstr = std::str::from_utf8(&out.stdout).unwrap();
-        outstr.lines().map(|s| self.parse(s)).collect()
+        self.parse_output(&out.stdout)
     }
 
     /// Execute operation on a package, such as install, uninstall and update

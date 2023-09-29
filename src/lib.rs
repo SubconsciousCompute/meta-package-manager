@@ -88,13 +88,13 @@ pub trait PackageManager: Commands {
     }
 
     /// Execute operation on a package, such as install, uninstall and update
-    fn execute_op(&self, pack: &Package, op: Operation) -> PackError<()> {
+    fn execute_op(&self, pack: Package, op: Operation) -> PackError<()> {
         let command = match op {
             Operation::Install => Cmd::Install,
             Operation::Uninstall => Cmd::Uninstall,
             Operation::Update => Cmd::Update,
         };
-        let pkg = self.pkg_format(pack);
+        let pkg = self.pkg_format(&pack);
         let cmds = self.consolidated(command, &[&pkg]);
         self.execute_cmds_status(&cmds)
             .success()

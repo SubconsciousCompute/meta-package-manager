@@ -7,7 +7,8 @@ impl PackageManager for Chocolatey {
         "Chocolatey"
     }
     fn pkg_delimiter(&self) -> char {
-        ' '
+        '|'
+    }
     }
 }
 
@@ -29,8 +30,8 @@ impl Commands for Chocolatey {
     }
     fn flags(&self, cmd: Cmd) -> &'static [&'static str] {
         match cmd {
-            Cmd::List => &["--local"],
-            Cmd::Install | Cmd::Update | Cmd::UpdateAll => &["-y"],
+            Cmd::List | Cmd::Search => &["--limit-output"],
+            Cmd::Install | Cmd::Update | Cmd::UpdateAll => &["--yes"],
             _ => &[],
         }
     }

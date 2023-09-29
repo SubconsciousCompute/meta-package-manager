@@ -22,6 +22,17 @@ pub trait PackageManager: Commands {
     /// For package managers that require additional formatting, overriding the default trait methods would be the way to go.
     fn pkg_delimiter(&self) -> char;
 
+    /// Get a formatted string of the package as <name><delimiter><version>
+    ///
+    /// Note: this functions returns a formatted string only if version information is present.
+    /// Otherwise, only a borrowed name string is returned. Which is why this function returns a 'Cow<str>' and not a `String`.
+    fn pkg_format(&self, pkg: &Package) -> Cow<str> {
+        if let Some(v) = pkg.version() {
+            format!("{}{}{}", pkg.name, self.pkg_delimiter(), v).into()
+        } else {
+            self.name().into()
+        }
+    }
     /// Returns a package after parsing a line of stdout output from the underlying package manager.
     ///
     /// This method is internally used in other default methods like [``PackageManager::search``] to parse packages from the output.
@@ -83,7 +94,7 @@ pub trait PackageManager: Commands {
             Operation::Uninstall => Cmd::Uninstall,
             Operation::Update => Cmd::Update,
         };
-        let pkg = pack.format(self.pkg_delimiter());
+        let pkg = self.pkg_format(pack);
         let cmds = self.consolidated(command, &[&pkg]);
         self.execute_cmds_status(&cmds)
             .success()
@@ -204,18 +215,6 @@ impl<'a> Package<'a> {
     {
         self.version.replace(ver.into());
         self
-    }
-
-    /// Get a formatted string of the package as <name><delimiter><version>
-    ///
-    /// Note: this functions returns a formatted string only if version information is present.
-    /// Otherwise, only a borrowed name string is returned. Which is why this function returns a 'Cow<str>' and not a `String`.
-    pub fn format(&self, delimiter: char) -> Cow<str> {
-        if let Some(v) = self.version() {
-            format!("{}{}{}", self.name, delimiter, v).into()
-        } else {
-            self.name().into()
-        }
     }
 }
 

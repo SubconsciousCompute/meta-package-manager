@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     fmt::{Debug, Display},
-    process::{Child, Command, ExitStatus, Output, Stdio},
+    process::{Child, Command, ExitStatus, Output},
 };
 
 use url::Url as ParsedUrl;

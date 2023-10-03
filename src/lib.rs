@@ -29,11 +29,11 @@ pub trait PackageManager: Commands {
     ///
     /// Note: this functions returns a formatted string only if version information is present.
     /// Otherwise, only a borrowed name string is returned. Which is why this function returns a 'Cow<str>' and not a `String`.
-    fn pkg_format(&self, pkg: &Package) -> Cow<str> {
+    fn pkg_format<'a>(&self, pkg: &'a Package) -> Cow<'a, str> {
         if let Some(v) = pkg.version() {
             format!("{}{}{}", pkg.name, self.pkg_delimiter(), v).into()
         } else {
-            self.name().into()
+            pkg.name().into()
         }
     }
     /// Returns a package after parsing a line of stdout output from the underlying package manager.

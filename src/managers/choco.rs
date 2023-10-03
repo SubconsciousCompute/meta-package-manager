@@ -11,11 +11,11 @@ impl PackageManager for Chocolatey {
     fn pkg_delimiter(&self) -> char {
         '|'
     }
-    fn pkg_format(&self, pkg: &Package) -> Cow<str> {
+    fn pkg_format<'a>(&self, pkg: &'a Package) -> Cow<'a, str> {
         if let Some(v) = pkg.version() {
             format!("{} --version {}", pkg.name, v).into()
         } else {
-            self.name().into()
+            pkg.name().into()
         }
     }
 }

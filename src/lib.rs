@@ -7,6 +7,7 @@ use std::{
 use url::Url as ParsedUrl;
 
 pub mod managers;
+pub mod verify;
 
 #[cfg(test)]
 mod libtests;

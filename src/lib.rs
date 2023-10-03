@@ -81,19 +81,13 @@ pub trait PackageManager: Commands {
     }
 
     /// Sync package manaager repositories
-    fn sync(&self) -> PackResult<()> {
+    fn sync(&self) -> ExitStatus {
         self.exec_cmds_status(&self.consolidated(Cmd::Sync, &[]))
-            .success()
-            .then_some(())
-            .ok_or(Error)
     }
 
     /// Update/upgrade all packages
-    fn update_all(&self) -> PackResult<()> {
+    fn update_all(&self) -> ExitStatus {
         self.exec_cmds_status(&self.consolidated(Cmd::UpdateAll, &[]))
-            .success()
-            .then_some(())
-            .ok_or(Error)
     }
 
     /// List installed packages
@@ -103,7 +97,7 @@ pub trait PackageManager: Commands {
     }
 
     /// exec an operation on multiple packages, such as install, uninstall and update
-    fn exec_op(&self, pkgs: &[Package], op: Operation) -> PackResult<()> {
+    fn exec_op(&self, pkgs: &[Package], op: Operation) -> ExitStatus {
         let command = match op {
             Operation::Install => Cmd::Install,
             Operation::Uninstall => Cmd::Uninstall,
@@ -115,18 +109,12 @@ pub trait PackageManager: Commands {
             &fmt.iter().map(|v| v.as_ref()).collect::<Vec<&str>>(),
         );
         self.exec_cmds_status(&cmds)
-            .success()
-            .then_some(())
-            .ok_or(Error)
     }
 
     /// Add third-party repository to the package manager's repository list
-    fn add_repo(&self, repo: Repo) -> PackResult<()> {
+    fn add_repo(&self, repo: Repo) -> ExitStatus {
         let cmds = self.consolidated(Cmd::AddRepo, &[repo.as_str()]);
         self.exec_cmds_status(&cmds)
-            .success()
-            .then_some(())
-            .ok_or(Error)
     }
 
     /// Run arbitrary commands against the package manager and get output
@@ -206,12 +194,6 @@ pub enum Cmd {
     AddRepo,
     Search,
 }
-
-/// Temporary error type
-pub struct Error;
-
-/// Temporary error type alias
-pub type PackResult<T> = Result<T, Error>;
 
 /// A representation of a package
 ///
@@ -303,9 +285,8 @@ pub struct Url(ParsedUrl);
 
 impl Url {
     /// Parse string into URL
-    pub fn parse(url: &str) -> PackResult<Url> {
-        let parsed = ParsedUrl::parse(url).map_err(|_| Error)?;
-        Ok(Url(parsed))
+    pub fn parse(url: &str) -> Result<Url, url::ParseError> {
+        ParsedUrl::parse(url).map(Url)
     }
     /// Get parsed URL as &str
     pub fn as_str(&self) -> &str {

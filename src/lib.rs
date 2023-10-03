@@ -102,15 +102,18 @@ pub trait PackageManager: Commands {
         self.parse_output(&out.stdout)
     }
 
-    /// Execute operation on a package, such as install, uninstall and update
-    fn execute_op(&self, pack: Package, op: Operation) -> PackResult<()> {
+    /// Execute an operation on multiple packages, such as install, uninstall and update
+    fn exec_op(&self, pkgs: &[Package], op: Operation) -> PackResult<()> {
         let command = match op {
             Operation::Install => Cmd::Install,
             Operation::Uninstall => Cmd::Uninstall,
             Operation::Update => Cmd::Update,
         };
-        let pkg = self.pkg_format(&pack);
-        let cmds = self.consolidated(command, &[&pkg]);
+        let fmt: Vec<_> = pkgs.iter().map(|p| self.pkg_format(p)).collect();
+        let cmds = self.consolidated(
+            command,
+            &fmt.iter().map(|v| v.as_ref()).collect::<Vec<&str>>(),
+        );
         self.execute_cmds_status(&cmds)
             .success()
             .then_some(())

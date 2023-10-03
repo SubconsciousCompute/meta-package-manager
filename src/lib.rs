@@ -62,15 +62,6 @@ pub trait PackageManager: Commands + Debug + Display {
             .collect()
     }
 
-    /// Check if package manager is installed on the system
-    fn is_installed(&self) -> bool {
-        Command::new(self.cmd())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .spawn()
-            .is_ok()
-    }
-
     /// General package search
     fn search(&self, pack: &str) -> Vec<Package> {
         let cmds = self.consolidated(Cmd::Search, &[pack]);

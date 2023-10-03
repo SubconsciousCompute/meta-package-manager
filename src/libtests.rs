@@ -28,7 +28,7 @@ impl PackageManager for MockPackageManager {
     fn pkg_delimiter(&self) -> char {
         '+'
     }
-    fn execute_cmds(&self, _: &[&str]) -> Output {
+    fn exec_cmds(&self, _: &[&str]) -> Output {
         let out = br#"
             package1
             package2+1.1.0

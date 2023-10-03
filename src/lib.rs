@@ -76,13 +76,13 @@ pub trait PackageManager: Commands {
     /// General package search
     fn search(&self, pack: &str) -> Vec<Package> {
         let cmds = self.consolidated(Cmd::Search, &[pack]);
-        let out = self.execute_cmds(&cmds);
+        let out = self.exec_cmds(&cmds);
         self.parse_output(&out.stdout)
     }
 
     /// Sync package manaager repositories
     fn sync(&self) -> PackResult<()> {
-        self.execute_cmds_status(&self.consolidated(Cmd::Sync, &[]))
+        self.exec_cmds_status(&self.consolidated(Cmd::Sync, &[]))
             .success()
             .then_some(())
             .ok_or(Error)
@@ -90,7 +90,7 @@ pub trait PackageManager: Commands {
 
     /// Update/upgrade all packages
     fn update_all(&self) -> PackResult<()> {
-        self.execute_cmds_status(&self.consolidated(Cmd::UpdateAll, &[]))
+        self.exec_cmds_status(&self.consolidated(Cmd::UpdateAll, &[]))
             .success()
             .then_some(())
             .ok_or(Error)
@@ -98,11 +98,11 @@ pub trait PackageManager: Commands {
 
     /// List installed packages
     fn list_installed(&self) -> Vec<Package> {
-        let out = self.execute_cmds(&self.consolidated(Cmd::List, &[]));
+        let out = self.exec_cmds(&self.consolidated(Cmd::List, &[]));
         self.parse_output(&out.stdout)
     }
 
-    /// Execute an operation on multiple packages, such as install, uninstall and update
+    /// exec an operation on multiple packages, such as install, uninstall and update
     fn exec_op(&self, pkgs: &[Package], op: Operation) -> PackResult<()> {
         let command = match op {
             Operation::Install => Cmd::Install,
@@ -114,7 +114,7 @@ pub trait PackageManager: Commands {
             command,
             &fmt.iter().map(|v| v.as_ref()).collect::<Vec<&str>>(),
         );
-        self.execute_cmds_status(&cmds)
+        self.exec_cmds_status(&cmds)
             .success()
             .then_some(())
             .ok_or(Error)
@@ -123,26 +123,26 @@ pub trait PackageManager: Commands {
     /// Add third-party repository to the package manager's repository list
     fn add_repo(&self, repo: Repo) -> PackResult<()> {
         let cmds = self.consolidated(Cmd::AddRepo, &[repo.as_str()]);
-        self.execute_cmds_status(&cmds)
+        self.exec_cmds_status(&cmds)
             .success()
             .then_some(())
             .ok_or(Error)
     }
 
     /// Run arbitrary commands against the package manager and get output
-    fn execute_cmds(&self, cmds: &[&str]) -> Output {
+    fn exec_cmds(&self, cmds: &[&str]) -> Output {
         // safe to unwrap when package manager is known to be available (see is_installed fn)
         Command::new(self.cmd()).args(cmds).output().unwrap()
     }
 
     /// Run arbitrary commands against the package manager and wait for ExitStatus
-    fn execute_cmds_status(&self, cmds: &[&str]) -> ExitStatus {
+    fn exec_cmds_status(&self, cmds: &[&str]) -> ExitStatus {
         // safe to unwrap when package manager is known to be available (see is_installed fn)
         Command::new(self.cmd()).args(cmds).status().unwrap()
     }
 
     /// Run arbitrary commands against the package manager and return handle to the spawned process
-    fn execute_cmds_spawn(&self, cmds: &[&str]) -> Child {
+    fn exec_cmds_spawn(&self, cmds: &[&str]) -> Child {
         // safe to unwrap when package manager is known to be available (see is_installed fn)
         Command::new(self.cmd()).args(cmds).spawn().unwrap()
     }
@@ -271,7 +271,7 @@ impl Display for Package<'_> {
     }
 }
 
-/// Operation type to execute using [``Package::execute_op``]
+/// Operation type to exec using [``Package::exec_op``]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Operation {
     Install,

@@ -46,3 +46,18 @@ impl Commands for Chocolatey {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn choco_pkg_fmt() {
+        let pkg = Package::from("package");
+        assert_eq!(Chocolatey.pkg_format(&pkg), Cow::from("package"));
+        let pkg = pkg.with_version("0.1.0");
+        assert_eq!(
+            Chocolatey.pkg_format(&pkg),
+            Cow::from("package --version 0.1.0")
+        );
+    }
+}

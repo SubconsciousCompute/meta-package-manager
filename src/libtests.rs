@@ -92,6 +92,14 @@ fn package_assertions<'a>(mut listiter: impl Iterator<Item = Package<'a>>) {
 }
 
 #[test]
+fn package_formatting() {
+    let pkg = Package::from("package");
+    assert_eq!(MockPackageManager.pkg_format(&pkg), "package");
+    let pkg = pkg.with_version("0.1.0");
+    assert_eq!(MockPackageManager.pkg_format(&pkg), "package+0.1.0");
+}
+
+#[test]
 fn package_version() {
     let pkg = Package::from("test");
     assert!(!pkg.has_version());

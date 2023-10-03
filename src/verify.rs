@@ -51,3 +51,25 @@ pub fn is_installed<P: PackageManager + ?Sized>(pm: &P) -> bool {
         .spawn()
         .is_ok()
 }
+
+/// Helper trait that lets you construct a verified package manager instance
+/// that is known to be installed or in path, and is safe to be interacted with.
+///
+/// This trait has a blanket implementation for all T that implement PackageManager
+pub trait Verify: PackageManager
+where
+    Self: Sized,
+{
+    fn verify(self) -> Option<Verified<Self>> {
+        Verified::new(self)
+    }
+
+    fn verify_dyn(self) -> Option<DynVerified>
+    where
+        Self: 'static,
+    {
+        DynVerified::new(self)
+    }
+}
+
+impl<T> Verify for T where T: PackageManager {}

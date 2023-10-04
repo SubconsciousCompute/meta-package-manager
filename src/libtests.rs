@@ -18,13 +18,10 @@ impl Commands for MockCommands {
     }
 }
 
+#[derive(Debug)]
 struct MockPackageManager;
 
 impl PackageManager for MockPackageManager {
-    fn name(&self) -> &'static str {
-        ""
-    }
-
     fn pkg_delimiter(&self) -> char {
         '+'
     }

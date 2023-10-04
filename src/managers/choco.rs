@@ -2,12 +2,10 @@ use std::borrow::Cow;
 
 use crate::{Cmd, Commands, Package, PackageManager};
 
+#[derive(Debug)]
 pub struct Chocolatey;
 
 impl PackageManager for Chocolatey {
-    fn name(&self) -> &'static str {
-        "Chocolatey"
-    }
     fn pkg_delimiter(&self) -> char {
         '|'
     }

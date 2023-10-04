@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    fmt::Display,
+    fmt::{Debug, Display},
     process::{Child, Command, ExitStatus, Output, Stdio},
 };
 
@@ -14,10 +14,7 @@ mod libtests;
 /// Primary interface for implementing a package manager
 ///
 /// Multiple package managers can be grouped together as dyn PackageManager.
-pub trait PackageManager: Commands {
-    /// Package manager name
-    fn name(&self) -> &'static str;
-
+pub trait PackageManager: Commands + Debug {
     /// Defines a delimeter to use while formatting package name and version
     ///
     /// For example, HomeBrew supports `<name>@<version>` and APT supports `<name>=<version>`.

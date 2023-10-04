@@ -10,13 +10,19 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  linux-test:
 
-    runs-on: ubuntu-latest
+    runs-on: [ubuntu-latest, macos-latest]
 
     steps:
     - uses: actions/checkout@v3
     - name: Build
       run: cargo build --verbose
-    - name: Run tests
+    - name: Run lib tests
       run: cargo test --lib --verbose
+    - name: Set up Homebrew
+      id: set-up-homebrew
+      uses: Homebrew/actions/setup-homebrew@master
+    - name: Run integration tests
+      run: cargo test --test basic --all-features --verbose
+

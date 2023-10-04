@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt::Display};
 
 use crate::{Cmd, Commands, Package, PackageManager};
 
@@ -42,6 +42,12 @@ impl Commands for Chocolatey {
             Cmd::Install | Cmd::Update | Cmd::UpdateAll => &["--yes"],
             _ => &[],
         }
+    }
+}
+
+impl Display for Chocolatey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Chocolatey")
     }
 }
 

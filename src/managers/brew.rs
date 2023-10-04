@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::{Cmd, Commands, PackageManager};
 
 #[derive(Debug)]
@@ -29,5 +31,11 @@ impl Commands for HomeBrew {
             Cmd::AddRepo => &["tap"],
             Cmd::Search => &["search"],
         }
+    }
+}
+
+impl Display for HomeBrew {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("HomeBrew")
     }
 }

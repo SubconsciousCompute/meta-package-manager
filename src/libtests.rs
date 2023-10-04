@@ -1,4 +1,4 @@
-use std::process::Output;
+use std::{fmt::Display, process::Output};
 
 use crate::{Package, PackageManager, Url};
 
@@ -20,6 +20,12 @@ impl Commands for MockCommands {
 
 #[derive(Debug)]
 struct MockPackageManager;
+
+impl Display for MockPackageManager {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        unimplemented!()
+    }
+}
 
 impl PackageManager for MockPackageManager {
     fn pkg_delimiter(&self) -> char {

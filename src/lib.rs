@@ -14,7 +14,7 @@ mod libtests;
 /// Primary interface for implementing a package manager
 ///
 /// Multiple package managers can be grouped together as dyn PackageManager.
-pub trait PackageManager: Commands + Debug {
+pub trait PackageManager: Commands + Debug + Display {
     /// Defines a delimeter to use while formatting package name and version
     ///
     /// For example, HomeBrew supports `<name>@<version>` and APT supports `<name>=<version>`.

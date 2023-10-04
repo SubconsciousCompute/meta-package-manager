@@ -7,7 +7,7 @@ use std::{
 use url::Url as ParsedUrl;
 
 pub mod managers;
-#[cfg(target_feature = "verify")]
+#[cfg(feature = "verify")]
 pub mod verify;
 
 #[cfg(test)]

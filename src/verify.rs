@@ -77,10 +77,16 @@ pub trait Verify: PackageManager
 where
     Self: Sized,
 {
+    /// Creates an instance of [``Verified``], which signifies that the package manager
+    /// is installed and is safe to be interacted with.
     fn verify(self) -> Option<Verified<Self>> {
         Verified::new(self)
     }
 
+    /// Creates an instance of [``DynVerified``], which signifies that the package manager
+    /// is installed and is safe to be interacted with.
+    ///
+    /// Note: This internally converts and stores `Self` as `dyn PackageManager`
     fn verify_dyn(self) -> Option<DynVerified>
     where
         Self: 'static,

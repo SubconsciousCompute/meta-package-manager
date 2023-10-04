@@ -1,10 +1,14 @@
 use std::ops::Deref;
 
 use crate::PackageManager;
-use std::process::{Command, Stdio};
+use std::{
+    fmt::Display,
+    process::{Command, Stdio},
+};
 
 /// Wraps `T` that implements [``PackageManager``] and only constructs an instance
 /// if the given package manager is installed / is in path.
+#[derive(Debug)]
 pub struct Verified<T> {
     inner: T,
 }
@@ -22,8 +26,15 @@ impl<T> Deref for Verified<T> {
     }
 }
 
+impl<T: PackageManager> Display for Verified<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{}", self.inner))
+    }
+}
+
 /// Converts `T` that implements [``PackageManager``] into `Box<dyn PackageManager>` and only constructs an instance
 /// if the given package manager is installed / is in path.
+#[derive(Debug)]
 pub struct DynVerified {
     inner: Box<dyn PackageManager>,
 }
@@ -40,6 +51,12 @@ impl Deref for DynVerified {
     type Target = dyn PackageManager;
     fn deref(&self) -> &Self::Target {
         self.inner.as_ref()
+    }
+}
+
+impl Display for DynVerified {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{}", self.inner))
     }
 }
 

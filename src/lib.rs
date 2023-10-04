@@ -1,12 +1,14 @@
 use std::{
     borrow::Cow,
     fmt::{Debug, Display},
-    process::{Child, Command, ExitStatus, Output, Stdio},
+    process::{Child, Command, ExitStatus, Output},
 };
 
 use url::Url as ParsedUrl;
 
 pub mod managers;
+#[cfg(feature = "verify")]
+pub mod verify;
 
 #[cfg(test)]
 mod libtests;
@@ -59,15 +61,6 @@ pub trait PackageManager: Commands + Debug + Display {
                 (!ts.is_empty()).then_some(self.parse(ts))
             })
             .collect()
-    }
-
-    /// Check if package manager is installed on the system
-    fn is_installed(&self) -> bool {
-        Command::new(self.cmd())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .spawn()
-            .is_ok()
     }
 
     /// General package search

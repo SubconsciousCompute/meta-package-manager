@@ -31,6 +31,6 @@ fn chocolatey() {
     // sync
     assert!(choco.sync().success());
     // search
-    assert!(choco.search("hello").iter().any(|p| p.name() == "hello"));
+    assert!(choco.search("rust").iter().any(|p| p.name() == "rust"));
     // TODO: Test Install, Uninstall, Update, List and AddRepo
 }

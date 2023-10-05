@@ -80,6 +80,27 @@ pub trait PackageManager: Commands + Debug + Display {
         self.exec_cmds_status(&self.consolidated(Cmd::UpdateAll, &[]))
     }
 
+    /// Install a single package
+    ///
+    /// For multi-package operations, see [``PackageManager::exec_op``]
+    fn install(&self, pkg: Package) -> ExitStatus {
+        self.exec_op(&[pkg], Operation::Install)
+    }
+
+    /// Uninstall a single package
+    ///
+    /// For multi-package operations, see [``PackageManager::exec_op``]
+    fn uninstall(&self, pkg: Package) -> ExitStatus {
+        self.exec_op(&[pkg], Operation::Uninstall)
+    }
+
+    /// Update a single package
+    ///
+    /// For multi-package operations, see [``PackageManager::exec_op``]
+    fn update(&self, pkg: Package) -> ExitStatus {
+        self.exec_op(&[pkg], Operation::Update)
+    }
+
     /// List installed packages
     fn list_installed(&self) -> Vec<Package> {
         let out = self.exec_cmds(&self.consolidated(Cmd::List, &[]));

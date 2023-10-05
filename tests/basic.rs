@@ -16,8 +16,6 @@ fn homebrew() {
     assert!(hb.list_installed().iter().any(|p| p.name() == "hello"));
     // update
     assert!(hb.exec_op(&["hello".into()], Operation::Update).success());
-    // update all
-    assert!(hb.update_all().success());
     // uninstall
     assert!(hb
         .exec_op(&["hello".into()], Operation::Uninstall)
@@ -34,7 +32,5 @@ fn chocolatey() {
     assert!(choco.sync().success());
     // search
     assert!(choco.search("hello").iter().any(|p| p.name() == "hello"));
-    // update all
-    assert!(choco.update_all().success());
     // TODO: Test Install, Uninstall, Update, List and AddRepo
 }

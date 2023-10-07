@@ -1,7 +1,7 @@
 # genpack
 A generic package manager for interfacing with multiple distro/platform specific package managers.
 
-## Bsic Usage
+## Basic Usage
 ```rust
 use genpack::{managers, Package, PackageManager, Operation};
 

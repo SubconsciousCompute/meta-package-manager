@@ -1,3 +1,4 @@
+#![doc = include_str!("libdoc.md")]
 use std::{
     borrow::Cow,
     fmt::{Debug, Display},

@@ -163,35 +163,23 @@ pub trait Commands {
     fn flags(&self, _cmd: Cmd) -> &'static [&'static str] {
         &[]
     }
-    /// Retreives defined commands and flags for the given [``Cmd``] type and returns a Vec of args in the order: `[commands..., user-args..., flags..., user-flags...]`
+    /// Retreives defined commands and flags for the given [``Cmd``] type and returns a Vec of args in the order: `[commands..., user-args..., flags...]`
     ///
-    /// This is an extended version of [``Commands::consolidated``], which only supports user args, and no flags.
     /// The appropriate commands and flags are determined with the help of the enum [``Cmd``]
     /// For finer control, a general purpose function [``consolidated_args``] is also provided.
     #[inline]
-    fn consolidated_ext<'a>(&self, cmd: Cmd, args: &[&'a str], flags: &[&'a str]) -> Vec<&'a str> {
+    fn consolidated<'a>(&self, cmd: Cmd, args: &[&'a str]) -> Vec<&'a str> {
         let commands = self.command(cmd);
-        let default_flags = self.flags(cmd);
-        let mut vec =
-            Vec::with_capacity(commands.len() + flags.len() + args.len() + default_flags.len());
+        let flags = self.flags(cmd);
+        let mut vec = Vec::with_capacity(commands.len() + flags.len() + args.len());
         vec.extend(
             commands
                 .iter()
                 .chain(args.iter())
-                .chain(default_flags.iter())
                 .chain(flags.iter())
-                .map(|e| *e),
+                .copied(),
         );
         vec
-    }
-    /// Retreives defined commands and flags for the given [``Cmd``] type and returns a Vec of args in the order: `[commands..., user-args..., flags...]`
-    ///
-    /// The appropriate commands and flags are determined with the help of the enum [``Cmd``]
-    /// For supplying additional flags in addition to default ones, see [``Commands::consolidated_ext``]
-    /// For finer control, a general purpose function [``consolidated_args``] is also provided.
-    #[inline]
-    fn consolidated<'a>(&self, cmd: Cmd, args: &[&'a str]) -> Vec<&'a str> {
-        self.consolidated_ext(cmd, args, &[])
     }
 }
 

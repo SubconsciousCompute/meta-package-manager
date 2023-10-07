@@ -67,17 +67,6 @@ fn default_cmd_consolidated_order() {
 }
 
 #[test]
-fn default_cmd_consolidatedext_order() {
-    let mock = MockCommands;
-    let con = mock.consolidated_ext(Cmd::Install, &["arg"], &["myflag"]);
-    let mut coniter = con.into_iter();
-    assert_eq!(coniter.next(), Some("command"));
-    assert_eq!(coniter.next(), Some("arg"));
-    assert_eq!(coniter.next(), Some("flag"));
-    assert_eq!(coniter.next(), Some("myflag"));
-}
-
-#[test]
 fn default_pm_package_parsing() {
     let pm = MockPackageManager;
     package_assertions(pm.list_installed().into_iter());

@@ -1,5 +1,6 @@
 # genpack
 A generic package manager for interfacing with multiple distro/platform specific package managers.
+This repo contains the library, the CLI frontend can be found [here](https://github.com/VoltaireNoir/genpack-cli).
 
 ## Basic Usage
 ```rust

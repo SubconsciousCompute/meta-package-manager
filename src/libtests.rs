@@ -13,10 +13,10 @@ impl Commands for MockCommands {
     fn cmd(&self) -> Command {
         Command::new("")
     }
-    fn command(&self, _: crate::Cmd) -> &'static [&'static str] {
+    fn get_cmds(&self, _: crate::Cmd) -> &'static [&'static str] {
         &["command"]
     }
-    fn flags(&self, _: crate::Cmd) -> &'static [&'static str] {
+    fn get_flags(&self, _: crate::Cmd) -> &'static [&'static str] {
         &["flag"]
     }
 }
@@ -40,7 +40,7 @@ impl Commands for MockPackageManager {
     fn cmd(&self) -> Command {
         Command::new("")
     }
-    fn command(&self, _: Cmd) -> &'static [&'static str] {
+    fn get_cmds(&self, _: Cmd) -> &'static [&'static str] {
         &[""]
     }
     fn exec_cmds(&self, _: &[&str]) -> Output {

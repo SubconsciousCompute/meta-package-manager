@@ -62,9 +62,9 @@ let _handle = verified.exec_cmds_spawn(&cmds);
 // this example is impractical, but it shows how you can mix custom commands with default ones
 // default command is retrieved for `List` and default flags for `Install`
 let cmds = genpack::consolidate_args(
-    verified.command(Cmd::List),
+    verified.get_cmds(Cmd::List),
     &["anything"],
-    verified.flags(Cmd::Install),
+    verified.get_flags(Cmd::Install),
 );
 let _status = verified.exec_cmds_status(&cmds); // blocking call returns ExitStatus
 # }

@@ -21,7 +21,7 @@ impl Commands for HomeBrew {
     fn cmd(&self) -> Command {
         Command::new("brew")
     }
-    fn command(&self, cmd: Cmd) -> &'static [&'static str] {
+    fn get_cmds(&self, cmd: Cmd) -> &'static [&'static str] {
         match cmd {
             Cmd::Install => &["install"],
             Cmd::Uninstall => &["uninstall"],

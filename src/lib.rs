@@ -138,11 +138,11 @@ pub trait Commands {
     /// Primary command of the package manager. For example, 'brew', 'apt', and 'dnf', constructed with [``std::process::Command::new``].
     fn cmd(&self) -> Command;
     /// Returns the appropriate command/s for the given supported command type. Check [``Cmd``] enum to see all supported commands.
-    fn command(&self, cmd: Cmd) -> &'static [&'static str];
+    fn get_cmds(&self, cmd: Cmd) -> &'static [&'static str];
     /// Returns the appropriate flags for the given command type. Check [``Cmd``] enum to see all supported commands.
     ///
     /// Flags are optional, which is why the default implementation returns an empty slice
-    fn flags(&self, _cmd: Cmd) -> &'static [&'static str] {
+    fn get_flags(&self, _cmd: Cmd) -> &'static [&'static str] {
         &[]
     }
     /// Retreives defined commands and flags for the given [``Cmd``] type and returns a Vec of args in the order: `[commands..., user-args..., flags...]`
@@ -151,8 +151,8 @@ pub trait Commands {
     /// For finer control, a general purpose function [``consolidated_args``] is also provided.
     #[inline]
     fn consolidated<'a>(&self, cmd: Cmd, args: &[&'a str]) -> Vec<&'a str> {
-        let commands = self.command(cmd);
-        let flags = self.flags(cmd);
+        let commands = self.get_cmds(cmd);
+        let flags = self.get_flags(cmd);
         let mut vec = Vec::with_capacity(commands.len() + flags.len() + args.len());
         vec.extend(
             commands

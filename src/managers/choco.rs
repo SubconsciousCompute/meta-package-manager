@@ -22,7 +22,7 @@ impl Commands for Chocolatey {
     fn cmd(&self) -> Command {
         Command::new("choco")
     }
-    fn command(&self, cmd: Cmd) -> &'static [&'static str] {
+    fn get_cmds(&self, cmd: Cmd) -> &'static [&'static str] {
         match cmd {
             Cmd::Install => &["install"],
             Cmd::Uninstall => &["uninstall"],
@@ -36,7 +36,7 @@ impl Commands for Chocolatey {
             Cmd::Search => &["search"],
         }
     }
-    fn flags(&self, cmd: Cmd) -> &'static [&'static str] {
+    fn get_flags(&self, cmd: Cmd) -> &'static [&'static str] {
         match cmd {
             Cmd::List | Cmd::Search => &["--limit-output"],
             Cmd::Install | Cmd::Update | Cmd::UpdateAll => &["--yes"],

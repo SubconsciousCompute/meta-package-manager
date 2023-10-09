@@ -42,11 +42,13 @@ pub trait PackageManager: Commands + Debug + Display {
     /// The default implementation merely tries to split the line at the provided delimiter (see [``PackageManager::pkg_delimiter``])
     /// and trims spaces. It returns a package with version information on success, or else it returns a package with only a package name.
     /// For package maangers that have unusual or complex output, users are free to override this method. Note: Remember to construct a package with owned values in this method.
-    fn parse<'a, 'b>(&self, line: &'a str) -> Package<'b> {
-        if let Some((name, version)) = line.split_once(self.pkg_delimiter()) {
-            return Package::from(name.trim().to_owned()).with_version(version.trim().to_owned());
-        }
-        Package::from(line.trim().to_owned())
+    fn parse_pkg<'a>(&self, line: &str) -> Option<Package<'a>> {
+        let pkg = if let Some((name, version)) = line.split_once(self.pkg_delimiter()) {
+            Package::from(name.trim().to_owned()).with_version(version.trim().to_owned())
+        } else {
+            Package::from(line.trim().to_owned())
+        };
+        Some(pkg)
     }
 
     /// Parses output, generally from stdout, to a Vec of Packages.
@@ -58,7 +60,11 @@ pub trait PackageManager: Commands + Debug + Display {
             .lines()
             .filter_map(|s| {
                 let ts = s.trim();
-                (!ts.is_empty()).then_some(self.parse(ts))
+                if !ts.is_empty() {
+                    self.parse_pkg(ts)
+                } else {
+                    None
+                }
             })
             .collect()
     }

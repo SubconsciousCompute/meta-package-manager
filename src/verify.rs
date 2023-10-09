@@ -1,10 +1,7 @@
 use std::ops::Deref;
 
 use crate::PackageManager;
-use std::{
-    fmt::Display,
-    process::{Command, Stdio},
-};
+use std::{fmt::Display, process::Stdio};
 
 /// Wraps `T` that implements [``PackageManager``] and only constructs an instance
 /// if the given package manager is installed / is in path.
@@ -62,7 +59,7 @@ impl Display for DynVerified {
 
 /// Check if package manager is installed on the system
 pub fn is_installed<P: PackageManager + ?Sized>(pm: &P) -> bool {
-    Command::new(pm.cmd())
+    pm.cmd()
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()

@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, process::Command};
 
 use crate::{Cmd, Commands, PackageManager};
 
@@ -18,8 +18,8 @@ impl PackageManager for HomeBrew {
 }
 
 impl Commands for HomeBrew {
-    fn cmd(&self) -> &'static str {
-        "brew"
+    fn cmd(&self) -> Command {
+        Command::new("brew")
     }
     fn command(&self, cmd: Cmd) -> &'static [&'static str] {
         match cmd {

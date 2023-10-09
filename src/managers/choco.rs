@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt::Display};
+use std::{borrow::Cow, fmt::Display, process::Command};
 
 use crate::{Cmd, Commands, Package, PackageManager};
 
@@ -19,8 +19,8 @@ impl PackageManager for Chocolatey {
 }
 
 impl Commands for Chocolatey {
-    fn cmd(&self) -> &'static str {
-        "choco"
+    fn cmd(&self) -> Command {
+        Command::new("choco")
     }
     fn command(&self, cmd: Cmd) -> &'static [&'static str] {
         match cmd {

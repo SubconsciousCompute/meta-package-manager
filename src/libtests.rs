@@ -1,4 +1,7 @@
-use std::{fmt::Display, process::Output};
+use std::{
+    fmt::Display,
+    process::{Command, Output},
+};
 
 use crate::{Package, PackageManager, Url};
 
@@ -7,8 +10,8 @@ use super::{Cmd, Commands};
 struct MockCommands;
 
 impl Commands for MockCommands {
-    fn cmd(&self) -> &'static str {
-        ""
+    fn cmd(&self) -> Command {
+        Command::new("")
     }
     fn command(&self, _: crate::Cmd) -> &'static [&'static str] {
         &["command"]
@@ -31,6 +34,15 @@ impl PackageManager for MockPackageManager {
     fn pkg_delimiter(&self) -> char {
         '+'
     }
+}
+
+impl Commands for MockPackageManager {
+    fn cmd(&self) -> Command {
+        Command::new("")
+    }
+    fn command(&self, _: Cmd) -> &'static [&'static str] {
+        &[""]
+    }
     fn exec_cmds(&self, _: &[&str]) -> Output {
         let out = br#"
             package1
@@ -44,15 +56,6 @@ impl PackageManager for MockPackageManager {
             .expect("failed to get output from test command");
         output.stdout = out.to_vec();
         output
-    }
-}
-
-impl Commands for MockPackageManager {
-    fn cmd(&self) -> &'static str {
-        ""
-    }
-    fn command(&self, _: Cmd) -> &'static [&'static str] {
-        &[""]
     }
 }
 

@@ -128,24 +128,6 @@ pub trait PackageManager: Commands + Debug + Display {
         let cmds = self.consolidated(Cmd::AddRepo, &[repo.as_str()]);
         self.exec_cmds_status(&cmds)
     }
-
-    /// Run arbitrary commands against the package manager and get output
-    fn exec_cmds(&self, cmds: &[&str]) -> Output {
-        // safe to unwrap when package manager is known to be available (see is_installed fn)
-        Command::new(self.cmd()).args(cmds).output().unwrap()
-    }
-
-    /// Run arbitrary commands against the package manager and wait for ExitStatus
-    fn exec_cmds_status(&self, cmds: &[&str]) -> ExitStatus {
-        // safe to unwrap when package manager is known to be available (see is_installed fn)
-        Command::new(self.cmd()).args(cmds).status().unwrap()
-    }
-
-    /// Run arbitrary commands against the package manager and return handle to the spawned process
-    fn exec_cmds_spawn(&self, cmds: &[&str]) -> Child {
-        // safe to unwrap when package manager is known to be available (see is_installed fn)
-        Command::new(self.cmd()).args(cmds).spawn().unwrap()
-    }
 }
 
 /// Trait for defining package panager commands in one place
@@ -153,8 +135,8 @@ pub trait PackageManager: Commands + Debug + Display {
 /// Only [``Commands::cmd``] and [``Commands::commands``] are required, the rest are simply conviniece methods
 /// that internally call [``Commands::commands``]. The trait [``PackageManager``] depends on this to provide default implementations.
 pub trait Commands {
-    /// Primary command of the package manager. For example, 'brew', 'apt', and 'dnf'.
-    fn cmd(&self) -> &'static str;
+    /// Primary command of the package manager. For example, 'brew', 'apt', and 'dnf', constructed with [``std::process::Command::new``].
+    fn cmd(&self) -> Command;
     /// Returns the appropriate command/s for the given supported command type. Check [``Cmd``] enum to see all supported commands.
     fn command(&self, cmd: Cmd) -> &'static [&'static str];
     /// Returns the appropriate flags for the given command type. Check [``Cmd``] enum to see all supported commands.
@@ -180,6 +162,30 @@ pub trait Commands {
                 .copied(),
         );
         vec
+    }
+    /// Run arbitrary commands against the package manager command and get output
+    ///
+    /// # Panics
+    /// This fn can panic when the defined [``Commands::cmd``] is not found in path. This can be avoided by using [``verified::Verified``]
+    /// or manually ensuring that the [``Commands::cmd``] is valid.
+    fn exec_cmds(&self, cmds: &[&str]) -> Output {
+        self.cmd().args(cmds).output().unwrap()
+    }
+    /// Run arbitrary commands against the package manager command and wait for ExitStatus
+    ///
+    /// # Panics
+    /// This fn can panic when the defined [``Commands::cmd``] is not found in path. This can be avoided by using [``verified::Verified``]
+    /// or manually ensuring that the [``Commands::cmd``] is valid.
+    fn exec_cmds_status(&self, cmds: &[&str]) -> ExitStatus {
+        self.cmd().args(cmds).status().unwrap()
+    }
+    /// Run arbitrary commands against the package manager command and return handle to the spawned process
+    ///
+    /// # Panics
+    /// This fn can panic when the defined [``Commands::cmd``] is not found in path. This can be avoided by using [``verified::Verified``]
+    /// or manually ensuring that the [``Commands::cmd``] is valid.
+    fn exec_cmds_spawn(&self, cmds: &[&str]) -> Child {
+        self.cmd().args(cmds).spawn().unwrap()
     }
 }
 

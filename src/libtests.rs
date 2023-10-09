@@ -1,6 +1,7 @@
 use std::{
     fmt::Display,
-    process::{Command, Output},
+    os::unix::process::ExitStatusExt,
+    process::{Command, ExitStatus, Output},
 };
 
 use crate::{Package, PackageManager};
@@ -49,13 +50,11 @@ impl Commands for MockPackageManager {
             package2+1.1.0
             package3   
         "#;
-        // Output struct cannot be constructed directly
-        // which is why a command is run and stdout is swapped
-        let mut output = std::process::Command::new("cargo")
-            .output()
-            .expect("failed to get output from test command");
-        output.stdout = out.to_vec();
-        output
+        Output {
+            status: ExitStatus::from_raw(0),
+            stdout: out.to_vec(),
+            stderr: vec![],
+        }
     }
 }
 

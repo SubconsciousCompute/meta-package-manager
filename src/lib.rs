@@ -6,8 +6,6 @@ use std::{
     process::{Child, Command, ExitStatus, Output},
 };
 
-use url::Url as ParsedUrl;
-
 pub mod managers;
 #[cfg(feature = "verify")]
 pub mod verify;
@@ -128,8 +126,8 @@ pub trait PackageManager: Commands + Debug + Display {
     ///
     /// Since the implementation might greatly vary among different package managers
     /// this method returns a `Result` instead of the usual `ExitStatus`.
-    fn add_repo(&self, repo: Repo) -> Result<(), RepoError> {
-        let cmds = self.consolidated(Cmd::AddRepo, &[repo.as_str()]);
+    fn add_repo(&self, repo: &str) -> Result<(), RepoError> {
+        let cmds = self.consolidated(Cmd::AddRepo, &[repo]);
         self.exec_cmds_status(&cmds)
             .success()
             .then_some(())
@@ -307,39 +305,6 @@ pub enum Operation {
     Install,
     Uninstall,
     Update,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Repo<'a> {
-    Url(Url),
-    Other(&'a str),
-}
-
-impl Repo<'_> {
-    pub fn as_str(&self) -> &str {
-        match self {
-            Repo::Url(u) => u.as_str(),
-            Repo::Other(o) => o,
-        }
-    }
-}
-
-/// A strongly typed URL to ensure URL validity
-///
-/// This struct merely is a wrapper for Url from the url crate
-/// and exposes only the necessarry functionality.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Url(ParsedUrl);
-
-impl Url {
-    /// Parse string into URL
-    pub fn parse(url: &str) -> Result<Url, url::ParseError> {
-        ParsedUrl::parse(url).map(Url)
-    }
-    /// Get parsed URL as &str
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
 }
 
 /// General purpose version of [``Commands::consolidated``] for consolidating different types of arguments into a single Vec

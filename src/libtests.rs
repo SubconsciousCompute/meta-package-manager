@@ -3,7 +3,7 @@ use std::{
     process::{Command, Output},
 };
 
-use crate::{Package, PackageManager, Url};
+use crate::{Package, PackageManager};
 
 use super::{Cmd, Commands};
 
@@ -108,10 +108,4 @@ fn package_version_replace() {
     assert_eq!(pkg.version(), Some("1.0"));
     let pkg = pkg.with_version("2.0");
     assert_eq!(pkg.version(), Some("2.0"));
-}
-
-#[test]
-fn url_validity() {
-    assert!(Url::parse("invalid").is_err());
-    assert!(Url::parse("https://valid.net/").is_ok());
 }

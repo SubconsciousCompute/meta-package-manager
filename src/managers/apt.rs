@@ -62,7 +62,7 @@ impl Commands for AdvancedPackageTool {
     }
     fn get_flags(&self, cmd: Cmd) -> &'static [&'static str] {
         match cmd {
-            Cmd::Install | Cmd::Uninstall => &["--yes"],
+            Cmd::Install | Cmd::Uninstall | Cmd::UpdateAll => &["--yes"],
             Cmd::Update => &["--yes", "--only-upgrade"],
             Cmd::List => &["--installed"],
             _ => &[],

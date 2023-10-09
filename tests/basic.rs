@@ -27,7 +27,7 @@ fn homebrew() {
 #[test]
 fn chocolatey() {
     let choco = managers::Chocolatey;
-    let choco = choco.verify().expect("HomeBrew not found in path");
+    let choco = choco.verify().expect("Chocolatey not found in path");
     // sync
     assert!(choco.sync().success());
     // search

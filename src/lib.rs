@@ -1,6 +1,7 @@
 #![doc = include_str!("libdoc.md")]
 use std::{
     borrow::Cow,
+    error::Error,
     fmt::{Debug, Display},
     process::{Child, Command, ExitStatus, Output},
 };
@@ -124,9 +125,50 @@ pub trait PackageManager: Commands + Debug + Display {
     }
 
     /// Add third-party repository to the package manager's repository list
-    fn add_repo(&self, repo: Repo) -> ExitStatus {
+    ///
+    /// Since the implementation might greatly vary among different package managers
+    /// this method returns a `Result` instead of the usual `ExitStatus`.
+    fn add_repo(&self, repo: Repo) -> Result<(), RepoError> {
         let cmds = self.consolidated(Cmd::AddRepo, &[repo.as_str()]);
         self.exec_cmds_status(&cmds)
+            .success()
+            .then_some(())
+            .ok_or(RepoError::default())
+    }
+}
+
+/// Error type for indicating failure in [``PackageManager::add_repo``]
+///
+/// Use [``RepoError::default``] when no meaningful source of the error is available.
+#[derive(Default, Debug)]
+pub struct RepoError {
+    pub source: Option<Box<dyn Error + 'static>>,
+}
+
+impl RepoError {
+    /// Construct `RepoError` with underlying error source/cause
+    ///
+    /// Use [``RepoError::default``] when no meaningful source of the error is available.
+    pub fn new<E: Error + 'static>(source: E) -> Self {
+        Self {
+            source: Some(Box::new(source)),
+        }
+    }
+}
+
+impl Display for RepoError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(s) = self.source() {
+            f.write_fmt(format_args!("failed to add repo: {}", s))
+        } else {
+            f.write_str("failed to add repo")
+        }
+    }
+}
+
+impl Error for RepoError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        self.source.as_deref()
     }
 }
 

@@ -35,7 +35,9 @@ fn chocolatey() {
     // TODO: Test Install, Uninstall, Update, List and AddRepo
 }
 
+// Requires elevated privilages to work
 #[cfg(target_os = "linux")]
+#[ignore]
 #[test]
 fn apt() {
     let apt = managers::AdvancedPackageTool;

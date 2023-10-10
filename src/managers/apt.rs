@@ -1,6 +1,15 @@
 use crate::{Cmd, Commands, Package, PackageManager, RepoError};
 use std::{fmt::Display, fs, io::Write, process::Command};
 
+/// Wrapper for Advanced Pacakge Tool (APT), the default package management user-facing utilities
+/// in Debian and Debian-based distributions.
+///
+/// # Idiosyncracies
+/// [``AdvancedPackageTool::list_installed``] and [``AdvancedPackageTool::search``] internally depend on "apt" command
+/// while the rest depend on "apt-get" command. This means that executing commands manually using the [``Commands``] trait will will
+/// only work for the functionality that depends on "apt-get" command.
+///
+/// Another notable point is that the [``AdvancedPackageTool::add_repo``] implementation doesn't execute commands, but it writes to "/etc/apt/sources.list".
 #[derive(Debug)]
 pub struct AdvancedPackageTool;
 

@@ -34,3 +34,24 @@ fn chocolatey() {
     assert!(choco.search("rust").iter().any(|p| p.name() == "rust"));
     // TODO: Test Install, Uninstall, Update, List and AddRepo
 }
+
+#[cfg(target_os = "linux")]
+#[test]
+fn apt() {
+    let apt = managers::AdvancedPackageTool;
+    let apt = apt.verify().expect("Apt not found in path");
+    let pkg = "hello";
+    // sync
+    assert!(apt.sync().success());
+    // search
+    assert!(apt.search(pkg).iter().any(|p| p.name() == "hello"));
+    // install
+    assert!(apt.install(pkg.into()).success());
+    // list
+    assert!(apt.list_installed().iter().any(|p| p.name() == "hello"));
+    // update
+    assert!(apt.update(pkg.into()).success());
+    // uninstall
+    assert!(apt.uninstall(pkg.into()).success());
+    // TODO: Test AddRepo
+}

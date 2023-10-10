@@ -1,8 +1,12 @@
 use crate::{Cmd, Commands, Package, PackageManager, RepoError};
-use std::{fmt::Display, process::Command};
+use std::{fmt::Display, fs, io::Write, process::Command};
 
 #[derive(Debug)]
 pub struct AdvancedPackageTool;
+
+impl AdvancedPackageTool {
+    const SOURCES: &str = "/etc/apt/sources.list";
+}
 
 impl PackageManager for AdvancedPackageTool {
     fn pkg_delimiter(&self) -> char {
@@ -33,8 +37,14 @@ impl PackageManager for AdvancedPackageTool {
         self.parse_output(&out.stdout)
     }
 
-    fn add_repo(&self, _repo: &str) -> Result<(), RepoError> {
-        todo!()
+    fn add_repo(&self, repo: &str) -> Result<(), RepoError> {
+        let mut sources = fs::File::options()
+            .append(true)
+            .open(Self::SOURCES)
+            .map_err(RepoError::new)?;
+        sources
+            .write_fmt(format_args!("\n{}", repo))
+            .map_err(RepoError::new)
     }
 }
 

@@ -41,8 +41,8 @@ fn apt() {
     let apt = managers::AdvancedPackageTool;
     let apt = apt.verify().expect("Apt not found in path");
     let pkg = "hello";
-    // // sync
-    // assert!(apt.sync().success());
+    // sync
+    assert!(apt.sync().success());
     // search
     assert!(apt.search(pkg).iter().any(|p| p.name() == "hello"));
     // install

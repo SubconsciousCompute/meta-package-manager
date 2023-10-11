@@ -1,6 +1,11 @@
 use crate::{Cmd, Commands, Package, PackageManager, RepoError};
 use std::{fmt::Display, process::Command};
 
+/// Wrapper for DandifiedYUM or DNF, the default package manager for Fedora
+///
+/// # Idiosyncracies
+/// The [``DandifiedYUM::add_repo``] method also installs `config-manager` plugin for DNF
+/// before attempting to add a repo.
 #[derive(Debug)]
 pub struct DandifiedYUM;
 
@@ -53,7 +58,8 @@ impl Commands for DandifiedYUM {
             Cmd::UpdateAll => &["distro-sync"],
             Cmd::List => &["list"],
             Cmd::Sync => &["makecache"],
-            Cmd::AddRepo => &["config-manager", "--add-repo"], // must come before repo
+            // depends on config-manager plugin (handled in add_repo method)
+            Cmd::AddRepo => &["config-manager", "--add-repo"], // flag must come before repo
             Cmd::Search => &["search"],
         }
     }

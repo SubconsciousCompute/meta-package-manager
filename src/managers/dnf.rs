@@ -1,4 +1,4 @@
-use crate::{Cmd, Commands, Package, PackageManager};
+use crate::{Cmd, Commands, Package, PackageManager, RepoError};
 use std::{fmt::Display, process::Command};
 
 #[derive(Debug)]
@@ -20,6 +20,18 @@ impl PackageManager for DandifiedYUM {
         } else {
             None
         }
+    }
+    fn add_repo(&self, repo: &str) -> Result<(), RepoError> {
+        if !self.install("dnf-command(config-manager)".into()).success() {
+            return Err(RepoError::with_msg(
+                "failed to install config-manager plugin",
+            ));
+        }
+
+        self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, &[repo]))
+            .success()
+            .then_some(())
+            .ok_or(RepoError::default())
     }
 }
 

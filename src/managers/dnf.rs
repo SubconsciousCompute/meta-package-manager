@@ -9,14 +9,14 @@ impl PackageManager for DandifiedYUM {
         '-'
     }
     fn parse_pkg<'a>(&self, line: &str) -> Option<Package<'a>> {
-        if let Some((pkg, _)) = line.split_once(':') {
-            return Some(pkg.trim().to_owned().into());
-        }
-        if line.contains(['@', '-']) {
+        if line.contains('@') {
             let mut splt = line.split_whitespace();
             let name = splt.next()?;
             let ver = splt.next()?;
-            Some(Package::from(name.trim().to_owned()).with_version(ver.trim().to_owned()))
+            return Some(Package::from(name.trim().to_owned()).with_version(ver.trim().to_owned()));
+        }
+        if !line.contains("====") {
+            Some(Package::from(line.split_once(':')?.0.trim().to_owned()))
         } else {
             None
         }
@@ -50,7 +50,7 @@ impl Commands for DandifiedYUM {
         match cmd {
             Cmd::Install | Cmd::Uninstall | Cmd::Update | Cmd::UpdateAll => &["--yes"],
             Cmd::List => &["--installed"],
-            Cmd::Search => &["--all", "-q"],
+            Cmd::Search => &["-q"],
             _ => &[],
         }
     }

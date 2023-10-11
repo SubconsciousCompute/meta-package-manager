@@ -57,3 +57,29 @@ fn apt() {
     assert!(apt.uninstall(pkg.into()).success());
     // TODO: Test AddRepo
 }
+
+// Requires elevated privilages to work
+#[cfg(target_os = "linux")]
+#[ignore]
+#[test]
+fn dnf() {
+    let dnf = managers::DandifiedYUM;
+    let dnf = dnf.verify().expect("Dnf not found in path");
+    let pkg = "hello";
+    // sync
+    assert!(dnf.sync().success());
+    // search
+    assert!(dnf.search(pkg).iter().any(|p| p.name() == "hello.x86_64"));
+    // install
+    assert!(dnf.install(pkg.into()).success());
+    // list
+    assert!(dnf
+        .list_installed()
+        .iter()
+        .any(|p| p.name() == "hello.x86_64"));
+    // update
+    assert!(dnf.update(pkg.into()).success());
+    // uninstall
+    assert!(dnf.uninstall(pkg.into()).success());
+    // TODO: Test AddRepo
+}

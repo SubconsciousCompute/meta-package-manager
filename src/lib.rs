@@ -158,6 +158,16 @@ impl RepoError {
             source: Some(Box::new(source)),
         }
     }
+
+    /// Construct 'RepoError' with an error message set as its error source
+    ///
+    /// Use [``RepoError::new``] to wrap an existing error.
+    /// Use [``RepoError::default``] when no meaningful source of the error is available.
+    pub fn with_msg(msg: &'static str) -> Self {
+        Self {
+            source: Some(msg.into()),
+        }
+    }
 }
 
 impl Display for RepoError {

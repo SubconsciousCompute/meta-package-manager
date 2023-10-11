@@ -48,7 +48,7 @@ impl Commands for DandifiedYUM {
 
     fn get_flags(&self, cmd: Cmd) -> &'static [&'static str] {
         match cmd {
-            Cmd::Install | Cmd::Uninstall | Cmd::Update | Cmd::UpdateAll => &["--yes"],
+            Cmd::Install | Cmd::Uninstall | Cmd::Update | Cmd::UpdateAll => &["-y"],
             Cmd::List => &["--installed"],
             Cmd::Search => &["-q"],
             _ => &[],

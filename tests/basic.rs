@@ -63,23 +63,34 @@ fn apt() {
 #[ignore]
 #[test]
 fn dnf() {
-    let dnf = managers::DandifiedYUM;
-    let dnf = dnf.verify().expect("Dnf not found in path");
+    dnf_yum_cases(managers::DandifiedYUM)
+}
+
+// Requires elevated privilages to work
+#[cfg(target_os = "linux")]
+#[ignore]
+#[test]
+fn yum() {
+    dnf_yum_cases(managers::YellowdogUpdaterModified::default())
+}
+
+fn dnf_yum_cases(man: impl PackageManager) {
+    let man = man.verify().expect("Dnf not found in path");
     let pkg = "hello";
     // sync
-    assert!(dnf.sync().success());
+    assert!(man.sync().success());
     // search
-    assert!(dnf.search(pkg).iter().any(|p| p.name() == "hello.x86_64"));
+    assert!(man.search(pkg).iter().any(|p| p.name() == "hello.x86_64"));
     // install
-    assert!(dnf.install(pkg.into()).success());
+    assert!(man.install(pkg.into()).success());
     // list
-    assert!(dnf
+    assert!(man
         .list_installed()
         .iter()
         .any(|p| p.name() == "hello.x86_64"));
     // update
-    assert!(dnf.update(pkg.into()).success());
+    assert!(man.update(pkg.into()).success());
     // uninstall
-    assert!(dnf.uninstall(pkg.into()).success());
+    assert!(man.uninstall(pkg.into()).success());
     // TODO: Test AddRepo
 }

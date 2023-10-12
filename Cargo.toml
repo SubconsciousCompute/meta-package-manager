@@ -6,7 +6,15 @@ edition = "2021"
 [features]
 default = ["verify"]
 verify = []
+choco = []
+brew = []
+apt = []
+dnf = []
+yum = ["dnf"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
+[[test]]
+name = "basic"
+required-features = ["verify", "choco", "brew", "apt", "dnf", "yum"]

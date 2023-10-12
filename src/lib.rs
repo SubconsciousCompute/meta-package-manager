@@ -327,11 +327,6 @@ pub enum Operation {
 #[inline]
 pub fn consolidate_args<'a>(cmds: &[&'a str], args: &[&'a str], flags: &[&'a str]) -> Vec<&'a str> {
     let mut vec = Vec::with_capacity(cmds.len() + args.len() + flags.len());
-    vec.extend(
-        cmds.iter()
-            .chain(args.iter())
-            .chain(flags.iter())
-            .map(|e| *e),
-    );
+    vec.extend(cmds.iter().chain(args.iter()).chain(flags.iter()).copied());
     vec
 }

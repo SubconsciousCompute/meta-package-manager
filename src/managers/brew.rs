@@ -5,12 +5,6 @@ use crate::{Cmd, Commands, PackageManager};
 #[derive(Debug)]
 pub struct HomeBrew;
 
-impl HomeBrew {
-    pub fn new() -> Self {
-        HomeBrew
-    }
-}
-
 impl PackageManager for HomeBrew {
     fn pkg_delimiter(&self) -> char {
         '@'

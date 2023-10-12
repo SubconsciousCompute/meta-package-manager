@@ -33,8 +33,12 @@ impl PackageManager for AdvancedPackageTool {
         let Some((name, info)) = line.split_once('/') else {
             return None;
         };
-        let ver = info.split_whitespace().nth(1)?;
-        Some(Package::from(name.to_owned()).with_version(ver.to_owned()))
+        if info.split_whitespace().count() == 3 {
+            let ver = info.split_whitespace().nth(1)?;
+            Some(Package::from(name.to_owned()).with_version(ver.to_owned()))
+        } else {
+            None
+        }
     }
 
     fn add_repo(&self, repo: &str) -> Result<(), RepoError> {

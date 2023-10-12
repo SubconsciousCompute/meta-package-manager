@@ -12,7 +12,7 @@ mod yum;
 #[cfg(feature = "apt")]
 pub use apt::AdvancedPackageTool;
 #[cfg(feature = "brew")]
-pub use brew::HomeBrew;
+pub use brew::Homebrew;
 #[cfg(feature = "choco")]
 pub use choco::Chocolatey;
 #[cfg(feature = "dnf")]

@@ -3,15 +3,15 @@ use std::{fmt::Display, process::Command};
 use crate::{Cmd, Commands, PackageManager};
 
 #[derive(Debug)]
-pub struct HomeBrew;
+pub struct Homebrew;
 
-impl PackageManager for HomeBrew {
+impl PackageManager for Homebrew {
     fn pkg_delimiter(&self) -> char {
         '@'
     }
 }
 
-impl Commands for HomeBrew {
+impl Commands for Homebrew {
     fn cmd(&self) -> Command {
         Command::new("brew")
     }
@@ -28,8 +28,8 @@ impl Commands for HomeBrew {
     }
 }
 
-impl Display for HomeBrew {
+impl Display for Homebrew {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("HomeBrew")
+        f.write_str("Homebrew")
     }
 }

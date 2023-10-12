@@ -5,8 +5,8 @@ use genpack::*;
 #[cfg(not(target_os = "windows"))]
 #[test]
 fn homebrew() {
-    let hb = managers::HomeBrew;
-    let hb = hb.verify().expect("HomeBrew not found in path");
+    let hb = managers::Homebrew;
+    let hb = hb.verify().expect("Homebrew not found in path");
     // sync
     assert!(hb.sync().success());
     // search

@@ -6,8 +6,7 @@ use std::{fmt::Display, fs, io::Write, process::Command};
 ///
 /// # Idiosyncracies
 /// [``AdvancedPackageTool::list_installed``] and [``AdvancedPackageTool::search``] internally depend on "apt" command
-/// while the rest depend on "apt-get" command. This means that executing commands manually using the [``Commands``] trait will will
-/// only work for the functionality that depends on "apt-get" command.
+/// while the rest depend on "apt-get" command.
 ///
 /// Another notable point is that the [``AdvancedPackageTool::add_repo``] implementation doesn't execute commands, but it writes to "/etc/apt/sources.list".
 #[derive(Debug)]
@@ -15,6 +14,14 @@ pub struct AdvancedPackageTool;
 
 impl AdvancedPackageTool {
     const SOURCES: &str = "/etc/apt/sources.list";
+
+    fn alt_cmd(cmds: &[&str]) -> Command {
+        if matches!(cmds.first(), Some(&"install") | Some(&"search")) {
+            Command::new("apt")
+        } else {
+            Self.cmd()
+        }
+    }
 }
 
 impl PackageManager for AdvancedPackageTool {
@@ -28,22 +35,6 @@ impl PackageManager for AdvancedPackageTool {
         };
         let ver = info.split_whitespace().nth(1)?;
         Some(Package::from(name.to_owned()).with_version(ver.to_owned()))
-    }
-
-    fn list_installed(&self) -> Vec<Package> {
-        let out = Command::new("apt")
-            .args(&self.consolidated(Cmd::List, &[]))
-            .output()
-            .unwrap();
-        self.parse_output(&out.stdout)
-    }
-
-    fn search(&self, pack: &str) -> Vec<Package> {
-        let out = Command::new("apt")
-            .args(&self.consolidated(Cmd::Search, &[pack]))
-            .output()
-            .unwrap();
-        self.parse_output(&out.stdout)
     }
 
     fn add_repo(&self, repo: &str) -> Result<(), RepoError> {
@@ -86,5 +77,17 @@ impl Commands for AdvancedPackageTool {
             Cmd::List => &["--installed"],
             _ => &[],
         }
+    }
+
+    fn exec_cmds(&self, cmds: &[&str]) -> std::process::Output {
+        Self::alt_cmd(cmds).args(cmds).output().unwrap()
+    }
+
+    fn exec_cmds_status(&self, cmds: &[&str]) -> std::process::ExitStatus {
+        Self::alt_cmd(cmds).args(cmds).status().unwrap()
+    }
+
+    fn exec_cmds_spawn(&self, cmds: &[&str]) -> std::process::Child {
+        Self::alt_cmd(cmds).args(cmds).spawn().unwrap()
     }
 }

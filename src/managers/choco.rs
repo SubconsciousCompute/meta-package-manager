@@ -2,6 +2,9 @@ use std::{borrow::Cow, fmt::Display, process::Command};
 
 use crate::{Cmd, Commands, Package, PackageManager};
 
+/// Wrapper for the Chocolatey package manager for windows
+///
+/// [Chocolatey Software | Chocolatey - The package manager for Windows](https://chocolatey.org/)
 #[derive(Debug)]
 pub struct Chocolatey;
 

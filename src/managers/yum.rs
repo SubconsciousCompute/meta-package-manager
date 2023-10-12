@@ -3,6 +3,8 @@ use std::{fmt::Display, process::Command};
 
 /// Wrapper for Yellowdog Updater Modified (YUM) package manager.
 ///
+/// [Chapter 14. YUM (Yellowdog Updater Modified) Red Hat Enterprise Linux 5 | Red Hat Customer Portal](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/5/html/deployment_guide/c1-yum)
+///
 /// Note: The current YUM implementation uses [``DandifiedYUM``]'s implementation
 /// under the hood, which is why this struct is required to be constructed by calling [``YellowdogUpdaterModified::default()``].
 #[derive(Debug)]

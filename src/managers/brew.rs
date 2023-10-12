@@ -2,6 +2,9 @@ use std::{fmt::Display, process::Command};
 
 use crate::{Cmd, Commands, PackageManager};
 
+/// Wrapper for the Homebrew package manager.
+///
+/// [Homebrew — The Missing Package Manager for macOS (or Linux)](https://brew.sh/)
 #[derive(Debug)]
 pub struct Homebrew;
 

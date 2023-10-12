@@ -1,8 +1,9 @@
 use crate::{Cmd, Commands, Package, PackageManager, RepoError};
 use std::{fmt::Display, process::Command};
 
-/// Wrapper for DandifiedYUM or DNF, the default package manager for Fedora
+/// Wrapper for DandifiedYUM or DNF, the next upcoming major version of YUM
 ///
+/// [DNF, the next-generation replacement for YUM — dnf latest documentation](https://dnf.readthedocs.io/en/latest/)
 /// # Idiosyncracies
 /// The [``DandifiedYUM::add_repo``] method also installs `config-manager` plugin for DNF
 /// before attempting to add a repo.

@@ -1,6 +1,10 @@
 use crate::{managers::DandifiedYUM, Cmd, Commands, PackageManager};
 use std::{fmt::Display, process::Command};
 
+/// Wrapper for Yellowdog Updater Modified (YUM) package manager.
+///
+/// Note: The current YUM implementation uses [``DandifiedYUM``]'s implementation
+/// under the hood, which is why this struct is required to be constructed by calling [``YellowdogUpdaterModified::default()``].
 #[derive(Debug)]
 pub struct YellowdogUpdaterModified {
     dnf: DandifiedYUM,

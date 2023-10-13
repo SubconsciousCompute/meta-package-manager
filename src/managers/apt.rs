@@ -17,7 +17,7 @@ impl AdvancedPackageTool {
     const SOURCES: &str = "/etc/apt/sources.list";
 
     fn alt_cmd(cmds: &[&str]) -> Command {
-        if matches!(cmds.first(), Some(&"install") | Some(&"search")) {
+        if matches!(cmds.first(), Some(&"list") | Some(&"search")) {
             Command::new("apt")
         } else {
             Self.cmd()

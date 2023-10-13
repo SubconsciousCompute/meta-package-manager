@@ -74,3 +74,36 @@ impl Commands for DandifiedYUM {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::DandifiedYUM;
+    use crate::{Package, PackageManager};
+
+    #[test]
+    fn parse_pkg() {
+        let dnf = DandifiedYUM;
+        let input = r#"
+sudo.x86_64                                                                                   1.9.13-2.p2.fc38                                                                @koji-override-0
+systemd-libs.x86_64                                                                           253.10-1.fc38                                                                   @koji-override-0
+================================================================================ Name Exactly Matched: hello =================================================================================
+hello.x86_64 : Prints a familiar, friendly greeting
+=============================================================================== Name & Summary Matched: hello ================================================================================
+rubygem-mixlib-shellout-doc.noarch : Documentation for rubygem-mixlib-shellout"#;
+
+        let mut iter = input.lines().filter_map(|l| dnf.parse_pkg(l));
+        assert_eq!(
+            iter.next(),
+            Some(Package::from("sudo.x86_64").with_version("1.9.13-2.p2.fc38"))
+        );
+        assert_eq!(
+            iter.next(),
+            Some(Package::from("systemd-libs.x86_64").with_version("253.10-1.fc38"))
+        );
+        assert_eq!(iter.next(), Some(Package::from("hello.x86_64")));
+        assert_eq!(
+            iter.next(),
+            Some(Package::from("rubygem-mixlib-shellout-doc.noarch"))
+        );
+    }
+}

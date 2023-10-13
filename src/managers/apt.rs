@@ -96,3 +96,39 @@ impl Commands for AdvancedPackageTool {
         Self::alt_cmd(cmds).args(cmds).spawn().unwrap()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::AdvancedPackageTool;
+    use crate::{Package, PackageManager};
+    #[test]
+    fn parse_pkg() {
+        let input = r#"
+hello/stable 2.10-3 amd64
+  example package based on GNU hello
+
+iagno/stable 1:3.38.1-2 amd64
+  popular Othello game for GNOME
+
+mount/now 2.38.1-5+b1 amd64 [installed,local]
+mysql-common/now 5.8+1.1.0 all [installed,local]"#;
+        let apt = AdvancedPackageTool;
+        let mut iter = input.lines().filter_map(|l| apt.parse_pkg(l));
+        assert_eq!(
+            iter.next(),
+            Some(Package::from("hello").with_version("2.10-3"))
+        );
+        assert_eq!(
+            iter.next(),
+            Some(Package::from("iagno").with_version("1:3.38.1-2"))
+        );
+        assert_eq!(
+            iter.next(),
+            Some(Package::from("mount").with_version("2.38.1-5+b1"))
+        );
+        assert_eq!(
+            iter.next(),
+            Some(Package::from("mysql-common").with_version("5.8+1.1.0"))
+        );
+    }
+}

@@ -100,7 +100,7 @@ impl Commands for AdvancedPackageTool {
 #[cfg(test)]
 mod tests {
     use super::AdvancedPackageTool;
-    use crate::{Package, PackageManager};
+    use crate::{Cmd, Commands, Package, PackageManager};
     #[test]
     fn parse_pkg() {
         let input = r#"
@@ -130,5 +130,30 @@ mysql-common/now 5.8+1.1.0 all [installed,local]"#;
             iter.next(),
             Some(Package::from("mysql-common").with_version("5.8+1.1.0"))
         );
+    }
+
+    #[test]
+    fn alt_cmd() {
+        let apt = AdvancedPackageTool;
+        let alt = "apt";
+        let reg = "apt-get";
+        let func = AdvancedPackageTool::alt_cmd;
+        let cmds = &[
+            Cmd::Install,
+            Cmd::Uninstall,
+            Cmd::Update,
+            Cmd::UpdateAll,
+            Cmd::List,
+            Cmd::Sync,
+            Cmd::AddRepo,
+            Cmd::Search,
+        ];
+        for cmd in cmds {
+            let should_match = match cmd {
+                Cmd::Search | Cmd::List => alt,
+                _ => reg,
+            };
+            assert_eq!(func(apt.get_cmds(*cmd)).get_program(), should_match);
+        }
     }
 }

@@ -1,3 +1,7 @@
+//! Package manager wrapper implementations
+//!
+//! The wrappers appear in this module based on which feature flag is enabled.
+//! If the module is empty, it means that no package manager feature flag is enabled.
 #[cfg(feature = "apt")]
 mod apt;
 #[cfg(feature = "brew")]

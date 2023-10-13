@@ -245,6 +245,10 @@ pub trait Commands {
     }
 }
 
+/// Representation of a package manager command
+///
+/// All the variants are the type of commands that a type that imlements [``Commands``] and
+/// [``PackageManager``] (should) support.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Cmd {
     Install,

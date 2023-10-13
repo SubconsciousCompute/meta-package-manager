@@ -4,8 +4,8 @@ A generic package manager for interfacing with multiple distro/platform specific
 ## Basic Usage
 ```no_run
 use genpack::{managers, Package, PackageManager, Operation};
-#[cfg(feature = "brew")]
-{
+# #[cfg(feature = "brew")]
+# {
 let brew = managers::Homebrew; // no constructor is called because it's a unit struct
 
 // Important: running any commands through the package manager if it is not in path/not installed
@@ -36,7 +36,7 @@ for p in brew.search("python") {
 for p in brew.list_installed() {
     println!("{p}");
 }
-}
+# }
 ```
 
 ## Advanced usage

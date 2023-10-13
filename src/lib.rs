@@ -113,7 +113,7 @@ pub trait PackageManager: Commands + Debug + Display {
         self.parse_output(&out.stdout)
     }
 
-    /// exec an operation on multiple packages, such as install, uninstall and update
+    /// Execute an operation on multiple packages, such as install, uninstall and update
     fn exec_op(&self, pkgs: &[Package], op: Operation) -> ExitStatus {
         let command = match op {
             Operation::Install => Cmd::Install,
@@ -315,7 +315,7 @@ impl Display for Package<'_> {
     }
 }
 
-/// Operation type to exec using [``Package::exec_op``]
+/// Operation type to execute using [``Package::exec_op``]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Operation {
     Install,

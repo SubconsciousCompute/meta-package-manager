@@ -30,11 +30,20 @@ fn homebrew() {
 fn chocolatey() {
     let choco = managers::Chocolatey;
     let choco = choco.verify().expect("Chocolatey not found in path");
+    let pkg = "tac";
     // sync
     assert!(choco.sync().success());
     // search
-    assert!(choco.search("rust").iter().any(|p| p.name() == "rust"));
-    // TODO: Test Install, Uninstall, Update, List and AddRepo
+    assert!(choco.search(pkg).iter().any(|p| p.name() == pkg));
+    // install
+    assert!(choco.install(pkg.into()).success());
+    // list
+    assert!(choco.list_installed().iter().any(|p| p.name() == pkg));
+    // update
+    assert!(choco.update(pkg.into()).success());
+    // uninstall
+    assert!(choco.uninstall(pkg.into()).success());
+    // TODO: Test AddRepo
 }
 
 // Requires elevated privilages to work

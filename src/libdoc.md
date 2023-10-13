@@ -1,6 +1,8 @@
 # genpack
 A generic package manager for interfacing with multiple distro/platform specific package managers.
 
+All package manager wrappers are placed behind feature flags, so you can enable only the ones you need.
+
 ## Basic Usage
 ```no_run
 use genpack::{managers, Package, PackageManager, Operation};

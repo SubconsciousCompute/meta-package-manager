@@ -55,7 +55,7 @@ pub trait PackageManager: Commands + Debug + Display {
     ///
     /// The default implementation uses [``PackageManager::parse``] for parsing each line into a [`Package`].
     fn parse_output(&self, out: &[u8]) -> Vec<Package> {
-        let outstr = std::str::from_utf8(out).unwrap();
+        let outstr = String::from_utf8_lossy(out);
         outstr
             .lines()
             .filter_map(|s| {

@@ -225,7 +225,10 @@ pub trait Commands {
     /// This fn can panic when the defined [``Commands::cmd``] is not found in path. This can be avoided by using [``verified::Verified``]
     /// or manually ensuring that the [``Commands::cmd``] is valid.
     fn exec_cmds(&self, cmds: &[&str]) -> Output {
-        self.cmd().args(cmds).output().unwrap()
+        self.cmd()
+            .args(cmds)
+            .output()
+            .expect("command executed without a prior check")
     }
     /// Run arbitrary commands against the package manager command and wait for ExitStatus
     ///
@@ -233,7 +236,10 @@ pub trait Commands {
     /// This fn can panic when the defined [``Commands::cmd``] is not found in path. This can be avoided by using [``verified::Verified``]
     /// or manually ensuring that the [``Commands::cmd``] is valid.
     fn exec_cmds_status(&self, cmds: &[&str]) -> ExitStatus {
-        self.cmd().args(cmds).status().unwrap()
+        self.cmd()
+            .args(cmds)
+            .status()
+            .expect("command executed without a prior check")
     }
     /// Run arbitrary commands against the package manager command and return handle to the spawned process
     ///
@@ -241,7 +247,10 @@ pub trait Commands {
     /// This fn can panic when the defined [``Commands::cmd``] is not found in path. This can be avoided by using [``verified::Verified``]
     /// or manually ensuring that the [``Commands::cmd``] is valid.
     fn exec_cmds_spawn(&self, cmds: &[&str]) -> Child {
-        self.cmd().args(cmds).spawn().unwrap()
+        self.cmd()
+            .args(cmds)
+            .spawn()
+            .expect("command executed without a prior check")
     }
 }
 

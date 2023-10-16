@@ -53,7 +53,7 @@ pub trait PackageManager: Commands + Debug + Display {
 
     /// Parses output, generally from stdout, to a Vec of Packages.
     ///
-    /// The default implementation uses [``PackageManager::parse``] for parsing each line into a [`Package`].
+    /// The default implementation uses [``PackageManager::parse_pkg``] for parsing each line into a [`Package`].
     fn parse_output(&self, out: &[u8]) -> Vec<Package> {
         let outstr = String::from_utf8_lossy(out);
         outstr

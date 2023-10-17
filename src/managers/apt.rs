@@ -55,7 +55,7 @@ impl PackageManager for AdvancedPackageTool {
 
 impl Display for AdvancedPackageTool {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("AdvancedPackageTool (APT)")
+        f.write_str("Advanced Package Tool (APT)")
     }
 }
 

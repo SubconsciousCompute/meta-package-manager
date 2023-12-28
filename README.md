@@ -1,7 +1,5 @@
 # genpack
-A generic package manager for interfacing with multiple distro/platform specific package managers using a single, simple, unified interface.
-
-This repo contains the library, the CLI frontend can be found [here](https://github.com/VoltaireNoir/genpack-cli).
+A generic package manager for interfacing with multiple distro/platform specific package managers using a single, simple, unified interface. `genpack` is both a Rust library and a CLI utility.
 
 ## Basic Usage
 ```rust
@@ -72,3 +70,12 @@ fn main() {
 }
   
 ```
+
+# Command-line Interface
+
+The CLI provides a common interface to execute operations using different package managers. It automatically detects the package managers available on the system and picks one of them to perform operations by default (the user can also target a specific package manager if required).
+
+![](screenshot1.png)
+
+
+![](screenshot2.png)

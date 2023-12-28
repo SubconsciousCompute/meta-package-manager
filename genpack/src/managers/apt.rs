@@ -14,7 +14,7 @@ use std::{fmt::Display, fs, io::Write, process::Command};
 pub struct AdvancedPackageTool;
 
 impl AdvancedPackageTool {
-    const SOURCES: &str = "/etc/apt/sources.list";
+    const SOURCES: &'static str = "/etc/apt/sources.list";
 
     fn alt_cmd(cmds: &[&str]) -> Command {
         if matches!(cmds.first(), Some(&"list") | Some(&"search")) {

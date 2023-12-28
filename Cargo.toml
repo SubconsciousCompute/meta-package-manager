@@ -1,21 +1,4 @@
-[package]
-name = "genpack"
-version = "0.1.0"
-edition = "2021"
-license = "AGPL-3.0"
-
-[features]
-default = ["verify"]
-verify = []
-choco = []
-brew = []
-apt = []
-dnf = []
-yum = ["dnf"]
-
-
-[dependencies]
-
-[[test]]
-name = "basic"
-required-features = ["verify", "choco", "brew", "apt", "dnf", "yum"]
+[workspace]
+resolver = "2"
+members = ["genpack", "genpack-cli"]
+exclude = ["*.png"]

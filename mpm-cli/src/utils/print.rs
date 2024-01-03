@@ -1,7 +1,7 @@
 use super::Manager;
 use anyhow::Error;
 use colored::{ColoredString, Colorize};
-use genpack::Package;
+use mpm::Package;
 use strum::{EnumCount, IntoEnumIterator};
 use tabled::{
     settings::{object::Rows, themes::Colorization, Color, Style},

@@ -1,5 +1,5 @@
 use anyhow::{bail, Context, Result};
-use genpack::{verify::DynVerified, Operation};
+use mpm::{verify::DynVerified, Operation};
 use manager::Manager;
 use parser::{Cli, Commands};
 use strum::IntoEnumIterator;

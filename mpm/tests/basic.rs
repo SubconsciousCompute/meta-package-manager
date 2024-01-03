@@ -1,5 +1,5 @@
-use genpack::verify::Verify;
-use genpack::*;
+use mpm::verify::Verify;
+use mpm::*;
 
 #[cfg(feature = "brew")]
 #[cfg(not(target_os = "windows"))]

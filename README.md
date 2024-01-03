@@ -1,9 +1,17 @@
-# genpack
-A generic package manager for interfacing with multiple distro/platform specific package managers using a single, simple, unified interface. `genpack` is both a Rust library and a CLI utility.
+# Meta Package Manager
+
+A meta package manager for interfacing with multiple distro/platform specific
+package managers using a single, simple, unified interface. `mpm` is both a
+Rust library and a CLI utility.
+
+It is inspired from
+[meta-package-manager](https://github.com/kdeldycke/meta-package-manager). It is
+still far behind.
 
 ## Basic Usage
+
 ```rust
-use genpack::{managers, Package, PackageManager, Operation};
+use mpm::{managers, Package, PackageManager, Operation};
 
 fn main() {
     let brew = managers::HomeBrew; // no constructor is called because it's a unit struct
@@ -41,7 +49,7 @@ fn main() {
 ## Advanced usage
 ```rust
 
-use genpack::{managers, verify::Verify, Cmd, Commands, PackageManager};
+use mpm::{managers, verify::Verify, Cmd, Commands, PackageManager};
 
 fn main() {
     // creating a verified instance (package manager known to be in path/installed)
@@ -61,7 +69,7 @@ fn main() {
     // fully customize commands with the general purpose `consolidated_args` fn
     // this example is impractical, but it shows how you can mix custom commands with default ones
     // default command is retrieved for `List` and default flags for `Install`
-    let cmds = genpack::consolidate_args(
+    let cmds = mpm::consolidate_args(
         verified.get_cmds(Cmd::List),
         &["anything"],
         verified.get_flags(Cmd::Install),
@@ -73,9 +81,12 @@ fn main() {
 
 # Command-line Interface
 
-The CLI provides a common interface to execute operations using different package managers. It automatically detects the package managers available on the system and picks one of them to perform operations by default (the user can also target a specific package manager if required).
+The CLI provides a common interface to execute operations using different
+package managers. It automatically detects the package managers available on the
+system and picks one of them to perform operations by default (the user can also
+target a specific package manager if required).
 
-![](screenshot1.png)
+![](data/screenshot1.png)
 
 
-![](screenshot2.png)
+![](data/screenshot2.png)

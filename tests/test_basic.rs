@@ -3,9 +3,9 @@
 use mpm::verify::Verify;
 use mpm::*;
 
-#[cfg(not(target_os = "osx"))]
+#[cfg(target_os = "osx")]
 #[test]
-fn homebrew() {
+fn test_homebrew() {
     let hb = managers::Homebrew;
     let hb = hb.verify().expect("Homebrew not found in path");
     // sync
@@ -27,7 +27,7 @@ fn homebrew() {
 
 #[cfg(windows)]
 #[test]
-fn chocolatey() {
+fn test_chocolatey() {
     let choco = managers::Chocolatey;
     let choco = choco.verify().expect("Chocolatey not found in path");
     let pkg = "tac";
@@ -47,62 +47,64 @@ fn chocolatey() {
 }
 
 // Requires elevated privilages to work
-#[cfg(feature = "apt")]
 #[cfg(target_os = "linux")]
-#[ignore]
 #[test]
-fn apt() {
+fn test_apt() {
     let apt = managers::AdvancedPackageTool;
-    let apt = apt.verify().expect("Apt not found in path");
-    let pkg = "hello";
-    // sync
-    assert!(apt.sync().success());
-    // search
-    assert!(apt.search(pkg).iter().any(|p| p.name() == "hello"));
-    // install
-    assert!(apt.install(pkg.into()).success());
-    // list
-    assert!(apt.list_installed().iter().any(|p| p.name() == "hello"));
-    // update
-    assert!(apt.update(pkg.into()).success());
-    // uninstall
-    assert!(apt.uninstall(pkg.into()).success());
-    // TODO: Test AddRepo
+    if let Ok(apt) = apt.verify() {
+        let pkg = "hello";
+        // sync
+        assert!(apt.sync().success());
+        // search
+        assert!(apt.search(pkg).iter().any(|p| p.name() == "hello"));
+        // install
+        assert!(apt.install(pkg.into()).success());
+        // list
+        assert!(apt.list_installed().iter().any(|p| p.name() == "hello"));
+        // update
+        assert!(apt.update(pkg.into()).success());
+        // uninstall
+        assert!(apt.uninstall(pkg.into()).success());
+        // TODO: Test AddRepo
+    } else {
+        eprintln!("apt is not found");
+    }
 }
 
 // Requires elevated privilages to work
 #[cfg(target_os = "linux")]
-#[ignore]
 #[test]
-fn dnf() {
+fn test_dnf() {
     dnf_yum_cases(managers::DandifiedYUM)
 }
 
 // Requires elevated privilages to work
 #[cfg(target_os = "linux")]
-#[ignore]
 #[test]
-fn yum() {
+fn test_yum() {
     dnf_yum_cases(managers::YellowdogUpdaterModified::default())
 }
 
 fn dnf_yum_cases(man: impl PackageManager) {
-    let man = man.verify().expect("Dnf not found in path");
-    let pkg = "hello";
-    // sync
-    assert!(man.sync().success());
-    // search
-    assert!(man.search(pkg).iter().any(|p| p.name() == "hello.x86_64"));
-    // install
-    assert!(man.install(pkg.into()).success());
-    // list
-    assert!(man
-        .list_installed()
-        .iter()
-        .any(|p| p.name() == "hello.x86_64"));
-    // update
-    assert!(man.update(pkg.into()).success());
-    // uninstall
-    assert!(man.uninstall(pkg.into()).success());
-    // TODO: Test AddRepo
+    if let Some(man) = man.verify() {
+        let pkg = "hello";
+        // sync
+        assert!(man.sync().success());
+        // search
+        assert!(man.search(pkg).iter().any(|p| p.name() == "hello.x86_64"));
+        // install
+        assert!(man.install(pkg.into()).success());
+        // list
+        assert!(man
+            .list_installed()
+            .iter()
+            .any(|p| p.name() == "hello.x86_64"));
+        // update
+        assert!(man.update(pkg.into()).success());
+        // uninstall
+        assert!(man.uninstall(pkg.into()).success());
+        // TODO: Test AddRepo
+    } else {
+        eprintln!("dnf not found");
+    }
 }

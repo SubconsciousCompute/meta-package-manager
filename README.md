@@ -86,7 +86,4 @@ package managers. It automatically detects the package managers available on the
 system and picks one of them to perform operations by default (the user can also
 target a specific package manager if required).
 
-![](data/screenshot1.png)
-
-
-![](data/screenshot2.png)
+Run `mpm --help` for more details.

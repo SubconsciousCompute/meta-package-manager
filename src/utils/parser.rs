@@ -1,6 +1,7 @@
-use super::Manager;
 use clap::{Parser, Subcommand};
-use mpm::Package;
+
+use crate::utils::manager::Manager;
+use crate::Package;
 
 #[derive(Parser)]
 #[command(

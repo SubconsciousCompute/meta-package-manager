@@ -1,11 +1,12 @@
 use std::fmt::Display;
 
 use clap::ValueEnum;
-use mpm::{
-    managers::{AdvancedPackageTool, Chocolatey, DandifiedYUM, Homebrew, YellowdogUpdaterModified},
-    verify::{DynVerified, Verify},
-};
 use strum::{EnumCount, EnumIter};
+
+use crate::managers::{
+    AdvancedPackageTool, Chocolatey, DandifiedYUM, Homebrew, YellowdogUpdaterModified,
+};
+use crate::verify::{DynVerified, Verify};
 
 /// Declarative macro for initializing a package manager based on the cfg predicate
 ///

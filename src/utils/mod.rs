@@ -1,13 +1,16 @@
 use anyhow::{bail, Context, Result};
 use manager::Manager;
-use mpm::{verify::DynVerified, Operation};
-use parser::{Cli, Commands};
 use strum::IntoEnumIterator;
 
 mod manager;
+
 pub mod parser;
+use parser::{Cli, Commands};
+
 #[macro_use]
 pub mod print;
+
+use crate::{verify::DynVerified, Operation};
 
 /// Primary interface to executing the CLI commands
 /// "ManHandler" because it handles Package Managers, and it's funny

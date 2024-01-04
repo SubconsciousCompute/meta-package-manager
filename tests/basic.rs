@@ -1,8 +1,9 @@
-use libmpm::verify::Verify;
-use libmpm::*;
+//! Tests
 
-#[cfg(feature = "brew")]
-#[cfg(not(target_os = "windows"))]
+use mpm::verify::Verify;
+use mpm::*;
+
+#[cfg(not(target_os = "osx"))]
 #[test]
 fn homebrew() {
     let hb = managers::Homebrew;
@@ -24,8 +25,7 @@ fn homebrew() {
     // TODO: Test AddRepo
 }
 
-#[cfg(feature = "choco")]
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 #[test]
 fn chocolatey() {
     let choco = managers::Chocolatey;
@@ -71,7 +71,6 @@ fn apt() {
 }
 
 // Requires elevated privilages to work
-#[cfg(feature = "dnf")]
 #[cfg(target_os = "linux")]
 #[ignore]
 #[test]
@@ -80,7 +79,6 @@ fn dnf() {
 }
 
 // Requires elevated privilages to work
-#[cfg(feautre = "yum")]
 #[cfg(target_os = "linux")]
 #[ignore]
 #[test]
@@ -88,7 +86,6 @@ fn yum() {
     dnf_yum_cases(managers::YellowdogUpdaterModified::default())
 }
 
-#[cfg(any(feature = "yum", feature = "dnf"))]
 fn dnf_yum_cases(man: impl PackageManager) {
     let man = man.verify().expect("Dnf not found in path");
     let pkg = "hello";

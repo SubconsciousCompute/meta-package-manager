@@ -167,23 +167,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
-name = "genpack"
-version = "0.1.0"
-source = "git+https://github.com/VoltaireNoir/genpack/#3e8b76c42a84736f3c216287fce288af50496520"
-
-[[package]]
-name = "genpack-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "colored",
- "genpack",
- "strum",
- "tabled",
-]
-
-[[package]]
 name = "heck"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -235,6 +218,17 @@ name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
+
+[[package]]
+name = "mpm"
+version = "0.3.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "colored",
+ "strum",
+ "tabled",
+]
 
 [[package]]
 name = "nom"

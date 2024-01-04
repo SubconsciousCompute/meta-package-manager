@@ -1,3 +1,16 @@
-[workspace]
-resolver = "2"
-members = ["libmpm", "mpm"]
+[package]
+name = "mpm"
+version = "0.3.0"
+edition = "2021"
+license = "AGPL-3.0"
+
+[dependencies]
+anyhow = "1.0.79"
+clap = { version = "4.4", features = ["derive"] }
+colored = "2.1"
+strum = { version = "0.25", features = ["derive"] }
+tabled = { version = "0.14", features = ["color"] }
+
+[features]
+default = ["verify"]
+verify = []

@@ -1,3 +1,5 @@
+//! mpm library
+
 use std::{
     borrow::Cow,
     error::Error,

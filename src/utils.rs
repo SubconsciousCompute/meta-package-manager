@@ -1,6 +1,6 @@
 use anyhow::{bail, Context, Result};
 use manager::Manager;
-use libmpm::{verify::DynVerified, Operation};
+use mpm::{verify::DynVerified, Operation};
 use parser::{Cli, Commands};
 use strum::IntoEnumIterator;
 

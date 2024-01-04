@@ -1,6 +1,6 @@
 use super::Manager;
 use clap::{Parser, Subcommand};
-use libmpm::Package;
+use mpm::Package;
 
 #[derive(Parser)]
 #[command(
@@ -64,6 +64,8 @@ pub enum Commands {
     },
 }
 
+/// Parse user given string into package name and version. The string must have `@` for version
+/// information to be extracted.
 pub fn pkg_parse(pkg: &str) -> Package {
     if let Some((name, version)) = pkg.split_once('@') {
         Package::from(name).with_version(version)

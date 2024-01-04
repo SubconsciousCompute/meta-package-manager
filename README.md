@@ -11,7 +11,7 @@ ahead in functionality.
 ## Basic Usage
 
 ```rust
-use libmpm::{managers, Package, PackageManager, Operation};
+use mpm::{managers, Package, PackageManager, Operation};
 
 fn main() {
     let brew = managers::HomeBrew; // no constructor is called because it's a unit struct
@@ -49,7 +49,7 @@ fn main() {
 ## Advanced usage
 ```rust
 
-use libmpm::{managers, verify::Verify, Cmd, Commands, PackageManager};
+use mpm::{managers, verify::Verify, Cmd, Commands, PackageManager};
 
 fn main() {
     // creating a verified instance (package manager known to be in path/installed)
@@ -69,7 +69,7 @@ fn main() {
     // fully customize commands with the general purpose `consolidated_args` fn
     // this example is impractical, but it shows how you can mix custom commands with default ones
     // default command is retrieved for `List` and default flags for `Install`
-    let cmds = libmpm::consolidate_args(
+    let cmds = mpm::consolidate_args(
         verified.get_cmds(Cmd::List),
         &["anything"],
         verified.get_flags(Cmd::Install),

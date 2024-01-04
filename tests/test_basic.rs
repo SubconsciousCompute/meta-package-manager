@@ -51,7 +51,7 @@ fn test_chocolatey() {
 #[test]
 fn test_apt() {
     let apt = managers::AdvancedPackageTool;
-    if let Ok(apt) = apt.verify() {
+    if let Some(apt) = apt.verify() {
         let pkg = "hello";
         // sync
         assert!(apt.sync().success());

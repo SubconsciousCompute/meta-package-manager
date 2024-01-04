@@ -1,12 +1,12 @@
 # Meta Package Manager
 
-A meta package manager for interfacing with multiple distro/platform specific
+A meta package manager for interfacing with multiple distro/platform-specific
 package managers using a single, simple, unified interface. `mpm` is both a
 Rust library and a CLI utility.
 
-It is inspired from
-[meta-package-manager](https://github.com/kdeldycke/meta-package-manager). It is
-still far behind.
+It is inspired by Python's
+[meta-package-manager](https://github.com/kdeldycke/meta-package-manager) which is far
+ahead in functionality.
 
 ## Basic Usage
 

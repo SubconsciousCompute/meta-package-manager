@@ -1,5 +1,5 @@
-use mpm::verify::Verify;
-use mpm::*;
+use libmpm::verify::Verify;
+use libmpm::*;
 
 #[cfg(feature = "brew")]
 #[cfg(not(target_os = "windows"))]

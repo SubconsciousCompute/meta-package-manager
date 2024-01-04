@@ -1,6 +1,6 @@
 use super::Manager;
 use clap::{Parser, Subcommand};
-use mpm::Package;
+use libmpm::Package;
 
 #[derive(Parser)]
 #[command(

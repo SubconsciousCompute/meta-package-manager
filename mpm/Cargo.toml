@@ -1,21 +1,20 @@
 [package]
 name = "mpm"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 license = "AGPL-3.0"
 
-[features]
-default = ["verify"]
-verify = []
-choco = []
-brew = []
-apt = []
-dnf = []
-yum = ["dnf"]
-
-
 [dependencies]
-
-[[test]]
-name = "basic"
-required-features = ["verify", "choco", "brew", "apt", "dnf", "yum"]
+anyhow = "1.0.75"
+clap = { version = "4.4.6", features = ["derive"] }
+colored = "2.0.4"
+strum = { version = "0.25.0", features = ["derive"] }
+tabled = { version = "0.14.0", features = ["color"] }
+libmpm = { path = "../libmpm", features = [
+  "verify",
+  "brew",
+  "choco",
+  "apt",
+  "dnf",
+  "yum",
+] }

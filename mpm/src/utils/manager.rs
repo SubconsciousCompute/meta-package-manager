@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use clap::ValueEnum;
-use mpm::{
+use libmpm::{
     managers::{AdvancedPackageTool, Chocolatey, DandifiedYUM, Homebrew, YellowdogUpdaterModified},
     verify::{DynVerified, Verify},
 };

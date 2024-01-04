@@ -8,6 +8,8 @@ use std::{
 };
 
 pub mod managers;
+pub mod utils;
+
 #[cfg(feature = "verify")]
 pub mod verify;
 

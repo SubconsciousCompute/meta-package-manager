@@ -3,11 +3,11 @@
 //! The wrappers appear in this module based on which feature flag is enabled.
 //! If the module is empty, it means that no package manager feature flag is enabled.
 
-mod apt;
-mod brew;
-mod choco;
-mod dnf;
-mod yum;
+pub mod apt;
+pub mod brew;
+pub mod choco;
+pub mod dnf;
+pub mod yum;
 
 pub use apt::AdvancedPackageTool;
 pub use brew::Homebrew;

@@ -1,10 +1,9 @@
 use clap::Parser;
-use utils::parser::Cli;
 
-mod utils;
+use mpm::utils;
 
 fn main() {
-    if let Err(err) = utils::execute(Cli::parse()) {
+    if let Err(err) = utils::execute(utils::parser::Cli::parse()) {
         utils::print::log_error(err);
         std::process::exit(1);
     }

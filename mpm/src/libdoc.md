@@ -5,7 +5,7 @@ All package manager wrappers are placed behind feature flags, so you can enable 
 
 ## Basic Usage
 ```no_run
-use genpack::{managers, Package, PackageManager, Operation};
+use mpm::{managers, Package, PackageManager, Operation};
 # #[cfg(feature = "brew")]
 # {
 let brew = managers::Homebrew; // no constructor is called because it's a unit struct
@@ -44,7 +44,7 @@ for p in brew.list_installed() {
 ## Advanced usage
 ```no_run
 # #[cfg(all(feature = "verify", feature = "choco"))]
-use genpack::{managers, verify::Verify, Cmd, Commands, PackageManager};
+use mpm::{managers, verify::Verify, Cmd, Commands, PackageManager};
 
 # #[cfg(all(feature = "verify", feature = "choco"))]
 # {
@@ -65,7 +65,7 @@ let _handle = verified.exec_cmds_spawn(&cmds);
 // fully customize commands with the general purpose `consolidated_args` fn
 // this example is impractical, but it shows how you can mix custom commands with default ones
 // default command is retrieved for `List` and default flags for `Install`
-let cmds = genpack::consolidate_args(
+let cmds = mpm::consolidate_args(
     verified.get_cmds(Cmd::List),
     &["anything"],
     verified.get_flags(Cmd::Install),

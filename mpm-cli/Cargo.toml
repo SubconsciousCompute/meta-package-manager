@@ -1,11 +1,11 @@
 [package]
-name = "genpack-cli"
+name = "mpm-cli"
 version = "0.1.0"
 edition = "2021"
 license = "AGPL-3.0"
 
 [[bin]]
-name = "genpack"
+name = "mpm"
 path = "src/main.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -16,8 +16,11 @@ clap = { version = "4.4.6", features = ["derive"] }
 colored = "2.0.4"
 strum = { version = "0.25.0", features = ["derive"] }
 tabled = { version = "0.14.0", features = ["color"] }
-
-[dependencies.genpack]
-path = "../genpack"
-features = ["verify", "brew", "choco", "apt", "dnf", "yum"]
-
+mpm = { path = "../mpm", features = [
+  "verify",
+  "brew",
+  "choco",
+  "apt",
+  "dnf",
+  "yum",
+] }

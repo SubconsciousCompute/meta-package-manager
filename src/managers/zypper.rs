@@ -8,6 +8,8 @@ use std::{fmt::Display, process::Command};
 pub struct Zypper;
 
 impl PackageManager for Zypper {
+    const PKG_CMD: &str = "zypper";
+
     fn pkg_delimiter(&self) -> char {
         '-'
     }
@@ -42,13 +44,14 @@ impl PackageManager for Zypper {
 
 impl Display for Zypper {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("Zypper")
+        f.write_str("zypper")
     }
 }
 
 impl Commands for Zypper {
+    /// return a primary command.
     fn cmd(&self) -> Command {
-        Command::new("zypper")
+        Command::new(Self::PKG_CMD)
     }
 
     fn get_cmds(&self, cmd: Cmd) -> &'static [&'static str] {
@@ -72,5 +75,17 @@ impl Commands for Zypper {
             Cmd::AddRepo => &["-f"],
             _ => &["-n"],
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tracing_test::traced_test;
+
+    #[test]
+    #[traced_test]
+    fn test_generate_cmd_zypper() {
+        let _zypper = Zypper;
     }
 }

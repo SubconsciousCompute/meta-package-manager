@@ -7,9 +7,8 @@ use std::{fmt::Display, process::Command};
 #[derive(Debug)]
 pub struct Zypper;
 
-impl PackageManager for Zypper {
-    const PKG_CMD: &str = "zypper";
 
+impl PackageManager for Zypper {
     fn pkg_delimiter(&self) -> char {
         '-'
     }
@@ -51,7 +50,7 @@ impl Display for Zypper {
 impl Commands for Zypper {
     /// return a primary command.
     fn cmd(&self) -> Command {
-        Command::new(Self::PKG_CMD)
+        Command::new("zypper")
     }
 
     fn get_cmds(&self, cmd: Cmd) -> &'static [&'static str] {
@@ -71,7 +70,7 @@ impl Commands for Zypper {
         match cmd {
             Cmd::Install | Cmd::Uninstall | Cmd::Update | Cmd::UpdateAll => &["-n"],
             Cmd::List => &["--installed"],
-            Cmd::Search => &["-q"],
+            Cmd::Search => &["--no-refresh", "-q"],
             Cmd::AddRepo => &["-f"],
             _ => &["-n"],
         }

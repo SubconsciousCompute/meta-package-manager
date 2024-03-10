@@ -118,13 +118,14 @@ impl ManHandler {
     }
 
     /// Does the same as the [``PackageManager::search``] fn
-    pub fn search(&self, string: &str) -> Result<()> {
+    pub fn search(&self, query: &str) -> Result<()> {
+        tracing::debug!("Searching for {query}");
         let man = self.get_man()?;
-        let pkgs = man.search(string);
+        let pkgs = man.search(query);
         if pkgs.is_empty() {
-            bail!("no packages found that match the string: {string}")
+            bail!("no packages found that match the query: {query}")
         }
-        notify!("{} packages found", pkgs.len());
+        notify!("{} packages found for query {query}", pkgs.len());
         print::print_packages(pkgs);
         Ok(())
     }

@@ -4,7 +4,7 @@ use clap::ValueEnum;
 use strum::{EnumCount, EnumIter};
 
 use crate::managers::{
-    AdvancedPackageTool, Chocolatey, DandifiedYUM, Homebrew, YellowdogUpdaterModified,
+    AdvancedPackageTool, Chocolatey, DandifiedYUM, Homebrew, YellowdogUpdaterModified, Zypper,
 };
 use crate::verify::{DynVerified, Verify};
 
@@ -42,11 +42,11 @@ pub enum Manager {
     Apt,
     Dnf,
     Yum,
+    Zypper,
 }
 
 impl Manager {
     /// Initialize the corresponding package maanger from genpack library into a [``DynVerified``] type
-
     pub fn init(&self) -> Option<DynVerified> {
         match self {
             Manager::Brew => {
@@ -69,6 +69,9 @@ impl Manager {
             Manager::Yum => {
                 if_cfg!(YellowdogUpdaterModified::default(), target_os = "linux")
             }
+            Manager::Zypper => {
+                if_cfg!(Zypper, target_os = "linux")
+            }
         }
     }
 }
@@ -80,6 +83,7 @@ impl Display for Manager {
             Manager::Choco => Chocolatey.fmt(f),
             Manager::Apt => AdvancedPackageTool.fmt(f),
             Manager::Dnf => DandifiedYUM.fmt(f),
+            Manager::Zypper => Zypper.fmt(f),
             Manager::Yum => YellowdogUpdaterModified::default().fmt(f),
         }
     }

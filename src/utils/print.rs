@@ -1,7 +1,7 @@
 use super::Manager;
+use crate::Package;
 use anyhow::Error;
 use colored::{ColoredString, Colorize};
-use crate::Package;
 use strum::{EnumCount, IntoEnumIterator};
 use tabled::{
     settings::{object::Rows, themes::Colorization, Color, Style},
@@ -9,11 +9,10 @@ use tabled::{
 };
 
 /// Takes a format string and prints it in the format "Info {format_str}"
-macro_rules! log_info {
+macro_rules! notify {
     ($($fmt:tt)+) => {
         {
-            use colored::Colorize;
-            println!("{} {args}", "Info:".cyan().bold(), args = format_args!($($fmt)+))
+            println!("> {args}", args = format_args!($($fmt)+))
         }
     };
 }
@@ -68,7 +67,7 @@ pub fn print_packages(pkgs: Vec<Package>) {
 
 /// Creates a table and prints supported package managers with availability information
 pub fn print_managers() {
-    log_info!(
+    notify!(
         "a total of {} package managers are supported",
         Manager::COUNT
     );

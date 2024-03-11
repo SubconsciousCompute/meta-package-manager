@@ -16,8 +16,8 @@ pub struct Cli {
     #[arg(
         long,
         short,
-        help = "Specify a package manager genpack should use",
-        long_help = "Optionally specify a package manager genpack should use. When no package manager is provided, a default available one is picked automatically."
+        help = "Specify a package manager mpm should use",
+        long_help = "Optionally specify a package manager mpm should use. When no package manager is provided, a default available one is picked automatically."
     )]
     pub manager: Option<Manager>,
 }

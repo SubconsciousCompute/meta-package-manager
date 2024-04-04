@@ -58,7 +58,7 @@ impl Commands for Zypper {
             Cmd::Uninstall => &["remove"],
             Cmd::Update => &["update"],
             Cmd::UpdateAll => &["dist-upgrade"],
-            Cmd::List => &["list"],
+            Cmd::List => &["search"],
             Cmd::Sync => &["refresh"],
             Cmd::AddRepo => &["addrepo"],
             Cmd::Search => &["search"],
@@ -68,7 +68,7 @@ impl Commands for Zypper {
     fn get_flags(&self, cmd: Cmd) -> &'static [&'static str] {
         match cmd {
             Cmd::Install | Cmd::Uninstall | Cmd::Update | Cmd::UpdateAll => &["-n"],
-            Cmd::List => &["--installed"],
+            Cmd::List => &["-i"],
             Cmd::Search => &["--no-refresh", "-q"],
             Cmd::AddRepo => &["-f"],
             _ => &["-n"],

@@ -134,6 +134,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "elevate"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e8b9e2c51eb43c3abc3a7408dc7274d0e09a778eb6c11053fed2841bcff547c4"
+dependencies = [
+ "libc",
+ "log",
+]
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -150,6 +160,12 @@ name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
+
+[[package]]
+name = "libc"
+version = "0.2.153"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c198f91728a82281a64e1f4f9eeb25d82cb32a5de251c6bd1b5154d63a8e7bd"
 
 [[package]]
 name = "log"
@@ -179,6 +195,7 @@ dependencies = [
  "anyhow",
  "clap",
  "colored",
+ "elevate",
  "os_info",
  "strum",
  "tabled",

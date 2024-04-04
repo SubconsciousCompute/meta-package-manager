@@ -12,7 +12,7 @@ use tabled::{
 macro_rules! notify {
     ($($fmt:tt)+) => {
         {
-            println!("> {args}", args = format_args!($($fmt)+))
+            println!("{args}", args = format_args!($($fmt)+))
         }
     };
 }

@@ -1,16 +1,16 @@
 [package]
 name = "mpm"
-version = "0.3.1"
+version = "0.4.0"
 edition = "2021"
 license = "AGPL-3.0"
 
 [dependencies]
-anyhow = "1.0.80"
+anyhow = "1.0.81"
 clap = { version = "4.5", features = ["derive"] }
 colored = "2.1"
 elevate = "0.6.1"
 xmltree = "0.10"
-os_info = "3.7.0"
+os_info = "3.8.2"
 strum = { version = "0.26", features = ["derive"] }
 tabled = "0.15"
 tracing = "0.1.40"

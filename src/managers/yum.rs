@@ -14,12 +14,6 @@ pub struct YellowdogUpdaterModified {
     dnf: DandifiedYUM,
 }
 
-impl YellowdogUpdaterModified {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl Default for YellowdogUpdaterModified {
     fn default() -> Self {
         Self { dnf: DandifiedYUM }

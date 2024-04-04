@@ -12,6 +12,37 @@ impl PackageManager for Zypper {
         '-'
     }
 
+    /// Parses output, generally from stdout, to a Vec of Packages.
+    ///
+    /// The default implementation uses [``PackageManager::parse_pkg``] for parsing each line into a [`Package`].
+    fn parse_output(&self, out: &[u8]) -> Vec<Package> {
+        use xmltree::Element;
+
+        let xml = String::from_utf8_lossy(out);
+        let root = Element::parse(xml.as_bytes()).expect("invalid xml");
+        let list = root
+            .get_child("search-result")
+            .expect("no search result found")
+            .get_child("solvable-list")
+            .expect("no solvable-list found");
+
+        let mut packages = vec![];
+        for p in &list.children {
+            if let Some(p) = p.as_element() {
+                packages.push(Package {
+                    name: p
+                        .attributes
+                        .get("name")
+                        .expect("must have name")
+                        .to_string()
+                        .into(),
+                    version: None,
+                })
+            }
+        }
+        packages
+    }
+
     fn parse_pkg<'a>(&self, line: &str) -> Option<Package<'a>> {
         if line.contains('@') {
             let mut splt = line.split_whitespace();
@@ -58,10 +89,10 @@ impl Commands for Zypper {
             Cmd::Uninstall => &["remove"],
             Cmd::Update => &["update"],
             Cmd::UpdateAll => &["dist-upgrade"],
-            Cmd::List => &["search"],
+            Cmd::List => &["--xmlout", "search"],
             Cmd::Sync => &["refresh"],
             Cmd::AddRepo => &["addrepo"],
-            Cmd::Search => &["search"],
+            Cmd::Search => &["--xmlout", "search"],
         }
     }
 

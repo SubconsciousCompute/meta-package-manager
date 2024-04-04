@@ -23,10 +23,9 @@
 //! provides a blanket implementation and lets you construct them directly from
 //! any instance of a type that implements [``PackageManager``]. For example,
 //! `MyPackageMan::new().verify()` or `MyPackageMan::new().verify_dyn()`.
-use std::ops::Deref;
+use std::{fmt::Display, ops::Deref, process::Stdio};
 
 use crate::PackageManager;
-use std::{fmt::Display, process::Stdio};
 
 /// Wraps `T` that implements [``PackageManager``] and only constructs an
 /// instance if the given package manager is installed / is in path.

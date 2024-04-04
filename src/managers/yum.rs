@@ -1,5 +1,6 @@
-use crate::{managers::DandifiedYUM, Cmd, Commands, PackageManager};
 use std::{fmt::Display, process::Command};
+
+use crate::{managers::DandifiedYUM, Cmd, Commands, PackageManager};
 
 /// Wrapper for Yellowdog Updater Modified (YUM) package manager.
 ///

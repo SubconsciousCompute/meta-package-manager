@@ -80,6 +80,18 @@ impl Manager {
             }
         }
     }
+
+    /// Return the supported pkg format e.g. deb, rpm etc.
+    pub fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
+        match self {
+            Self::Brew => vec![PkgFormat::Bottle],
+            Self::Choco => vec![PkgFormat::Exe, PkgFormat::Msi],
+            Self::Apt => vec![PkgFormat::Deb],
+            Self::Dnf => vec![PkgFormat::Rpm],
+            Self::Yum => vec![PkgFormat::Rpm],
+            Self::Zypper => vec![PkgFormat::Rpm],
+        }
+    }
 }
 
 impl Display for Manager {
@@ -92,5 +104,29 @@ impl Display for Manager {
             Manager::Zypper => Zypper.fmt(f),
             Manager::Yum => YellowdogUpdaterModified::default().fmt(f),
         }
+    }
+}
+
+/// Pkg Format.
+#[derive(Clone)]
+pub enum PkgFormat {
+    Bottle,
+    Exe,
+    Msi,
+    Rpm,
+    Deb,
+}
+
+impl PkgFormat {
+    /// File extension of package.
+    pub fn file_extention(&self) -> String {
+        match self {
+            Self::Bottle => "tar.gz",
+            Self::Exe => "exe",
+            Self::Msi => "msi",
+            Self::Rpm => "rpm",
+            Self::Deb => "deb",
+        }
+        .to_string()
     }
 }

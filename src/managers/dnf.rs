@@ -1,5 +1,6 @@
-use crate::{Cmd, Commands, Package, PackageManager, RepoError};
 use std::{fmt::Display, process::Command};
+
+use crate::{Cmd, Commands, Package, PackageManager, RepoError};
 
 /// Wrapper for DandifiedYUM or DNF, the next upcoming major version of YUM
 ///

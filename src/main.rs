@@ -1,9 +1,8 @@
 //! Meta Package Manager (MPM) binary
 
 use clap::Parser;
-use tracing_subscriber::{fmt, prelude::*, EnvFilter};
-
 use mpm::utils;
+use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
 fn main() {
     // elevate to sudo

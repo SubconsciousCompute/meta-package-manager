@@ -1,5 +1,6 @@
-use crate::{Cmd, Commands, Package, PackageManager, RepoError};
 use std::{fmt::Display, fs, io::Write, process::Command};
+
+use crate::{Cmd, Commands, Package, PackageManager, RepoError};
 
 /// Wrapper for Advanced Pacakge Tool (APT), the default package management
 /// user-facing utilities in Debian and Debian-based distributions.

@@ -228,6 +228,7 @@ pub trait Commands {
     /// This fn can panic when the defined [``Commands::cmd``] is not found in path. This can be avoided by using [``verified::Verified``]
     /// or manually ensuring that the [``Commands::cmd``] is valid.
     fn exec_cmds(&self, cmds: &[&str]) -> Output {
+        tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
         self.cmd()
             .args(cmds)
             .output()

@@ -23,6 +23,7 @@ impl ManHandler {
     pub fn new(man: Option<Manager>) -> Self {
         Self { man }
     }
+
     /// Tries to initialize the package manager ManHandler was initialized with
     /// if its present, or else it tries to get the default one.
     fn get_man(&self) -> Result<DynVerified> {
@@ -30,16 +31,16 @@ impl ManHandler {
             let userm = m
                 .init()
                 .context("requested package manager is unavailable")?;
-            log_info!("running command(s) through {userm}");
+            notify!("running command(s) through {userm}");
             userm
         } else {
             let defm = Self::get_default()?;
-            log_info!("defaulting to {defm}");
+            notify!("defaulting to {defm}");
             defm
         };
         Ok(man)
     }
-    /// Get default package manager. Priority is set in the declaration of [``manager::Manager``] enum.
+
     /// First enum variant is given the highest priority, second, the second highest, and so on.
     fn get_default() -> Result<DynVerified> {
         Manager::iter()
@@ -61,6 +62,7 @@ impl ManHandler {
     pub fn update(&self, pkgs: Vec<String>) -> Result<()> {
         self.execute_op(pkgs, Operation::Update)
     }
+
     /// Execute the update_all operation on the package manager
     pub fn update_all(&self) -> Result<()> {
         let man = self.get_man()?;
@@ -70,6 +72,7 @@ impl ManHandler {
         }
         Ok(())
     }
+
     /// Handles three different types of [``Operation``]s on packages: Install, Uninstall and Update
     fn execute_op(&self, raw_pkgs: Vec<String>, op: Operation) -> Result<()> {
         let pkgs: Vec<_> = raw_pkgs.iter().map(|p| parser::pkg_parse(p)).collect();
@@ -83,6 +86,7 @@ impl ManHandler {
         }
         Ok(())
     }
+
     /// Does the same as the [``PackageManager::add_repo``] fn
     pub fn add_repo(&self, repo: &str) -> Result<()> {
         let man = self.get_man()?;
@@ -106,7 +110,7 @@ impl ManHandler {
     pub fn list(&self) -> Result<()> {
         let man = self.get_man()?;
         let pkgs = man.list_installed();
-        log_info!("{} packages found", pkgs.len());
+        notify!("{} packages found", pkgs.len());
         if !pkgs.is_empty() {
             print::print_packages(pkgs);
         }
@@ -114,13 +118,14 @@ impl ManHandler {
     }
 
     /// Does the same as the [``PackageManager::search``] fn
-    pub fn search(&self, string: &str) -> Result<()> {
+    pub fn search(&self, query: &str) -> Result<()> {
+        tracing::debug!("Searching for {query}");
         let man = self.get_man()?;
-        let pkgs = man.search(string);
+        let pkgs = man.search(query);
         if pkgs.is_empty() {
-            bail!("no packages found that match the string: {string}")
+            bail!("no packages found that match the query: {query}")
         }
-        log_info!("{} packages found", pkgs.len());
+        notify!("{} packages found for query {query}", pkgs.len());
         print::print_packages(pkgs);
         Ok(())
     }

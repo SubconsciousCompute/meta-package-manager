@@ -5,12 +5,20 @@ edition = "2021"
 license = "AGPL-3.0"
 
 [dependencies]
-anyhow = "1.0.79"
-clap = { version = "4.4", features = ["derive"] }
+anyhow = "1.0.80"
+clap = { version = "4.5", features = ["derive"] }
 colored = "2.1"
-strum = { version = "0.25", features = ["derive"] }
-tabled = { version = "0.14", features = ["color"] }
+elevate = "0.6.1"
+xmltree = "0.10"
+os_info = "3.7.0"
+strum = { version = "0.26", features = ["derive"] }
+tabled = "0.15"
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 
 [features]
 default = ["verify"]
 verify = []
+
+[dev-dependencies]
+tracing-test = "0.2.4"

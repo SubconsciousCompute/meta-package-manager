@@ -23,15 +23,23 @@ impl Default for PkgManagerHandler {
 }
 
 impl PkgManagerHandler {
-    /// Initialize with an optional package manager
+    /// Create Self with an optional uninitialised package manager.
     pub fn new(man: Option<Manager>) -> Self {
         Self(man)
     }
 
-    /// Tries to initialize the package manager PkgManagerHandler was
-    /// initialized with if its present, or else it tries to get the default
-    /// one.
-    fn get_man(&self) -> Result<DynVerified> {
+    /// Try to find the system package manager.
+    ///
+    /// First enum variant is given the highest priority, second, the second
+    /// highest, and so on.
+    pub fn default_pkg_manager() -> Result<DynVerified> {
+        Manager::iter()
+            .find_map(|m| m.init())
+            .context("no supported package manager found")
+    }
+
+    /// Get the inner package manager, if `None` then return the system's default pacakge manager.
+    fn get_pkg_manager(&self) -> Result<DynVerified> {
         let man = if let Some(m) = &self.0 {
             let userm = m
                 .init()
@@ -39,19 +47,11 @@ impl PkgManagerHandler {
             notify!("running command(s) through {userm}");
             userm
         } else {
-            let defm = Self::get_default()?;
+            let defm = Self::default_pkg_manager()?;
             notify!("defaulting to {defm}");
             defm
         };
         Ok(man)
-    }
-
-    /// First enum variant is given the highest priority, second, the second
-    /// highest, and so on.
-    pub fn get_default() -> Result<DynVerified> {
-        Manager::iter()
-            .find_map(|m| m.init())
-            .context("no supported package manager found")
     }
 
     /// Wrapper for [``Self::execute_op``]
@@ -71,7 +71,7 @@ impl PkgManagerHandler {
 
     /// Execute the update_all operation on the package manager
     pub fn update_all(&self) -> Result<()> {
-        let man = self.get_man()?;
+        let man = self.get_pkg_manager()?;
         let status = man.update_all();
         if !status.success() {
             bail!("failed to update all packages using {man} with {status}");
@@ -83,7 +83,7 @@ impl PkgManagerHandler {
     /// Uninstall and Update
     fn execute_op(&self, raw_pkgs: Vec<String>, op: Operation) -> Result<()> {
         let pkgs: Vec<_> = raw_pkgs.iter().map(|p| parser::pkg_parse(p)).collect();
-        let man = self.get_man()?;
+        let man = self.get_pkg_manager()?;
         let status = man.exec_op(&pkgs, op);
         if !status.success() {
             bail!(
@@ -96,7 +96,7 @@ impl PkgManagerHandler {
 
     /// Does the same as the [``PackageManager::add_repo``] fn
     pub fn add_repo(&self, repo: &str) -> Result<()> {
-        let man = self.get_man()?;
+        let man = self.get_pkg_manager()?;
         if let Err(err) = man.add_repo(repo) {
             bail!("{err}")
         }
@@ -105,7 +105,7 @@ impl PkgManagerHandler {
 
     /// Does the same as the [``PackageManager::sync``] fn
     pub fn sync(&self) -> Result<()> {
-        let man = self.get_man()?;
+        let man = self.get_pkg_manager()?;
         let status = man.sync();
         if !status.success() {
             bail!("failed to sync {man} due to {status}")
@@ -115,7 +115,7 @@ impl PkgManagerHandler {
 
     /// Does the same as the [``PackageManager::list``] fn
     pub fn list(&self) -> Result<()> {
-        let man = self.get_man()?;
+        let man = self.get_pkg_manager()?;
         let pkgs = man.list_installed();
         notify!("{} packages found", pkgs.len());
         if !pkgs.is_empty() {
@@ -127,7 +127,7 @@ impl PkgManagerHandler {
     /// Does the same as the [``PackageManager::search``] fn
     pub fn search(&self, query: &str) -> Result<()> {
         tracing::debug!("Searching for {query}");
-        let man = self.get_man()?;
+        let man = self.get_pkg_manager()?;
         let pkgs = man.search(query);
         if pkgs.is_empty() {
             bail!("no packages found that match the query: {query}")

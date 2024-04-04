@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2024-04-05
+
+- Adds support for zypper (openSUSE).
+- ManHandler renamed to PkgManagerHandler 
+
 ## [0.3.1] - 2024-01-04
 
 - refactor: Merged workspace into single crate

@@ -13,21 +13,25 @@ pub mod print;
 use crate::{verify::DynVerified, Operation};
 
 /// Primary interface to executing the CLI commands
-/// "ManHandler" because it handles Package Managers, and it's funny
-pub struct ManHandler {
-    man: Option<Manager>,
+/// "PkgManagerHandler" because it handles Package Managers, and it's funny
+pub struct PkgManagerHandler(Option<Manager>);
+
+impl Default for PkgManagerHandler {
+    fn default() -> Self {
+        Self::new(None)
+    }
 }
 
-impl ManHandler {
+impl PkgManagerHandler {
     /// Initialize with an optional package manager
     pub fn new(man: Option<Manager>) -> Self {
-        Self { man }
+        Self(man)
     }
 
-    /// Tries to initialize the package manager ManHandler was initialized with
+    /// Tries to initialize the package manager PkgManagerHandler was initialized with
     /// if its present, or else it tries to get the default one.
     fn get_man(&self) -> Result<DynVerified> {
-        let man = if let Some(m) = &self.man {
+        let man = if let Some(m) = &self.0 {
             let userm = m
                 .init()
                 .context("requested package manager is unavailable")?;
@@ -43,7 +47,7 @@ impl ManHandler {
 
     /// First enum variant is given the highest priority, second, the second
     /// highest, and so on.
-    fn get_default() -> Result<DynVerified> {
+    pub fn get_default() -> Result<DynVerified> {
         Manager::iter()
             .find_map(|m| m.init())
             .context("no supported package manager found")
@@ -135,7 +139,7 @@ impl ManHandler {
 
 /// Function that handles the parsed CLI arguments in one place
 pub fn execute(args: Cli) -> Result<()> {
-    let handler = ManHandler::new(args.manager);
+    let handler = PkgManagerHandler::new(args.manager);
     match args.command {
         Commands::Managers => print::print_managers(),
         Commands::Search { string } => handler.search(&string)?,

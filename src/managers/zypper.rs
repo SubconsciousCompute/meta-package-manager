@@ -7,7 +7,6 @@ use std::{fmt::Display, process::Command};
 #[derive(Debug)]
 pub struct Zypper;
 
-
 impl PackageManager for Zypper {
     fn pkg_delimiter(&self) -> char {
         '-'

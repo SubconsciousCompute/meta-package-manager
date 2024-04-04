@@ -77,6 +77,7 @@ impl Display for DynVerified {
 /// The current implementation merely runs the primary package-manager command
 /// and checks if it returns an error or not.
 pub fn is_installed<P: PackageManager + ?Sized>(pm: &P) -> bool {
+    tracing::trace!("Checking if {pm:?} is installed: {:?}", pm.cmd());
     pm.cmd()
         .stdout(Stdio::null())
         .stderr(Stdio::null())

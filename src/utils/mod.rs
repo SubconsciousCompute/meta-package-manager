@@ -28,8 +28,9 @@ impl PkgManagerHandler {
         Self(man)
     }
 
-    /// Tries to initialize the package manager PkgManagerHandler was initialized with
-    /// if its present, or else it tries to get the default one.
+    /// Tries to initialize the package manager PkgManagerHandler was
+    /// initialized with if its present, or else it tries to get the default
+    /// one.
     fn get_man(&self) -> Result<DynVerified> {
         let man = if let Some(m) = &self.0 {
             let userm = m

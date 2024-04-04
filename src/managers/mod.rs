@@ -21,8 +21,7 @@ pub use zypper::Zypper;
 #[cfg(test)]
 mod tests {
 
-    use crate::verify::Verify;
-    use crate::PackageManager;
+    use crate::{verify::Verify, PackageManager};
 
     #[cfg(target_os = "osx")]
     #[test]

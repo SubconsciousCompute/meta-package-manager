@@ -1,25 +1,35 @@
-//! This module contains types that are used to signify that a package manager is installed / is in path and is safe to use.
+//! This module contains types that are used to signify that a package manager
+//! is installed / is in path and is safe to use.
 //!
-//! The [``crate::Commands``] trait (which the [``PackageManager``] trait relies on) internally uses `unwrap` on [``std::process::Command``] when it is executed to avoid
-//! extra error-handling on the user side. This is safe and won't cause a panic when the primary command of the given package maanger
+//! The [``crate::Commands``] trait (which the [``PackageManager``] trait relies
+//! on) internally uses `unwrap` on [``std::process::Command``] when it is
+//! executed to avoid extra error-handling on the user side. This is safe and
+//! won't cause a panic when the primary command of the given package maanger
 //! works (i.e. is in path), which is the assumption the API makes.
-//! However, the user cannot always be trusted to ensure this assumption holds true. Therefore, one can rely on the functionality provided by this
-//! module to check if a package manager is installed / is in path, and then construct a type that marks that it is now safe to use.
-//! This is done by leveraging the type system: the verified types can only be constructed using their provided constructor functions.
-//! They internally use the [``is_installed``] function and return `Some(Self)` only if it returns `true`.
+//! However, the user cannot always be trusted to ensure this assumption holds
+//! true. Therefore, one can rely on the functionality provided by this
+//! module to check if a package manager is installed / is in path, and then
+//! construct a type that marks that it is now safe to use. This is done by
+//! leveraging the type system: the verified types can only be constructed using
+//! their provided constructor functions. They internally use the
+//! [``is_installed``] function and return `Some(Self)` only if it returns
+//! `true`.
 //!
-//! The type [``Verified``] is a generic wrapper that works with any `T` that implements the [``PackageManager``] trait.
-//! [``DynVerified``] is similar, except that it internally stores the type `T` as `Box<dyn PackageManager>` to allow dynamic dispatch with ease.
-//! These types can be constructed manaully by using their respective constructors or use the [``Verify``] trait, which provides a blanket implementation
-//! and lets you construct them directly from any instance of a type that implements [``PackageManager``].
-//! For example, `MyPackageMan::new().verify()` or `MyPackageMan::new().verify_dyn()`.
+//! The type [``Verified``] is a generic wrapper that works with any `T` that
+//! implements the [``PackageManager``] trait. [``DynVerified``] is similar,
+//! except that it internally stores the type `T` as `Box<dyn PackageManager>`
+//! to allow dynamic dispatch with ease. These types can be constructed manaully
+//! by using their respective constructors or use the [``Verify``] trait, which
+//! provides a blanket implementation and lets you construct them directly from
+//! any instance of a type that implements [``PackageManager``]. For example,
+//! `MyPackageMan::new().verify()` or `MyPackageMan::new().verify_dyn()`.
 use std::ops::Deref;
 
 use crate::PackageManager;
 use std::{fmt::Display, process::Stdio};
 
-/// Wraps `T` that implements [``PackageManager``] and only constructs an instance
-/// if the given package manager is installed / is in path.
+/// Wraps `T` that implements [``PackageManager``] and only constructs an
+/// instance if the given package manager is installed / is in path.
 #[derive(Debug)]
 pub struct Verified<T> {
     inner: T,
@@ -44,8 +54,9 @@ impl<T: PackageManager> Display for Verified<T> {
     }
 }
 
-/// Converts `T` that implements [``PackageManager``] into `Box<dyn PackageManager>` and only constructs an instance
-/// if the given package manager is installed / is in path.
+/// Converts `T` that implements [``PackageManager``] into `Box<dyn
+/// PackageManager>` and only constructs an instance if the given package
+/// manager is installed / is in path.
 #[derive(Debug)]
 pub struct DynVerified {
     inner: Box<dyn PackageManager>,
@@ -88,19 +99,20 @@ pub fn is_installed<P: PackageManager + ?Sized>(pm: &P) -> bool {
 /// Helper trait that lets you construct a verified package manager instance
 /// that is known to be installed or in path, and is safe to be interacted with.
 ///
-/// This trait has a blanket implementation for all T that implement PackageManager
+/// This trait has a blanket implementation for all T that implement
+/// PackageManager
 pub trait Verify: PackageManager
 where
     Self: Sized,
 {
-    /// Creates an instance of [``Verified``], which signifies that the package manager
-    /// is installed and is safe to be interacted with.
+    /// Creates an instance of [``Verified``], which signifies that the package
+    /// manager is installed and is safe to be interacted with.
     fn verify(self) -> Option<Verified<Self>> {
         Verified::new(self)
     }
 
-    /// Creates an instance of [``DynVerified``], which signifies that the package manager
-    /// is installed and is safe to be interacted with.
+    /// Creates an instance of [``DynVerified``], which signifies that the
+    /// package manager is installed and is safe to be interacted with.
     ///
     /// Note: This internally converts and stores `Self` as `dyn PackageManager`
     fn verify_dyn(self) -> Option<DynVerified>

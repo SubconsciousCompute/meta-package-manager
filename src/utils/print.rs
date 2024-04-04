@@ -65,7 +65,8 @@ pub fn print_packages(pkgs: Vec<Package>) {
     print_table(table);
 }
 
-/// Creates a table and prints supported package managers with availability information
+/// Creates a table and prints supported package managers with availability
+/// information
 pub fn print_managers() {
     notify!(
         "a total of {} package managers are supported",

@@ -5,8 +5,8 @@ use std::{fmt::Display, process::Command};
 ///
 /// [DNF, the next-generation replacement for YUM — dnf latest documentation](https://dnf.readthedocs.io/en/latest/)
 /// # Idiosyncracies
-/// The [``DandifiedYUM::add_repo``] method also installs `config-manager` plugin for DNF
-/// before attempting to add a repo.
+/// The [``DandifiedYUM::add_repo``] method also installs `config-manager`
+/// plugin for DNF before attempting to add a repo.
 #[derive(Debug)]
 pub struct DandifiedYUM;
 

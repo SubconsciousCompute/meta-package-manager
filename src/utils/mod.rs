@@ -41,7 +41,8 @@ impl ManHandler {
         Ok(man)
     }
 
-    /// First enum variant is given the highest priority, second, the second highest, and so on.
+    /// First enum variant is given the highest priority, second, the second
+    /// highest, and so on.
     fn get_default() -> Result<DynVerified> {
         Manager::iter()
             .find_map(|m| m.init())
@@ -73,7 +74,8 @@ impl ManHandler {
         Ok(())
     }
 
-    /// Handles three different types of [``Operation``]s on packages: Install, Uninstall and Update
+    /// Handles three different types of [``Operation``]s on packages: Install,
+    /// Uninstall and Update
     fn execute_op(&self, raw_pkgs: Vec<String>, op: Operation) -> Result<()> {
         let pkgs: Vec<_> = raw_pkgs.iter().map(|p| parser::pkg_parse(p)).collect();
         let man = self.get_man()?;

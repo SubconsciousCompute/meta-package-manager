@@ -1,7 +1,6 @@
 //! Tests
 
-use mpm::verify::Verify;
-use mpm::*;
+use mpm::{verify::Verify, *};
 
 #[cfg(target_os = "osx")]
 #[test]

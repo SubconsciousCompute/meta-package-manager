@@ -3,14 +3,18 @@ use std::fmt::Display;
 use clap::ValueEnum;
 use strum::{EnumCount, EnumIter};
 
-use crate::managers::{
-    AdvancedPackageTool, Chocolatey, DandifiedYUM, Homebrew, YellowdogUpdaterModified, Zypper,
+use crate::{
+    managers::{
+        AdvancedPackageTool, Chocolatey, DandifiedYUM, Homebrew, YellowdogUpdaterModified, Zypper,
+    },
+    verify::{DynVerified, Verify},
 };
-use crate::verify::{DynVerified, Verify};
 
-/// Declarative macro for initializing a package manager based on the cfg predicate
+/// Declarative macro for initializing a package manager based on the cfg
+/// predicate
 ///
-/// Takes a package manager instance and a cfg predicate (same as the cfg attribute or macro) and attempts to constructs a [``DynVerified``] instance
+/// Takes a package manager instance and a cfg predicate (same as the cfg
+/// attribute or macro) and attempts to constructs a [``DynVerified``] instance
 /// if the cfg predicate evaluates to true, otherwise returns None
 macro_rules! if_cfg {
     ($pm:expr, $($cfg:tt)+) => {
@@ -25,14 +29,15 @@ macro_rules! if_cfg {
 /// The enum lists all the supported package managers in one place
 ///
 /// The same enum is used in the Cli command parser.
-/// Any package manager names that are too long should have an alias, which will let the users of the CLI
-/// access the package manager without having to write the full name.
+/// Any package manager names that are too long should have an alias, which will
+/// let the users of the CLI access the package manager without having to write
+/// the full name.
 ///
-/// The order of the listing is also important. The order dictates priority during selection of the default
-/// package manager.
+/// The order of the listing is also important. The order dictates priority
+/// during selection of the default package manager.
 ///
-/// Adding support to a new package manager involves creating a new variant of its name and writing the appropriate
-/// [``Manager::init``] implementation.
+/// Adding support to a new package manager involves creating a new variant of
+/// its name and writing the appropriate [``Manager::init``] implementation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, EnumCount, ValueEnum)]
 #[value(rename_all = "lower")]
 #[non_exhaustive]
@@ -46,7 +51,8 @@ pub enum Manager {
 }
 
 impl Manager {
-    /// Initialize the corresponding package maanger from genpack library into a [``DynVerified``] type
+    /// Initialize the corresponding package maanger from genpack library into a
+    /// [``DynVerified``] type
     pub fn init(&self) -> Option<DynVerified> {
         match self {
             Manager::Brew => {
@@ -74,6 +80,18 @@ impl Manager {
             }
         }
     }
+
+    /// Return the supported pkg format e.g. deb, rpm etc.
+    pub fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
+        match self {
+            Self::Brew => vec![PkgFormat::Bottle],
+            Self::Choco => vec![PkgFormat::Exe, PkgFormat::Msi],
+            Self::Apt => vec![PkgFormat::Deb],
+            Self::Dnf => vec![PkgFormat::Rpm],
+            Self::Yum => vec![PkgFormat::Rpm],
+            Self::Zypper => vec![PkgFormat::Rpm],
+        }
+    }
 }
 
 impl Display for Manager {
@@ -86,5 +104,29 @@ impl Display for Manager {
             Manager::Zypper => Zypper.fmt(f),
             Manager::Yum => YellowdogUpdaterModified::default().fmt(f),
         }
+    }
+}
+
+/// Pkg Format.
+#[derive(Clone)]
+pub enum PkgFormat {
+    Bottle,
+    Exe,
+    Msi,
+    Rpm,
+    Deb,
+}
+
+impl PkgFormat {
+    /// File extension of package.
+    pub fn file_extention(&self) -> String {
+        match self {
+            Self::Bottle => "tar.gz",
+            Self::Exe => "exe",
+            Self::Msi => "msi",
+            Self::Rpm => "rpm",
+            Self::Deb => "deb",
+        }
+        .to_string()
     }
 }

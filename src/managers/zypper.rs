@@ -1,7 +1,8 @@
 //! Zypper package manager
 
-use crate::{Cmd, Commands, Package, PackageManager, RepoError};
 use std::{fmt::Display, process::Command};
+
+use crate::{Cmd, Commands, Package, PackageManager, RepoError};
 
 /// Wrapper for Zypper package manager. Some openSUSE might support dnf as well.
 #[derive(Debug)]
@@ -14,7 +15,8 @@ impl PackageManager for Zypper {
 
     /// Parses output, generally from stdout, to a Vec of Packages.
     ///
-    /// The default implementation uses [``PackageManager::parse_pkg``] for parsing each line into a [`Package`].
+    /// The default implementation uses [``PackageManager::parse_pkg``] for
+    /// parsing each line into a [`Package`].
     fn parse_output(&self, out: &[u8]) -> Vec<Package> {
         use xmltree::Element;
 
@@ -109,8 +111,9 @@ impl Commands for Zypper {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tracing_test::traced_test;
+
+    use super::*;
 
     #[test]
     #[traced_test]

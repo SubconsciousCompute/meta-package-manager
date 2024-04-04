@@ -1,5 +1,3 @@
-use super::Manager;
-use crate::Package;
 use anyhow::Error;
 use colored::{ColoredString, Colorize};
 use strum::{EnumCount, IntoEnumIterator};
@@ -7,6 +5,8 @@ use tabled::{
     settings::{object::Rows, themes::Colorization, Color, Style},
     Table, Tabled,
 };
+
+use crate::{utils::manager::Manager, Package};
 
 /// Takes a format string and prints it in the format "Info {format_str}"
 macro_rules! notify {
@@ -19,17 +19,26 @@ macro_rules! notify {
 
 /// Struct used for printing supported package managers in a table
 #[derive(Tabled)]
-#[allow(non_snake_case)]
+#[tabled(rename_all = "PascalCase")]
 struct Listing {
-    Supported: Manager,
-    Available: ColoredString,
+    supported: Manager,
+    /// CSV of support formats.
+    file_extensions: ColoredString,
+    available: ColoredString,
 }
 
 impl Listing {
     fn new(pm: Manager) -> Self {
         Listing {
-            Supported: pm,
-            Available: if pm.init().is_some() {
+            supported: pm,
+            file_extensions: pm
+                .supported_pkg_formats()
+                .iter()
+                .map(|pkg| pkg.file_extention())
+                .collect::<Vec<_>>()
+                .join(", ")
+                .green(),
+            available: if pm.init().is_some() {
                 "Yes".green()
             } else {
                 "No".red()
@@ -65,7 +74,8 @@ pub fn print_packages(pkgs: Vec<Package>) {
     print_table(table);
 }
 
-/// Creates a table and prints supported package managers with availability information
+/// Creates a table and prints supported package managers with availability
+/// information
 pub fn print_managers() {
     notify!(
         "a total of {} package managers are supported",

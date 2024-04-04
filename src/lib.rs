@@ -22,15 +22,18 @@ mod libtests;
 pub trait PackageManager: Commands + Debug + Display {
     /// Defines a delimeter to use while formatting package name and version
     ///
-    /// For example, HomeBrew supports `<name>@<version>` and APT supports `<name>=<version>`.
-    /// Their appropriate delimiters would be '@' and '=', respectively.
-    /// For package managers that require additional formatting, overriding the default trait methods would be the way to go.
+    /// For example, HomeBrew supports `<name>@<version>` and APT supports
+    /// `<name>=<version>`. Their appropriate delimiters would be '@' and
+    /// '=', respectively. For package managers that require additional
+    /// formatting, overriding the default trait methods would be the way to go.
     fn pkg_delimiter(&self) -> char;
 
     /// Get a formatted string of the package as <name><delimiter><version>
     ///
-    /// Note: this functions returns a formatted string only if version information is present.
-    /// Otherwise, only a borrowed name string is returned. Which is why this function returns a 'Cow<str>' and not a `String`.
+    /// Note: this functions returns a formatted string only if version
+    /// information is present. Otherwise, only a borrowed name string is
+    /// returned. Which is why this function returns a 'Cow<str>' and not a
+    /// `String`.
     fn pkg_format<'a>(&self, pkg: &'a Package) -> Cow<'a, str> {
         if let Some(v) = pkg.version() {
             format!("{}{}{}", pkg.name, self.pkg_delimiter(), v).into()
@@ -38,13 +41,19 @@ pub trait PackageManager: Commands + Debug + Display {
             pkg.name().into()
         }
     }
-    /// Returns a package after parsing a line of stdout output from the underlying package manager.
+    /// Returns a package after parsing a line of stdout output from the
+    /// underlying package manager.
     ///
-    /// This method is internally used in other default methods like [``PackageManager::search``] to parse packages from the output.
+    /// This method is internally used in other default methods like
+    /// [``PackageManager::search``] to parse packages from the output.
     ///
-    /// The default implementation merely tries to split the line at the provided delimiter (see [``PackageManager::pkg_delimiter``])
-    /// and trims spaces. It returns a package with version information on success, or else it returns a package with only a package name.
-    /// For package maangers that have unusual or complex output, users are free to override this method. Note: Remember to construct a package with owned values in this method.
+    /// The default implementation merely tries to split the line at the
+    /// provided delimiter (see [``PackageManager::pkg_delimiter``])
+    /// and trims spaces. It returns a package with version information on
+    /// success, or else it returns a package with only a package name.
+    /// For package maangers that have unusual or complex output, users are free
+    /// to override this method. Note: Remember to construct a package with
+    /// owned values in this method.
     fn parse_pkg<'a>(&self, line: &str) -> Option<Package<'a>> {
         let pkg = if let Some((name, version)) = line.split_once(self.pkg_delimiter()) {
             Package::from(name.trim().to_owned()).with_version(version.trim().to_owned())
@@ -56,7 +65,8 @@ pub trait PackageManager: Commands + Debug + Display {
 
     /// Parses output, generally from stdout, to a Vec of Packages.
     ///
-    /// The default implementation uses [``PackageManager::parse_pkg``] for parsing each line into a [`Package`].
+    /// The default implementation uses [``PackageManager::parse_pkg``] for
+    /// parsing each line into a [`Package`].
     fn parse_output(&self, out: &[u8]) -> Vec<Package> {
         let outstr = String::from_utf8_lossy(out);
         outstr
@@ -116,7 +126,8 @@ pub trait PackageManager: Commands + Debug + Display {
         self.parse_output(&out.stdout)
     }
 
-    /// Execute an operation on multiple packages, such as install, uninstall and update
+    /// Execute an operation on multiple packages, such as install, uninstall
+    /// and update
     fn exec_op(&self, pkgs: &[Package], op: Operation) -> ExitStatus {
         let command = match op {
             Operation::Install => Cmd::Install,
@@ -133,8 +144,9 @@ pub trait PackageManager: Commands + Debug + Display {
 
     /// Add third-party repository to the package manager's repository list
     ///
-    /// Since the implementation might greatly vary among different package managers
-    /// this method returns a `Result` instead of the usual `ExitStatus`.
+    /// Since the implementation might greatly vary among different package
+    /// managers this method returns a `Result` instead of the usual
+    /// `ExitStatus`.
     fn add_repo(&self, repo: &str) -> Result<(), RepoError> {
         let cmds = self.consolidated(Cmd::AddRepo, &[repo]);
         self.exec_cmds_status(&cmds)
@@ -146,7 +158,8 @@ pub trait PackageManager: Commands + Debug + Display {
 
 /// Error type for indicating failure in [``PackageManager::add_repo``]
 ///
-/// Use [``RepoError::default``] when no meaningful source of the error is available.
+/// Use [``RepoError::default``] when no meaningful source of the error is
+/// available.
 #[derive(Default, Debug)]
 pub struct RepoError {
     pub source: Option<Box<dyn Error + 'static>>,
@@ -155,7 +168,8 @@ pub struct RepoError {
 impl RepoError {
     /// Construct `RepoError` with underlying error source/cause
     ///
-    /// Use [``RepoError::default``] when no meaningful source of the error is available.
+    /// Use [``RepoError::default``] when no meaningful source of the error is
+    /// available.
     pub fn new<E: Error + 'static>(source: E) -> Self {
         Self {
             source: Some(Box::new(source)),
@@ -165,7 +179,8 @@ impl RepoError {
     /// Construct 'RepoError' with an error message set as its error source
     ///
     /// Use [``RepoError::new``] to wrap an existing error.
-    /// Use [``RepoError::default``] when no meaningful source of the error is available.
+    /// Use [``RepoError::default``] when no meaningful source of the error is
+    /// available.
     pub fn with_msg(msg: &'static str) -> Self {
         Self {
             source: Some(msg.into()),
@@ -191,23 +206,32 @@ impl Error for RepoError {
 
 /// Trait for defining package panager commands in one place
 ///
-/// Only [``Commands::cmd``] and [``Commands::commands``] are required, the rest are simply conviniece methods
-/// that internally call [``Commands::commands``]. The trait [``PackageManager``] depends on this to provide default implementations.
+/// Only [``Commands::cmd``] and [``Commands::commands``] are required, the rest
+/// are simply conviniece methods that internally call [``Commands::commands``].
+/// The trait [``PackageManager``] depends on this to provide default
+/// implementations.
 pub trait Commands {
-    /// Primary command of the package manager. For example, 'brew', 'apt', and 'dnf', constructed with [``std::process::Command::new``].
+    /// Primary command of the package manager. For example, 'brew', 'apt', and
+    /// 'dnf', constructed with [``std::process::Command::new``].
     fn cmd(&self) -> Command;
-    /// Returns the appropriate command/s for the given supported command type. Check [``Cmd``] enum to see all supported commands.
+    /// Returns the appropriate command/s for the given supported command type.
+    /// Check [``Cmd``] enum to see all supported commands.
     fn get_cmds(&self, cmd: Cmd) -> &'static [&'static str];
-    /// Returns the appropriate flags for the given command type. Check [``Cmd``] enum to see all supported commands.
+    /// Returns the appropriate flags for the given command type. Check
+    /// [``Cmd``] enum to see all supported commands.
     ///
-    /// Flags are optional, which is why the default implementation returns an empty slice
+    /// Flags are optional, which is why the default implementation returns an
+    /// empty slice
     fn get_flags(&self, _cmd: Cmd) -> &'static [&'static str] {
         &[]
     }
-    /// Retreives defined commands and flags for the given [``Cmd``] type and returns a Vec of args in the order: `[commands..., user-args..., flags...]`
+    /// Retreives defined commands and flags for the given [``Cmd``] type and
+    /// returns a Vec of args in the order: `[commands..., user-args...,
+    /// flags...]`
     ///
-    /// The appropriate commands and flags are determined with the help of the enum [``Cmd``]
-    /// For finer control, a general purpose function [``consolidated_args``] is also provided.
+    /// The appropriate commands and flags are determined with the help of the
+    /// enum [``Cmd``] For finer control, a general purpose function
+    /// [``consolidated_args``] is also provided.
     #[inline]
     fn consolidated<'a>(&self, cmd: Cmd, args: &[&'a str]) -> Vec<&'a str> {
         let commands = self.get_cmds(cmd);
@@ -222,10 +246,12 @@ pub trait Commands {
         );
         vec
     }
-    /// Run arbitrary commands against the package manager command and get output
+    /// Run arbitrary commands against the package manager command and get
+    /// output
     ///
     /// # Panics
-    /// This fn can panic when the defined [``Commands::cmd``] is not found in path. This can be avoided by using [``verified::Verified``]
+    /// This fn can panic when the defined [``Commands::cmd``] is not found in
+    /// path. This can be avoided by using [``verified::Verified``]
     /// or manually ensuring that the [``Commands::cmd``] is valid.
     fn exec_cmds(&self, cmds: &[&str]) -> Output {
         tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
@@ -234,10 +260,12 @@ pub trait Commands {
             .output()
             .expect("command executed without a prior check")
     }
-    /// Run arbitrary commands against the package manager command and wait for ExitStatus
+    /// Run arbitrary commands against the package manager command and wait for
+    /// ExitStatus
     ///
     /// # Panics
-    /// This fn can panic when the defined [``Commands::cmd``] is not found in path. This can be avoided by using [``verified::Verified``]
+    /// This fn can panic when the defined [``Commands::cmd``] is not found in
+    /// path. This can be avoided by using [``verified::Verified``]
     /// or manually ensuring that the [``Commands::cmd``] is valid.
     fn exec_cmds_status(&self, cmds: &[&str]) -> ExitStatus {
         self.cmd()
@@ -245,10 +273,12 @@ pub trait Commands {
             .status()
             .expect("command executed without a prior check")
     }
-    /// Run arbitrary commands against the package manager command and return handle to the spawned process
+    /// Run arbitrary commands against the package manager command and return
+    /// handle to the spawned process
     ///
     /// # Panics
-    /// This fn can panic when the defined [``Commands::cmd``] is not found in path. This can be avoided by using [``verified::Verified``]
+    /// This fn can panic when the defined [``Commands::cmd``] is not found in
+    /// path. This can be avoided by using [``verified::Verified``]
     /// or manually ensuring that the [``Commands::cmd``] is valid.
     fn exec_cmds_spawn(&self, cmds: &[&str]) -> Child {
         self.cmd()
@@ -260,8 +290,8 @@ pub trait Commands {
 
 /// Representation of a package manager command
 ///
-/// All the variants are the type of commands that a type that imlements [``Commands``] and
-/// [``PackageManager``] (should) support.
+/// All the variants are the type of commands that a type that imlements
+/// [``Commands``] and [``PackageManager``] (should) support.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Cmd {
     Install,
@@ -277,8 +307,9 @@ pub enum Cmd {
 /// A representation of a package
 ///
 /// This struct contains package's name and version information (optional).
-/// It can be constructed with any type that implements `Into<Cow<sr>>`, for example, `&str` and `String`.
-/// `Package::from("python")` or with version, `Package::from("python").with_version("3.10.0")`.
+/// It can be constructed with any type that implements `Into<Cow<sr>>`, for
+/// example, `&str` and `String`. `Package::from("python")` or with version,
+/// `Package::from("python").with_version("3.10.0")`.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Package<'a> {
     name: Cow<'a, str>,
@@ -340,7 +371,8 @@ pub enum Operation {
     Update,
 }
 
-/// General purpose version of [``Commands::consolidated``] for consolidating different types of arguments into a single Vec
+/// General purpose version of [``Commands::consolidated``] for consolidating
+/// different types of arguments into a single Vec
 #[inline]
 pub fn consolidate_args<'a>(cmds: &[&'a str], args: &[&'a str], flags: &[&'a str]) -> Vec<&'a str> {
     let mut vec = Vec::with_capacity(cmds.len() + args.len() + flags.len());

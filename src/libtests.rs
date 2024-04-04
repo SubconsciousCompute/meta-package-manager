@@ -1,17 +1,14 @@
+#[cfg(target_family = "unix")]
+use std::os::unix::process::ExitStatusExt;
+#[cfg(target_family = "windows")]
+use std::os::windows::process::ExitStatusExt;
 use std::{
     fmt::Display,
     process::{Command, ExitStatus, Output},
 };
 
-#[cfg(target_family = "unix")]
-use std::os::unix::process::ExitStatusExt;
-
-#[cfg(target_family = "windows")]
-use std::os::windows::process::ExitStatusExt;
-
-use crate::{Package, PackageManager};
-
 use super::{Cmd, Commands};
+use crate::{Package, PackageManager};
 
 struct MockCommands;
 

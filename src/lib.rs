@@ -7,8 +7,10 @@ use std::{
     process::{Child, Command, ExitStatus, Output},
 };
 
-pub mod managers;
+mod managers;
+
 pub mod utils;
+pub use utils::PkgManagerHandler;
 
 #[cfg(feature = "verify")]
 pub mod verify;

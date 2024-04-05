@@ -295,7 +295,7 @@ pub trait Commands {
 /// example, `&str` and `String`. `Package::from("python")` or with version,
 /// `Package::from("python").with_version("3.10.0")`.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct Package {
+pub struct Package {
     name: String,
     // Untyped version, might be replaced with a strongly typed one
     version: Option<String>,

@@ -92,15 +92,6 @@ impl std::fmt::Display for MetaPackageManager {
     }
 }
 
-/// Parse user given string into package name and version. The string must have
-/// `@` for version information to be extracted.
-pub(crate) fn pkg_parse(pkg: &str) -> crate::common::Package {
-    if let Some((name, version)) = pkg.split_once('@') {
-        Package::new(name, Some(version))
-    } else {
-        Package::new(pkg, None)
-    }
-}
 
 #[cfg(test)]
 mod tests {

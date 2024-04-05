@@ -2,6 +2,8 @@
 
 use std::{error::Error, fmt::Display};
 
+const NO_VERSION: &'static str = "~";
+
 /// Primary interface for implementing a package manager
 ///
 /// Multiple package managers can be grouped together as dyn PackageManager.
@@ -291,14 +293,12 @@ pub trait Commands {
 /// A representation of a package
 ///
 /// This struct contains package's name and version information (optional).
-/// It can be constructed with any type that implements `Into<Cow<sr>>`, for
-/// example, `&str` and `String`. `Package::from("python")` or with version,
-/// `Package::from("python").with_version("3.10.0")`.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash, serde::Serialize, tabled::Tabled)]
 pub struct Package {
+    /// name of the package
     name: String,
     // Untyped version, might be replaced with a strongly typed one
-    version: Option<String>,
+    version: String,
 }
 
 impl std::str::FromStr for Package {
@@ -318,7 +318,7 @@ impl Package {
     pub fn new(name: &str, version: Option<&str>) -> Self {
         Self {
             name: name.to_string(),
-            version: version.map(|x| x.to_string()),
+            version: version.unwrap_or(NO_VERSION).to_string(),
         }
     }
 
@@ -329,13 +329,16 @@ impl Package {
 
     /// Get version information if present
     pub fn version(&self) -> Option<&str> {
-        self.version.as_deref()
+        if self.version == NO_VERSION {
+            return None;
+        }
+        Some(&self.version)
     }
 }
 
 impl Display for Package {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(v) = self.version.as_ref() {
+        if let Some(v) = self.version() {
             // might be changed later for a better format
             write!(f, "{} - {}", self.name, v)
         } else {

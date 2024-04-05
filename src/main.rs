@@ -1,7 +1,6 @@
 //! Meta Package Manager (MPM) binary
 
 use clap::Parser;
-use mpm::utils;
 use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
 fn main() {
@@ -19,8 +18,8 @@ fn main() {
     let info = os_info::get();
     tracing::info!("Detected OS {:?}", info.os_type());
 
-    if let Err(err) = utils::execute(utils::parser::Cli::parse()) {
-        utils::print::log_error(err);
+    if let Err(err) = mpm::cli::execute(mpm::cli::Cli::parse()) {
+        mpm::print::log_error(err);
         std::process::exit(1);
     }
 }

@@ -33,8 +33,11 @@ pub use common::*;
 pub mod managers;
 pub use managers::*;
 
-#[cfg(feature = "cli")]
-pub mod utils;
+#[macro_use]
+pub mod print;
+pub use print::*;
+
+pub mod cli;
 
 #[cfg(test)]
 mod tests {

@@ -1,4 +1,3 @@
-use anyhow::Error;
 use colored::{ColoredString, Colorize};
 use strum::{EnumCount, IntoEnumIterator};
 use tabled::{
@@ -81,7 +80,8 @@ pub fn print_table(mut table: Table) {
     println!("{table}");
 }
 
-pub fn log_error(err: Error) {
+/// Log error
+pub fn log_error(err: anyhow::Error) {
     eprintln!("{} {err}", "Error:".red().bold());
     for (i, cause) in err.chain().skip(1).enumerate() {
         if i == 0 {

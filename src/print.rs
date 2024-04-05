@@ -7,8 +7,6 @@ use tabled::{
 
 use crate::{common::AvailablePackageManager, managers::MetaPackageManager};
 
-use super::manager::PkgFormat;
-
 /// Takes a format string and prints it in the format "Info {format_str}"
 #[macro_export]
 macro_rules! notify {
@@ -58,18 +56,6 @@ pub fn print_managers() {
     );
     let table = Table::new(AvailablePackageManager::iter().map(Listing::new));
     print_table(table);
-}
-
-/// Prints list of supported package managers in JSON format to stdout
-#[cfg(feature = "json")]
-pub fn print_managers_json() -> anyhow::Result<()> {
-    use anyhow::Context;
-
-    let managers: Vec<_> = Manager::iter().map(PkgManangerInfo::new).collect();
-    let stdout = std::io::stdout();
-    serde_json::to_writer_pretty(stdout, &managers)
-        .context("failed to print support package managers in JSON")?;
-    Ok(())
 }
 
 /// Takes a `Table` type and sets appropriate styling options, then prints in

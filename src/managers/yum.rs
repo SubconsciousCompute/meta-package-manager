@@ -2,9 +2,6 @@ use std::{fmt::Display, process::Command};
 
 use crate::{managers::DandifiedYUM, Cmd, Commands, PackageManager};
 
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
-
 /// Wrapper for Yellowdog Updater Modified (YUM) package manager.
 ///
 /// [Chapter 14. YUM (Yellowdog Updater Modified) Red Hat Enterprise Linux 5 | Red Hat Customer Portal](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/5/html/deployment_guide/c1-yum)
@@ -12,7 +9,6 @@ use serde::{Deserialize, Serialize};
 /// Note: The current YUM implementation uses [``DandifiedYUM``]'s
 /// implementation under the hood, which is why this struct is required to be
 /// constructed by calling [``YellowdogUpdaterModified::default()``].
-#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[derive(Debug)]
 pub struct YellowdogUpdaterModified(DandifiedYUM);
 

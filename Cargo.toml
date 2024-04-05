@@ -19,12 +19,5 @@ ambassador = "0.3.6"
 serde_json = "1.0.115"
 serde = "1.0.197"
 
-[features]
-default = ["cli"]
-cli = ["verify", "json"]
-verify = []
-serde = ["dep:serde"]
-json = ["serde", "dep:serde_json"]
-
 [dev-dependencies]
 tracing-test = "0.2.4"

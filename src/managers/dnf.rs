@@ -2,9 +2,6 @@ use std::{fmt::Display, process::Command};
 
 use crate::{Cmd, Commands, Package, PackageManager};
 
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
-
 /// Wrapper for DandifiedYUM or DNF, the next upcoming major version of YUM
 ///
 /// [DNF, the next-generation replacement for YUM — dnf latest documentation](https://dnf.readthedocs.io/en/latest/)

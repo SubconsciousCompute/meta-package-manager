@@ -1,4 +1,3 @@
-use crate::{Cmd, Commands, Package, PackageManager, RepoError};
 use std::{fmt::Display, fs, io::Write, process::Command};
 
 use crate::{common::Package, Cmd, Commands, PackageManager};

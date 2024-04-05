@@ -6,14 +6,13 @@ use tabled::{
     Table, Tabled,
 };
 
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
-
-use crate::{utils::manager::Manager, Package};
+use crate::common::AvailablePackageManager;
+use crate::{managers::MetaPackageManager, Package};
 
 use super::manager::PkgFormat;
 
 /// Takes a format string and prints it in the format "Info {format_str}"
+#[macro_export]
 macro_rules! notify {
     ($($fmt:tt)+) => {
         {
@@ -26,16 +25,16 @@ macro_rules! notify {
 #[derive(Tabled)]
 #[tabled(rename_all = "PascalCase")]
 struct Listing {
-    supported: Manager,
+    supported: ColoredString,
     /// CSV of support formats.
     file_extensions: ColoredString,
     available: ColoredString,
 }
 
 impl Listing {
-    fn new(pm: Manager) -> Self {
+    pub(crate) fn new(pm: AvailablePackageManager) -> Self {
         Listing {
-            supported: pm,
+            supported: format!("{pm:?}").green(),
             file_extensions: pm
                 .supported_pkg_formats()
                 .iter()
@@ -43,7 +42,7 @@ impl Listing {
                 .collect::<Vec<_>>()
                 .join(", ")
                 .green(),
-            available: if pm.init().is_some() {
+            available: if MetaPackageManager::try_new(pm).is_ok() {
                 "Yes".green()
             } else {
                 "No".red()
@@ -75,13 +74,13 @@ impl PkgManangerInfo {
 /// Struct used for printing packages in a table
 #[derive(Tabled)]
 #[allow(non_snake_case)]
-struct PkgListing<'a> {
+pub(crate) struct PkgListing<'a> {
     Package: &'a str,
     Version: ColoredString,
 }
 
 impl<'a> PkgListing<'a> {
-    fn new(pkg: &'a Package<'a>) -> Self {
+    fn new(pkg: &'a Package) -> Self {
         PkgListing {
             Package: pkg.name(),
             Version: if let Some(v) = pkg.version() {
@@ -104,7 +103,7 @@ pub fn print_packages_json(pkgs: Vec<Package>) -> anyhow::Result<()> {
 }
 
 /// Creates a table and prints list of packages with version information
-pub fn print_packages(pkgs: Vec<Package>) {
+pub(crate) fn print_packages(pkgs: Vec<Package>) {
     let table = Table::new(pkgs.iter().map(PkgListing::new));
     print_table(table);
 }
@@ -114,9 +113,9 @@ pub fn print_packages(pkgs: Vec<Package>) {
 pub fn print_managers() {
     notify!(
         "a total of {} package managers are supported",
-        Manager::COUNT
+        AvailablePackageManager::COUNT
     );
-    let table = Table::new(Manager::iter().map(Listing::new));
+    let table = Table::new(AvailablePackageManager::iter().map(|pm| Listing::new(pm)));
     print_table(table);
 }
 

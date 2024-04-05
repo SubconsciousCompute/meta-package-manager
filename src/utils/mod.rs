@@ -1,193 +1,34 @@
-use anyhow::{bail, Context, Result};
-use manager::Manager;
-use strum::IntoEnumIterator;
-
-mod manager;
-
 pub mod parser;
-use parser::{Cli, Commands};
 
 #[macro_use]
 pub mod print;
 
-use crate::{verify::DynVerified, Operation};
-
-/// Primary interface to executing the CLI commands
-/// "PkgManagerHandler" because it handles Package Managers, and it's funny
-pub struct PkgManagerHandler(Option<Manager>);
-
-impl Default for PkgManagerHandler {
-    fn default() -> Self {
-        Self::new(None)
-    }
-}
-
-impl PkgManagerHandler {
-    /// Create Self with an optional uninitialised package manager.
-    pub fn new(man: Option<Manager>) -> Self {
-        Self(man)
-    }
-
-    /// Try to find the system package manager.
-    ///
-    /// First enum variant is given the highest priority, second, the second
-    /// highest, and so on.
-    pub fn default_pkg_manager() -> Result<DynVerified> {
-        Manager::iter()
-            .find_map(|m| m.init())
-            .context("no supported package manager found")
-    }
-
-    /// Get the inner package manager, if `None` then return the system's default pacakge manager.
-    fn get_pkg_manager(&self) -> Result<DynVerified> {
-        let man = if let Some(m) = &self.0 {
-            let userm = m
-                .init()
-                .context("requested package manager is unavailable")?;
-            notify!("running command(s) through {userm}");
-            userm
-        } else {
-            let defm = Self::default_pkg_manager()?;
-            notify!("defaulting to {defm}");
-            defm
-        };
-        Ok(man)
-    }
-
-    /// Wrapper for [``Self::execute_op``]
-    pub fn install(&self, pkgs: Vec<String>) -> Result<()> {
-        self.execute_op(pkgs, Operation::Install)
-    }
-
-    /// Wrapper for [``Self::execute_op``]
-    pub fn uninstall(&self, pkgs: Vec<String>) -> Result<()> {
-        self.execute_op(pkgs, Operation::Uninstall)
-    }
-
-    /// Wrapper for [``Self::execute_op``]
-    pub fn update(&self, pkgs: Vec<String>) -> Result<()> {
-        self.execute_op(pkgs, Operation::Update)
-    }
-
-    /// Execute the update_all operation on the package manager
-    pub fn update_all(&self) -> Result<()> {
-        let man = self.get_pkg_manager()?;
-        let status = man.update_all();
-        if !status.success() {
-            bail!("failed to update all packages using {man} with {status}");
-        }
-        Ok(())
-    }
-
-    /// Handles three different types of [``Operation``]s on packages: Install,
-    /// Uninstall and Update
-    fn execute_op(&self, raw_pkgs: Vec<String>, op: Operation) -> Result<()> {
-        let pkgs: Vec<_> = raw_pkgs.iter().map(|p| parser::pkg_parse(p)).collect();
-        let man = self.get_pkg_manager()?;
-        let status = man.exec_op(&pkgs, op);
-        if !status.success() {
-            bail!(
-                "failed to execute {:?} operation using {man} with {status}",
-                op,
-            );
-        }
-        Ok(())
-    }
-
-    /// Does the same as the [``PackageManager::add_repo``] fn
-    pub fn add_repo(&self, repo: &str) -> Result<()> {
-        let man = self.get_pkg_manager()?;
-        if let Err(err) = man.add_repo(repo) {
-            bail!("{err}")
-        }
-        Ok(())
-    }
-
-    /// Does the same as the [``PackageManager::sync``] fn
-    pub fn sync(&self) -> Result<()> {
-        let man = self.get_pkg_manager()?;
-        let status = man.sync();
-        if !status.success() {
-            bail!("failed to sync {man} due to {status}")
-        }
-        Ok(())
-    }
-
-    /// Does the same as the [``PackageManager::list``] fn
-    pub fn list(&self) -> Result<()> {
-        let man = self.get_pkg_manager()?;
-        let pkgs = man.list_installed();
-        notify!("{} packages found", pkgs.len());
-        if !pkgs.is_empty() {
-            print::print_packages(pkgs);
-        }
-        Ok(())
-    }
-
-    #[cfg(feature = "json")]
-    /// Does the same as the [``PkgManagerHandler::list``] fn, except the output will be in JSON
-    pub fn list_json(&self) -> Result<()> {
-        let man = self.get_pkg_manager()?;
-        let pkgs = man.list_installed();
-        print::print_packages_json(pkgs)
-    }
-
-    /// Does the same as the [``PackageManager::search``] fn
-    pub fn search(&self, query: &str) -> Result<()> {
-        tracing::debug!("Searching for {query}");
-        let man = self.get_pkg_manager()?;
-        let pkgs = man.search(query);
-        if pkgs.is_empty() {
-            bail!("no packages found that match the query: {query}")
-        }
-        notify!("{} packages found for query {query}", pkgs.len());
-        print::print_packages(pkgs);
-        Ok(())
-    }
-
-    #[cfg(feature = "json")]
-    /// Does the same as the [``PkgManagerHandler::search``] fn, except the output will be in JSON
-    pub fn search_json(&self, query: &str) -> Result<()> {
-        tracing::debug!("Searching for {query}");
-        let man = self.get_pkg_manager()?;
-        let pkgs = man.search(query);
-        print::print_packages_json(pkgs)
-    }
-}
+use parser::Cli;
+use parser::MpmCommands;
 
 /// Function that handles the parsed CLI arguments in one place
-pub fn execute(args: Cli) -> Result<()> {
-    let handler = PkgManagerHandler::new(args.manager);
+pub fn execute(args: Cli) -> anyhow::Result<()> {
+    let mpm = if let Some(manager) = args.manager {
+        crate::MetaPackageManager::try_new(manager)?
+    } else {
+        crate::MetaPackageManager::default()?
+    };
+
     match args.command {
-        Commands::Managers => {
-            if cfg!(feature = "json") && args.json {
-                return print::print_managers_json();
-            }
-            print::print_managers()
-        }
-        Commands::Search { string } => {
-            if cfg!(feature = "json") && args.json {
-                return handler.search_json(&string);
-            }
-            handler.search(&string)?
-        }
-        Commands::List => {
-            if cfg!(feature = "json") && args.json {
-                return handler.list_json();
-            }
-            handler.list()?
-        }
-        Commands::Install { packages } => handler.install(packages)?,
-        Commands::Uninstall { packages } => handler.uninstall(packages)?,
-        Commands::Update { packages, all } => {
+        MpmCommands::Managers => print::print_managers(),
+        MpmCommands::Search { string } => mpm.search(&string)?,
+        MpmCommands::List => mpm.list()?,
+        MpmCommands::Install { packages } => mpm.install(packages)?,
+        MpmCommands::Uninstall { packages } => mpm.uninstall(packages)?,
+        MpmCommands::Update { packages, all } => {
             if all {
-                handler.update_all()?
+                mpm.update_all()?
             } else {
-                handler.update(packages)?;
+                mpm.update(packages)?;
             }
         }
-        Commands::Repo { repo } => handler.add_repo(&repo)?,
-        Commands::Sync => handler.sync()?,
+        MpmCommands::Repo { repo } => mpm.add_repo(&repo)?,
+        MpmCommands::Sync => mpm.sync()?,
     };
 
     Ok(())

@@ -5,7 +5,7 @@ use crate::{Cmd, Commands, PackageManager};
 /// Wrapper for the Homebrew package manager.
 ///
 /// [Homebrew — The Missing Package Manager for macOS (or Linux)](https://brew.sh/)
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Homebrew;
 
 impl PackageManager for Homebrew {
@@ -18,16 +18,20 @@ impl Commands for Homebrew {
     fn cmd(&self) -> Command {
         Command::new("brew")
     }
-    fn get_cmds(&self, cmd: Cmd) -> &'static [&'static str] {
+
+    fn get_cmds(&self, cmd: Cmd) -> Vec<String> {
         match cmd {
-            Cmd::Install => &["install"],
-            Cmd::Uninstall => &["uninstall"],
-            Cmd::Update | Cmd::UpdateAll => &["upgrade"],
-            Cmd::List => &["list"],
-            Cmd::Sync => &["update"],
-            Cmd::AddRepo => &["tap"],
-            Cmd::Search => &["search"],
+            Cmd::Install => vec!["install"],
+            Cmd::Uninstall => vec!["uninstall"],
+            Cmd::Update | Cmd::UpdateAll => vec!["upgrade"],
+            Cmd::List => vec!["list"],
+            Cmd::Sync => vec!["update"],
+            Cmd::AddRepo => vec!["tap"],
+            Cmd::Search => vec!["search"],
         }
+        .iter()
+        .map(|x| x.to_string())
+        .collect()
     }
 }
 

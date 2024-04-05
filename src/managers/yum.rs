@@ -14,13 +14,11 @@ use serde::{Deserialize, Serialize};
 /// constructed by calling [``YellowdogUpdaterModified::default()``].
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[derive(Debug)]
-pub struct YellowdogUpdaterModified {
-    dnf: DandifiedYUM,
-}
+pub struct YellowdogUpdaterModified(DandifiedYUM);
 
 impl Default for YellowdogUpdaterModified {
     fn default() -> Self {
-        Self { dnf: DandifiedYUM }
+        Self(DandifiedYUM)
     }
 }
 
@@ -32,13 +30,13 @@ impl Display for YellowdogUpdaterModified {
 
 impl PackageManager for YellowdogUpdaterModified {
     fn pkg_delimiter(&self) -> char {
-        self.dnf.pkg_delimiter()
+        self.0.pkg_delimiter()
     }
-    fn parse_pkg<'a>(&self, line: &str) -> Option<crate::Package<'a>> {
-        self.dnf.parse_pkg(line)
+    fn parse_pkg<'a>(&self, line: &str) -> Option<crate::Package> {
+        self.0.parse_pkg(line)
     }
     fn add_repo(&self, repo: &str) -> Result<(), crate::RepoError> {
-        self.dnf.add_repo(repo)
+        self.0.add_repo(repo)
     }
 }
 
@@ -46,10 +44,10 @@ impl Commands for YellowdogUpdaterModified {
     fn cmd(&self) -> Command {
         Command::new("yum")
     }
-    fn get_cmds(&self, cmd: crate::Cmd) -> &'static [&'static str] {
-        self.dnf.get_cmds(cmd)
+    fn get_cmds(&self, cmd: crate::Cmd) -> Vec<String> {
+        self.0.get_cmds(cmd)
     }
-    fn get_flags(&self, cmd: Cmd) -> &'static [&'static str] {
-        self.dnf.get_flags(cmd)
+    fn get_flags(&self, cmd: Cmd) -> Vec<String> {
+        self.0.get_flags(cmd)
     }
 }

@@ -11,29 +11,33 @@ use serde::{Deserialize, Serialize};
 /// # Idiosyncracies
 /// The [``DandifiedYUM::add_repo``] method also installs `config-manager`
 /// plugin for DNF before attempting to add a repo.
-#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct DandifiedYUM;
 
 impl PackageManager for DandifiedYUM {
     fn pkg_delimiter(&self) -> char {
         '-'
     }
-    fn parse_pkg<'a>(&self, line: &str) -> Option<Package<'a>> {
+
+    fn parse_pkg<'a>(&self, line: &str) -> Option<Package> {
         if line.contains('@') {
             let mut splt = line.split_whitespace();
             let name = splt.next()?;
             let ver = splt.next()?;
-            return Some(Package::from(name.trim().to_owned()).with_version(ver.trim().to_owned()));
+            return Some(Package::new(name.trim(), Some(ver.trim())));
         }
         if !line.contains("====") {
-            Some(Package::from(line.split_once(':')?.0.trim().to_owned()))
+            Some(Package::new(line.split_once(':')?.0.trim(), None))
         } else {
             None
         }
     }
+
     fn add_repo(&self, repo: &str) -> Result<(), RepoError> {
-        if !self.install("dnf-command(config-manager)".into()).success() {
+        if !self
+            .install(Package::new("dnf-command(config-manager)", None))
+            .success()
+        {
             return Err(RepoError::with_msg(
                 "failed to install config-manager plugin",
             ));
@@ -56,27 +60,34 @@ impl Commands for DandifiedYUM {
     fn cmd(&self) -> Command {
         Command::new("dnf")
     }
-    fn get_cmds(&self, cmd: Cmd) -> &'static [&'static str] {
+
+    fn get_cmds(&self, cmd: Cmd) -> Vec<String> {
         match cmd {
-            Cmd::Install => &["install"],
-            Cmd::Uninstall => &["remove"],
-            Cmd::Update => &["upgrade"],
-            Cmd::UpdateAll => &["distro-sync"],
-            Cmd::List => &["list"],
-            Cmd::Sync => &["makecache"],
+            Cmd::Install => vec!["install"],
+            Cmd::Uninstall => vec!["remove"],
+            Cmd::Update => vec!["upgrade"],
+            Cmd::UpdateAll => vec!["distro-sync"],
+            Cmd::List => vec!["list"],
+            Cmd::Sync => vec!["makecache"],
             // depends on config-manager plugin (handled in add_repo method)
-            Cmd::AddRepo => &["config-manager", "--add-repo"], // flag must come before repo
-            Cmd::Search => &["search"],
+            Cmd::AddRepo => vec!["config-manager", "--add-repo"], // flag must come before repo
+            Cmd::Search => vec!["search"],
         }
+        .iter()
+        .map(|x| x.to_string())
+        .collect()
     }
 
-    fn get_flags(&self, cmd: Cmd) -> &'static [&'static str] {
+    fn get_flags(&self, cmd: Cmd) -> Vec<String> {
         match cmd {
-            Cmd::Install | Cmd::Uninstall | Cmd::Update | Cmd::UpdateAll => &["-y"],
-            Cmd::List => &["--installed"],
-            Cmd::Search => &["-q"],
-            _ => &[],
+            Cmd::Install | Cmd::Uninstall | Cmd::Update | Cmd::UpdateAll => vec!["-y"],
+            Cmd::List => vec!["--installed"],
+            Cmd::Search => vec!["-q"],
+            _ => vec![],
         }
+        .iter()
+        .map(|x| x.to_string())
+        .collect()
     }
 }
 

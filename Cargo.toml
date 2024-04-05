@@ -15,8 +15,7 @@ strum = { version = "0.26", features = ["derive"] }
 tabled = "0.15"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
-serde = { version = "1.0.197", features = ["derive"], optional = true }
-serde_json = {version = "1.0.115", optional = true }
+ambassador = "0.3.6"
 
 [features]
 default = ["cli"]

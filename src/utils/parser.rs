@@ -1,7 +1,5 @@
 use clap::{Parser, Subcommand};
 
-use crate::{utils::manager::Manager, Package};
-
 #[derive(Parser)]
 #[command(
     author,
@@ -9,28 +7,25 @@ use crate::{utils::manager::Manager, Package};
     about = "A generic package manager.",
     long_about = "A generic package manager for interfacing with multiple distro and platform specific package managers."
 )]
+
+/// Cli for PackageManager.
+///
+/// It is public because other tools can use this interface to pass the command
+/// line args.
 pub struct Cli {
     #[command(subcommand)]
-    pub command: Commands,
+    pub command: MpmCommands,
     #[arg(
         long,
         short,
         help = "Specify a package manager mpm should use",
         long_help = "Optionally specify a package manager mpm should use. When no package manager is provided, a default available one is picked automatically."
     )]
-    pub manager: Option<Manager>,
-    #[cfg(feature = "json")]
-    #[arg(
-        short,
-        long,
-        help = "Print JSON to stdout instead of formatted text",
-        long_help = "Use JSON output instead of formatted text. Note: the flag will be ignored when used with unsupported commands."
-    )]
-    pub json: bool,
+    pub manager: Option<crate::common::AvailablePackageManager>,
 }
 
 #[derive(Subcommand)]
-pub enum Commands {
+pub enum MpmCommands {
     #[command(about = "List supported package managers and display their availability")]
     Managers,
 
@@ -77,14 +72,4 @@ pub enum Commands {
         #[arg(long, short)]
         all: bool,
     },
-}
-
-/// Parse user given string into package name and version. The string must have
-/// `@` for version information to be extracted.
-pub fn pkg_parse(pkg: &str) -> Package {
-    if let Some((name, version)) = pkg.split_once('@') {
-        Package::from(name).with_version(version)
-    } else {
-        pkg.into()
-    }
 }

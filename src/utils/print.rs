@@ -6,7 +6,7 @@ use tabled::{
     Table, Tabled,
 };
 
-use crate::{common::AvailablePackageManager, managers::MetaPackageManager, Package};
+use crate::{common::AvailablePackageManager, managers::MetaPackageManager};
 
 use super::manager::PkgFormat;
 
@@ -50,63 +50,6 @@ impl Listing {
     }
 }
 
-#[cfg(feature = "json")]
-/// Type used for printing a list of supported package managers as JSON
-#[derive(Serialize, Deserialize, Debug)]
-struct PkgManangerInfo {
-    name: Manager,
-    available: bool,
-    file_extensions: Vec<PkgFormat>,
-}
-
-#[cfg(feature = "json")]
-impl PkgManangerInfo {
-    fn new(pm: Manager) -> Self {
-        PkgManangerInfo {
-            name: pm,
-            file_extensions: pm.supported_pkg_formats(),
-            available: pm.init().is_some(),
-        }
-    }
-}
-
-/// Struct used for printing packages in a table
-#[derive(Tabled)]
-#[allow(non_snake_case)]
-pub(crate) struct PkgListing<'a> {
-    Package: &'a str,
-    Version: ColoredString,
-}
-
-impl<'a> PkgListing<'a> {
-    fn new(pkg: &'a Package) -> Self {
-        PkgListing {
-            Package: pkg.name(),
-            Version: if let Some(v) = pkg.version() {
-                v.green()
-            } else {
-                "~".white() // no version info is present
-            },
-        }
-    }
-}
-
-#[cfg(feature = "json")]
-/// Prints list of packages with version information in JSON format to stdout
-pub fn print_packages_json(pkgs: Vec<Package>) -> anyhow::Result<()> {
-    use anyhow::Context;
-
-    let stdout = std::io::stdout();
-    serde_json::to_writer_pretty(stdout, &pkgs).context("failed to package list in JSON")?;
-    Ok(())
-}
-
-/// Creates a table and prints list of packages with version information
-pub(crate) fn print_packages(pkgs: Vec<Package>) {
-    let table = Table::new(pkgs.iter().map(PkgListing::new));
-    print_table(table);
-}
-
 /// Creates a table and prints supported package managers with availability
 /// information
 pub fn print_managers() {
@@ -114,7 +57,7 @@ pub fn print_managers() {
         "a total of {} package managers are supported",
         AvailablePackageManager::COUNT
     );
-    let table = Table::new(AvailablePackageManager::iter().map(|pm| Listing::new(pm)));
+    let table = Table::new(AvailablePackageManager::iter().map(Listing::new));
     print_table(table);
 }
 

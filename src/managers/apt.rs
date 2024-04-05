@@ -39,9 +39,7 @@ impl PackageManager for AdvancedPackageTool {
     }
 
     fn parse_pkg<'a>(&self, line: &str) -> Option<Package> {
-        let Some((name, info)) = line.split_once('/') else {
-            return None;
-        };
+        let (name, info) = line.split_once('/')?;
         if matches!(info.split_whitespace().count(), 3 | 4) {
             let ver = info.split_whitespace().nth(1)?;
             Some(Package::new(name, Some(ver)))

@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 pub mod parser;
 
 #[macro_use]
@@ -12,7 +14,7 @@ pub fn execute(args: Cli) -> anyhow::Result<()> {
     let mpm = if let Some(manager) = args.manager {
         crate::MetaPackageManager::try_new(manager)?
     } else {
-        crate::MetaPackageManager::default()?
+        crate::MetaPackageManager::new_default()?
     };
 
     match args.command {
@@ -27,13 +29,13 @@ pub fn execute(args: Cli) -> anyhow::Result<()> {
         }
         MpmCommands::Install { packages } => {
             for pkg in packages {
-                let s = mpm.install(Package::from_str(&pkg));
+                let s = mpm.install(Package::from_str(&pkg)?);
                 anyhow::ensure!(s.success(), "Failed to install {pkg}");
             }
         }
         MpmCommands::Uninstall { packages } => {
             for pkg in packages {
-                let s = mpm.uninstall(Package::from_str(&pkg));
+                let s = mpm.uninstall(Package::from_str(&pkg)?);
                 anyhow::ensure!(s.success(), "Failed to uninstall pacakge {pkg}");
             }
         }
@@ -43,7 +45,7 @@ pub fn execute(args: Cli) -> anyhow::Result<()> {
                 mpm.update_all();
             } else {
                 for pkg in packages {
-                    let s = mpm.update(Package::from_str(&pkg));
+                    let s = mpm.update(Package::from_str(&pkg)?);
                     anyhow::ensure!(s.success(), "Failed to update pacakge {pkg}");
                 }
             }

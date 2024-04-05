@@ -39,7 +39,7 @@ pub enum MetaPackageManager {
 
 impl Default for MetaPackageManager {
     fn default() -> Self {
-        Self::Choco(Chocolatey::default())
+        Self::Choco(Chocolatey)
     }
 }
 
@@ -48,12 +48,12 @@ impl MetaPackageManager {
     pub fn try_new(manager: AvailablePackageManager) -> anyhow::Result<Self> {
         tracing::info!("Creating meta package manager interface for {manager:?}");
         let mpm = match manager {
-            AvailablePackageManager::Apt => Self::Apt(AdvancedPackageTool::default()),
-            AvailablePackageManager::Brew => Self::Brew(Homebrew::default()),
-            AvailablePackageManager::Choco => Self::Choco(Chocolatey::default()),
-            AvailablePackageManager::Dnf => Self::Dnf(DandifiedYUM::default()),
+            AvailablePackageManager::Apt => Self::Apt(AdvancedPackageTool),
+            AvailablePackageManager::Brew => Self::Brew(Homebrew),
+            AvailablePackageManager::Choco => Self::Choco(Chocolatey),
+            AvailablePackageManager::Dnf => Self::Dnf(DandifiedYUM),
             AvailablePackageManager::Yum => Self::Yum(YellowdogUpdaterModified::default()),
-            AvailablePackageManager::Zypper => Self::Zypper(Zypper::default()),
+            AvailablePackageManager::Zypper => Self::Zypper(Zypper),
         };
 
         match mpm.cmd().arg("--version").status() {
@@ -72,7 +72,7 @@ impl MetaPackageManager {
     ///
     /// First enum variant is given the highest priority, second, the second
     /// highest, and so on.
-    pub fn default() -> anyhow::Result<Self> {
+    pub fn new_default() -> anyhow::Result<Self> {
         AvailablePackageManager::iter()
             .find_map(|m| Self::try_new(m).ok())
             .context("no supported package manager found")
@@ -91,7 +91,6 @@ impl std::fmt::Display for MetaPackageManager {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {

@@ -14,7 +14,7 @@ impl PackageManager for Chocolatey {
     }
     fn pkg_format(&self, pkg: &Package) -> String {
         if let Some(v) = pkg.version() {
-            format!("{} --version {}", pkg.name(), v).into()
+            format!("{} --version {}", pkg.name(), v)
         } else {
             pkg.name().into()
         }

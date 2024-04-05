@@ -23,7 +23,7 @@ pub trait PackageManager: Commands + std::fmt::Debug + std::fmt::Display {
     /// `String`.
     fn pkg_format(&self, pkg: &Package) -> String {
         if let Some(v) = pkg.version() {
-            format!("{}{}{}", pkg.name, self.pkg_delimiter(), v).into()
+            format!("{}{}{}", pkg.name, self.pkg_delimiter(), v)
         } else {
             pkg.name().into()
         }
@@ -72,19 +72,19 @@ pub trait PackageManager: Commands + std::fmt::Debug + std::fmt::Display {
 
     /// General package search
     fn search(&self, pack: &str) -> Vec<Package> {
-        let cmds = self.consolidated(crate::common::Cmd::Search, &[pack.to_string()]);
+        let cmds = self.consolidated(Cmd::Search, &[pack.to_string()]);
         let out = self.exec_cmds(&cmds);
         self.parse_output(&out.stdout)
     }
 
     /// Sync package manaager repositories
     fn sync(&self) -> std::process::ExitStatus {
-        self.exec_cmds_status(&self.consolidated::<&str>(crate::common::Cmd::Sync, &[]))
+        self.exec_cmds_status(&self.consolidated::<&str>(Cmd::Sync, &[]))
     }
 
     /// Update/upgrade all packages
     fn update_all(&self) -> std::process::ExitStatus {
-        self.exec_cmds_status(&self.consolidated::<&str>(crate::common::Cmd::UpdateAll, &[]))
+        self.exec_cmds_status(&self.consolidated::<&str>(Cmd::UpdateAll, &[]))
     }
 
     /// Install a single package
@@ -110,7 +110,7 @@ pub trait PackageManager: Commands + std::fmt::Debug + std::fmt::Display {
 
     /// List installed packages
     fn list_installed(&self) -> Vec<Package> {
-        let out = self.exec_cmds(&self.consolidated::<&str>(crate::common::Cmd::List, &[]));
+        let out = self.exec_cmds(&self.consolidated::<&str>(Cmd::List, &[]));
         self.parse_output(&out.stdout)
     }
 
@@ -118,9 +118,9 @@ pub trait PackageManager: Commands + std::fmt::Debug + std::fmt::Display {
     /// and update
     fn exec_op(&self, pkgs: &[Package], op: Operation) -> std::process::ExitStatus {
         let command = match op {
-            Operation::Install => crate::common::Cmd::Install,
-            Operation::Uninstall => crate::common::Cmd::Uninstall,
-            Operation::Update => crate::common::Cmd::Update,
+            Operation::Install => Cmd::Install,
+            Operation::Uninstall => Cmd::Uninstall,
+            Operation::Update => Cmd::Update,
         };
         let fmt: Vec<_> = pkgs
             .iter()
@@ -136,7 +136,7 @@ pub trait PackageManager: Commands + std::fmt::Debug + std::fmt::Display {
     /// managers this method returns a `Result` instead of the usual
     /// `std::process::ExitStatus`.
     fn add_repo(&self, repo: &str) -> anyhow::Result<()> {
-        let cmds = self.consolidated(crate::common::Cmd::AddRepo, &[repo.to_string()]);
+        let cmds = self.consolidated(Cmd::AddRepo, &[repo.to_string()]);
         let s = self.exec_cmds_status(&cmds);
         anyhow::ensure!(s.success(), "Error adding repo");
         Ok(())
@@ -221,14 +221,14 @@ pub trait Commands {
 
     /// Returns the appropriate command/s for the given supported command type.
     /// Check [``crate::common::Cmd``] enum to see all supported commands.
-    fn get_cmds(&self, cmd: crate::common::Cmd) -> Vec<String>;
+    fn get_cmds(&self, cmd: Cmd) -> Vec<String>;
 
     /// Returns the appropriate flags for the given command type. Check
     /// [``crate::common::Cmd``] enum to see all supported commands.
     ///
     /// Flags are optional, which is why the default implementation returns an
     /// empty slice
-    fn get_flags(&self, _cmd: crate::common::Cmd) -> Vec<String> {
+    fn get_flags(&self, _cmd: Cmd) -> Vec<String> {
         vec![]
     }
 
@@ -240,9 +240,9 @@ pub trait Commands {
     /// enum [``crate::common::Cmd``] For finer control, a general purpose
     /// function [``consolidated_args``] is also provided.
     #[inline]
-    fn consolidated<S: AsRef<str>>(&self, cmd: crate::common::Cmd, args: &[S]) -> Vec<String> {
+    fn consolidated<S: AsRef<str>>(&self, cmd: Cmd, args: &[S]) -> Vec<String> {
         let mut commands = self.get_cmds(cmd);
-        commands.append(&mut args.into_iter().map(|x| x.as_ref().to_string()).collect());
+        commands.append(&mut args.iter().map(|x| x.as_ref().to_string()).collect());
         commands.append(&mut self.get_flags(cmd));
         commands
     }
@@ -301,21 +301,24 @@ pub struct Package {
     version: Option<String>,
 }
 
+impl std::str::FromStr for Package {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> anyhow::Result<Self> {
+        if let Some((name, version)) = s.split_once('@') {
+            Ok(Package::new(name, Some(version)))
+        } else {
+            Ok(Package::new(s, None))
+        }
+    }
+}
+
 impl Package {
     /// Create new Package with name and version.
     pub fn new(name: &str, version: Option<&str>) -> Self {
         Self {
             name: name.to_string(),
             version: version.map(|x| x.to_string()),
-        }
-    }
-
-    /// Parse a string into [`Self`]
-    pub fn from_str(s: &str) -> Self {
-        if let Some((name, version)) = s.split_once('@') {
-            Package::new(name, Some(version))
-        } else {
-            Package::new(s, None)
         }
     }
 

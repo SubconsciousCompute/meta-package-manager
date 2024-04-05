@@ -3,6 +3,9 @@ use std::fmt::Display;
 use clap::ValueEnum;
 use strum::{EnumCount, EnumIter};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 use crate::{
     managers::{
         AdvancedPackageTool, Chocolatey, DandifiedYUM, Homebrew, YellowdogUpdaterModified, Zypper,
@@ -38,6 +41,7 @@ macro_rules! if_cfg {
 ///
 /// Adding support to a new package manager involves creating a new variant of
 /// its name and writing the appropriate [``Manager::init``] implementation.
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, EnumCount, ValueEnum)]
 #[value(rename_all = "lower")]
 #[non_exhaustive]
@@ -108,7 +112,8 @@ impl Display for Manager {
 }
 
 /// Pkg Format.
-#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug)]
 pub enum PkgFormat {
     Bottle,
     Exe,

@@ -1,6 +1,8 @@
+use crate::{Cmd, Commands, Package, PackageManager, RepoError};
 use std::{fmt::Display, fs, io::Write, process::Command};
 
-use crate::{Cmd, Commands, Package, PackageManager, RepoError};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 /// Wrapper for Advanced Pacakge Tool (APT), the default package management
 /// user-facing utilities in Debian and Debian-based distributions.
@@ -14,6 +16,7 @@ use crate::{Cmd, Commands, Package, PackageManager, RepoError};
 /// Another notable point is that the [``AdvancedPackageTool::add_repo``]
 /// implementation doesn't execute commands, but it writes to
 /// "/etc/apt/sources.list".
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[derive(Debug)]
 pub struct AdvancedPackageTool;
 

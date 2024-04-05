@@ -15,10 +15,15 @@ strum = { version = "0.26", features = ["derive"] }
 tabled = "0.15"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+serde = { version = "1.0.197", features = ["derive"], optional = true }
+serde_json = {version = "1.0.115", optional = true }
 
 [features]
-default = ["verify"]
+default = ["cli"]
+cli = ["verify", "json"]
 verify = []
+serde = ["dep:serde"]
+json = ["serde", "dep:serde_json"]
 
 [dev-dependencies]
 tracing-test = "0.2.4"

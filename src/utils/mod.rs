@@ -124,6 +124,14 @@ impl PkgManagerHandler {
         Ok(())
     }
 
+    #[cfg(feature = "json")]
+    /// Does the same as the [``PkgManagerHandler::list``] fn, except the output will be in JSON
+    pub fn list_json(&self) -> Result<()> {
+        let man = self.get_pkg_manager()?;
+        let pkgs = man.list_installed();
+        print::print_packages_json(pkgs)
+    }
+
     /// Does the same as the [``PackageManager::search``] fn
     pub fn search(&self, query: &str) -> Result<()> {
         tracing::debug!("Searching for {query}");
@@ -136,15 +144,39 @@ impl PkgManagerHandler {
         print::print_packages(pkgs);
         Ok(())
     }
+
+    #[cfg(feature = "json")]
+    /// Does the same as the [``PkgManagerHandler::search``] fn, except the output will be in JSON
+    pub fn search_json(&self, query: &str) -> Result<()> {
+        tracing::debug!("Searching for {query}");
+        let man = self.get_pkg_manager()?;
+        let pkgs = man.search(query);
+        print::print_packages_json(pkgs)
+    }
 }
 
 /// Function that handles the parsed CLI arguments in one place
 pub fn execute(args: Cli) -> Result<()> {
     let handler = PkgManagerHandler::new(args.manager);
     match args.command {
-        Commands::Managers => print::print_managers(),
-        Commands::Search { string } => handler.search(&string)?,
-        Commands::List => handler.list()?,
+        Commands::Managers => {
+            if cfg!(feature = "json") && args.json {
+                return print::print_managers_json();
+            }
+            print::print_managers()
+        }
+        Commands::Search { string } => {
+            if cfg!(feature = "json") && args.json {
+                return handler.search_json(&string);
+            }
+            handler.search(&string)?
+        }
+        Commands::List => {
+            if cfg!(feature = "json") && args.json {
+                return handler.list_json();
+            }
+            handler.list()?
+        }
         Commands::Install { packages } => handler.install(packages)?,
         Commands::Uninstall { packages } => handler.uninstall(packages)?,
         Commands::Update { packages, all } => {

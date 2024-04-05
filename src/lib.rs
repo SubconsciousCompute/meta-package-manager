@@ -7,9 +7,14 @@ use std::{
     process::{Child, Command, ExitStatus, Output},
 };
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 mod managers;
 
+#[cfg(feature = "cli")]
 pub mod utils;
+#[cfg(feature = "cli")]
 pub use utils::PkgManagerHandler;
 
 #[cfg(feature = "verify")]
@@ -294,6 +299,7 @@ pub trait Commands {
 ///
 /// All the variants are the type of commands that a type that imlements
 /// [``Commands``] and [``PackageManager``] (should) support.
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Cmd {
     Install,
@@ -312,6 +318,7 @@ pub enum Cmd {
 /// It can be constructed with any type that implements `Into<Cow<sr>>`, for
 /// example, `&str` and `String`. `Package::from("python")` or with version,
 /// `Package::from("python").with_version("3.10.0")`.
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Package<'a> {
     name: Cow<'a, str>,
@@ -366,6 +373,7 @@ impl Display for Package<'_> {
 }
 
 /// Operation type to execute using [``Package::exec_op``]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Operation {
     Install,

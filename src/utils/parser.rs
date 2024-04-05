@@ -19,6 +19,14 @@ pub struct Cli {
         long_help = "Optionally specify a package manager mpm should use. When no package manager is provided, a default available one is picked automatically."
     )]
     pub manager: Option<Manager>,
+    #[cfg(feature = "json")]
+    #[arg(
+        short,
+        long,
+        help = "Print JSON to stdout instead of formatted text",
+        long_help = "Use JSON output instead of formatted text. Note: the flag will be ignored when used with unsupported commands."
+    )]
+    pub json: bool,
 }
 
 #[derive(Subcommand)]

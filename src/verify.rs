@@ -25,10 +25,14 @@
 //! `MyPackageMan::new().verify()` or `MyPackageMan::new().verify_dyn()`.
 use std::{fmt::Display, ops::Deref, process::Stdio};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 use crate::PackageManager;
 
 /// Wraps `T` that implements [``PackageManager``] and only constructs an
 /// instance if the given package manager is installed / is in path.
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug)]
 pub struct Verified<T> {
     inner: T,

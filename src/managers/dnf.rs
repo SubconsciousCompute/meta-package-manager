@@ -2,12 +2,16 @@ use std::{fmt::Display, process::Command};
 
 use crate::{Cmd, Commands, Package, PackageManager, RepoError};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 /// Wrapper for DandifiedYUM or DNF, the next upcoming major version of YUM
 ///
 /// [DNF, the next-generation replacement for YUM — dnf latest documentation](https://dnf.readthedocs.io/en/latest/)
 /// # Idiosyncracies
 /// The [``DandifiedYUM::add_repo``] method also installs `config-manager`
 /// plugin for DNF before attempting to add a repo.
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[derive(Debug)]
 pub struct DandifiedYUM;
 

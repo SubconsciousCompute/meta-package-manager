@@ -4,7 +4,11 @@ use std::{fmt::Display, process::Command};
 
 use crate::{Cmd, Commands, Package, PackageManager, RepoError};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 /// Wrapper for Zypper package manager. Some openSUSE might support dnf as well.
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[derive(Debug)]
 pub struct Zypper;
 

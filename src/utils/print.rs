@@ -6,7 +6,12 @@ use tabled::{
     Table, Tabled,
 };
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 use crate::{utils::manager::Manager, Package};
+
+use super::manager::PkgFormat;
 
 /// Takes a format string and prints it in the format "Info {format_str}"
 macro_rules! notify {
@@ -47,6 +52,26 @@ impl Listing {
     }
 }
 
+#[cfg(feature = "json")]
+/// Type used for printing a list of supported package managers as JSON
+#[derive(Serialize, Deserialize, Debug)]
+struct PkgManangerInfo {
+    name: Manager,
+    available: bool,
+    file_extensions: Vec<PkgFormat>,
+}
+
+#[cfg(feature = "json")]
+impl PkgManangerInfo {
+    fn new(pm: Manager) -> Self {
+        PkgManangerInfo {
+            name: pm,
+            file_extensions: pm.supported_pkg_formats(),
+            available: pm.init().is_some(),
+        }
+    }
+}
+
 /// Struct used for printing packages in a table
 #[derive(Tabled)]
 #[allow(non_snake_case)]
@@ -68,6 +93,16 @@ impl<'a> PkgListing<'a> {
     }
 }
 
+#[cfg(feature = "json")]
+/// Prints list of packages with version information in JSON format to stdout
+pub fn print_packages_json(pkgs: Vec<Package>) -> anyhow::Result<()> {
+    use anyhow::Context;
+
+    let stdout = std::io::stdout();
+    serde_json::to_writer_pretty(stdout, &pkgs).context("failed to package list in JSON")?;
+    Ok(())
+}
+
 /// Creates a table and prints list of packages with version information
 pub fn print_packages(pkgs: Vec<Package>) {
     let table = Table::new(pkgs.iter().map(PkgListing::new));
@@ -83,6 +118,18 @@ pub fn print_managers() {
     );
     let table = Table::new(Manager::iter().map(Listing::new));
     print_table(table);
+}
+
+/// Prints list of supported package managers in JSON format to stdout
+#[cfg(feature = "json")]
+pub fn print_managers_json() -> anyhow::Result<()> {
+    use anyhow::Context;
+
+    let managers: Vec<_> = Manager::iter().map(PkgManangerInfo::new).collect();
+    let stdout = std::io::stdout();
+    serde_json::to_writer_pretty(stdout, &managers)
+        .context("failed to print support package managers in JSON")?;
+    Ok(())
 }
 
 /// Takes a `Table` type and sets appropriate styling options, then prints in

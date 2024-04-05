@@ -2,14 +2,10 @@
 
 use std::{fmt::Display, process::Command};
 
-use crate::{Cmd, Commands, Package, PackageManager, RepoError};
-
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use crate::{Cmd, Commands, Package, PackageManager};
 
 /// Wrapper for Zypper package manager. Some openSUSE might support dnf as well.
-#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Zypper;
 
 impl PackageManager for Zypper {
@@ -35,45 +31,42 @@ impl PackageManager for Zypper {
         let mut packages = vec![];
         for p in &list.children {
             if let Some(p) = p.as_element() {
-                packages.push(Package {
-                    name: p
-                        .attributes
-                        .get("name")
-                        .expect("must have name")
-                        .to_string()
-                        .into(),
-                    version: None,
-                })
+                packages.push(Package::new(
+                    p.attributes.get("name").expect("must have name"),
+                    None,
+                ));
             }
         }
         packages
     }
 
-    fn parse_pkg<'a>(&self, line: &str) -> Option<Package<'a>> {
+    fn parse_pkg<'a>(&self, line: &str) -> Option<Package> {
         if line.contains('@') {
             let mut splt = line.split_whitespace();
             let name = splt.next()?;
             let ver = splt.next()?;
-            return Some(Package::from(name.trim().to_owned()).with_version(ver.trim().to_owned()));
+            return Some(Package::new(name.trim(), Some(ver.trim())));
         }
         if !line.contains("====") {
-            Some(Package::from(line.split_once(':')?.0.trim().to_owned()))
+            Some(Package::new(line.split_once(':')?.0.trim(), None))
         } else {
             None
         }
     }
 
-    fn add_repo(&self, repo: &str) -> Result<(), RepoError> {
-        if !self.install("dnf-command(config-manager)".into()).success() {
-            return Err(RepoError::with_msg(
-                "failed to install config-manager plugin",
-            ));
-        }
+    fn add_repo(&self, repo: &str) -> anyhow::Result<()> {
+        anyhow::ensure!(
+            self.install(Package::new("dnf-command(config-manager)", None))
+                .success(),
+            "failed to install config-manager plugin",
+        );
 
-        self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, &[repo]))
-            .success()
-            .then_some(())
-            .ok_or(RepoError::default())
+        anyhow::ensure!(
+            self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, &[repo]))
+                .success(),
+            "Failed to add repo"
+        );
+        Ok(())
     }
 }
 
@@ -89,27 +82,33 @@ impl Commands for Zypper {
         Command::new("zypper")
     }
 
-    fn get_cmds(&self, cmd: Cmd) -> &'static [&'static str] {
+    fn get_cmds(&self, cmd: Cmd) -> Vec<String> {
         match cmd {
-            Cmd::Install => &["install"],
-            Cmd::Uninstall => &["remove"],
-            Cmd::Update => &["update"],
-            Cmd::UpdateAll => &["dist-upgrade"],
-            Cmd::List => &["--xmlout", "search"],
-            Cmd::Sync => &["refresh"],
-            Cmd::AddRepo => &["addrepo"],
-            Cmd::Search => &["--xmlout", "search"],
+            Cmd::Install => vec!["install"],
+            Cmd::Uninstall => vec!["remove"],
+            Cmd::Update => vec!["update"],
+            Cmd::UpdateAll => vec!["dist-upgrade"],
+            Cmd::List => vec!["--xmlout", "search"],
+            Cmd::Sync => vec!["refresh"],
+            Cmd::AddRepo => vec!["addrepo"],
+            Cmd::Search => vec!["--xmlout", "search"],
         }
+        .iter()
+        .map(|x| x.to_string())
+        .collect()
     }
 
-    fn get_flags(&self, cmd: Cmd) -> &'static [&'static str] {
+    fn get_flags(&self, cmd: Cmd) -> Vec<String> {
         match cmd {
-            Cmd::Install | Cmd::Uninstall | Cmd::Update | Cmd::UpdateAll => &["-n"],
-            Cmd::List => &["-i"],
-            Cmd::Search => &["--no-refresh", "-q"],
-            Cmd::AddRepo => &["-f"],
-            _ => &["-n"],
+            Cmd::Install | Cmd::Uninstall | Cmd::Update | Cmd::UpdateAll => vec!["-n"],
+            Cmd::List => vec!["-i"],
+            Cmd::Search => vec!["--no-refresh", "-q"],
+            Cmd::AddRepo => vec!["-f"],
+            _ => vec!["-n"],
         }
+        .iter()
+        .map(|x| x.to_string())
+        .collect()
     }
 }
 

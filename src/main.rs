@@ -1,12 +1,12 @@
 //! Meta Package Manager (MPM) binary
 
 use clap::Parser;
-use mpm::utils;
 use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
 fn main() {
     // elevate to sudo
-    if let Err(e) = elevate::with_env(&["CARGO_", "RUST_LOG"]) {
+    #[cfg(target_os = "linux")]
+    if let Err(e) = sudo::with_env(&["CARGO_", "RUST_LOG"]) {
         tracing::warn!("Failed to elevate to sudo: {e}.");
     }
 
@@ -18,8 +18,8 @@ fn main() {
     let info = os_info::get();
     tracing::info!("Detected OS {:?}", info.os_type());
 
-    if let Err(err) = utils::execute(utils::parser::Cli::parse()) {
-        utils::print::log_error(err);
+    if let Err(err) = mpm::cli::execute(mpm::cli::Cli::parse()) {
+        mpm::print::log_error(err);
         std::process::exit(1);
     }
 }

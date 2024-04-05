@@ -1,9 +1,6 @@
 use std::{fmt::Display, process::Command};
 
-use crate::{Cmd, Commands, Package, PackageManager, RepoError};
-
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use crate::{Cmd, Commands, Package, PackageManager};
 
 /// Wrapper for DandifiedYUM or DNF, the next upcoming major version of YUM
 ///
@@ -11,38 +8,38 @@ use serde::{Deserialize, Serialize};
 /// # Idiosyncracies
 /// The [``DandifiedYUM::add_repo``] method also installs `config-manager`
 /// plugin for DNF before attempting to add a repo.
-#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct DandifiedYUM;
 
 impl PackageManager for DandifiedYUM {
     fn pkg_delimiter(&self) -> char {
         '-'
     }
-    fn parse_pkg<'a>(&self, line: &str) -> Option<Package<'a>> {
+
+    fn parse_pkg<'a>(&self, line: &str) -> Option<Package> {
         if line.contains('@') {
             let mut splt = line.split_whitespace();
             let name = splt.next()?;
             let ver = splt.next()?;
-            return Some(Package::from(name.trim().to_owned()).with_version(ver.trim().to_owned()));
+            return Some(Package::new(name.trim(), Some(ver.trim())));
         }
         if !line.contains("====") {
-            Some(Package::from(line.split_once(':')?.0.trim().to_owned()))
+            Some(Package::new(line.split_once(':')?.0.trim(), None))
         } else {
             None
         }
     }
-    fn add_repo(&self, repo: &str) -> Result<(), RepoError> {
-        if !self.install("dnf-command(config-manager)".into()).success() {
-            return Err(RepoError::with_msg(
-                "failed to install config-manager plugin",
-            ));
-        }
 
-        self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, &[repo]))
-            .success()
-            .then_some(())
-            .ok_or(RepoError::default())
+    fn add_repo(&self, repo: &str) -> anyhow::Result<()> {
+        anyhow::ensure!(
+            self.install(Package::new("dnf-command(config-manager)", None))
+                .success(),
+            "failed to install config-manager plugin"
+        );
+
+        let s = self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, &[repo]));
+        anyhow::ensure!(s.success(), "failed to add repo");
+        Ok(())
     }
 }
 
@@ -56,37 +53,46 @@ impl Commands for DandifiedYUM {
     fn cmd(&self) -> Command {
         Command::new("dnf")
     }
-    fn get_cmds(&self, cmd: Cmd) -> &'static [&'static str] {
+
+    fn get_cmds(&self, cmd: Cmd) -> Vec<String> {
         match cmd {
-            Cmd::Install => &["install"],
-            Cmd::Uninstall => &["remove"],
-            Cmd::Update => &["upgrade"],
-            Cmd::UpdateAll => &["distro-sync"],
-            Cmd::List => &["list"],
-            Cmd::Sync => &["makecache"],
+            Cmd::Install => vec!["install"],
+            Cmd::Uninstall => vec!["remove"],
+            Cmd::Update => vec!["upgrade"],
+            Cmd::UpdateAll => vec!["distro-sync"],
+            Cmd::List => vec!["list"],
+            Cmd::Sync => vec!["makecache"],
             // depends on config-manager plugin (handled in add_repo method)
-            Cmd::AddRepo => &["config-manager", "--add-repo"], // flag must come before repo
-            Cmd::Search => &["search"],
+            Cmd::AddRepo => vec!["config-manager", "--add-repo"], // flag must come before repo
+            Cmd::Search => vec!["search"],
         }
+        .iter()
+        .map(|x| x.to_string())
+        .collect()
     }
 
-    fn get_flags(&self, cmd: Cmd) -> &'static [&'static str] {
+    fn get_flags(&self, cmd: Cmd) -> Vec<String> {
         match cmd {
-            Cmd::Install | Cmd::Uninstall | Cmd::Update | Cmd::UpdateAll => &["-y"],
-            Cmd::List => &["--installed"],
-            Cmd::Search => &["-q"],
-            _ => &[],
+            Cmd::Install | Cmd::Uninstall | Cmd::Update | Cmd::UpdateAll => vec!["-y"],
+            Cmd::List => vec!["--installed"],
+            Cmd::Search => vec!["-q"],
+            _ => vec![],
         }
+        .iter()
+        .map(|x| x.to_string())
+        .collect()
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use super::DandifiedYUM;
     use crate::{Package, PackageManager};
 
     #[test]
-    fn parse_pkg() {
+    fn test_parse_pkg() {
         let dnf = DandifiedYUM;
         let input = r#"
 sudo.x86_64                                                                                   1.9.13-2.p2.fc38                                                                @koji-override-0
@@ -99,16 +105,17 @@ rubygem-mixlib-shellout-doc.noarch : Documentation for rubygem-mixlib-shellout"#
         let mut iter = input.lines().filter_map(|l| dnf.parse_pkg(l));
         assert_eq!(
             iter.next(),
-            Some(Package::from("sudo.x86_64").with_version("1.9.13-2.p2.fc38"))
+            Package::from_str("sudo.x86_64@1.9.13-2.p2.fc38").ok()
         );
         assert_eq!(
             iter.next(),
-            Some(Package::from("systemd-libs.x86_64").with_version("253.10-1.fc38"))
+            Package::from_str("systemd-libs.x86_64@253.10-1.fc38").ok()
         );
-        assert_eq!(iter.next(), Some(Package::from("hello.x86_64")));
+
+        assert_eq!(iter.next(), Package::from_str("hello.x86_64").ok());
         assert_eq!(
             iter.next(),
-            Some(Package::from("rubygem-mixlib-shellout-doc.noarch"))
+            Package::from_str("rubygem-mixlib-shellout-doc.noarch").ok()
         );
     }
 }

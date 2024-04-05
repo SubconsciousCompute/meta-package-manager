@@ -86,11 +86,13 @@ impl Commands for DandifiedYUM {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use super::DandifiedYUM;
     use crate::{Package, PackageManager};
 
     #[test]
-    fn parse_pkg() {
+    fn test_parse_pkg() {
         let dnf = DandifiedYUM;
         let input = r#"
 sudo.x86_64                                                                                   1.9.13-2.p2.fc38                                                                @koji-override-0
@@ -103,16 +105,17 @@ rubygem-mixlib-shellout-doc.noarch : Documentation for rubygem-mixlib-shellout"#
         let mut iter = input.lines().filter_map(|l| dnf.parse_pkg(l));
         assert_eq!(
             iter.next(),
-            Some(Package::from("sudo.x86_64").with_version("1.9.13-2.p2.fc38"))
+            Package::from_str("sudo.x86_64@1.9.13-2.p2.fc38").ok()
         );
         assert_eq!(
             iter.next(),
-            Some(Package::from("systemd-libs.x86_64").with_version("253.10-1.fc38"))
+            Package::from_str("systemd-libs.x86_64@253.10-1.fc38").ok()
         );
-        assert_eq!(iter.next(), Some(Package::from("hello.x86_64")));
+
+        assert_eq!(iter.next(), Package::from_str("hello.x86_64").ok());
         assert_eq!(
             iter.next(),
-            Some(Package::from("rubygem-mixlib-shellout-doc.noarch"))
+            Package::from_str("rubygem-mixlib-shellout-doc.noarch").ok()
         );
     }
 }

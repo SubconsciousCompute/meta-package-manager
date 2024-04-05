@@ -137,7 +137,7 @@ fn print_pkgs(pkgs: &[Package], json: bool) -> anyhow::Result<()> {
     if json {
         println!("{}", serde_json::to_string_pretty(pkgs)?);
     } else {
-        println!("{}", tabled::Table::new(pkgs).to_string());
+        println!("{}", tabled::Table::new(pkgs));
     }
     Ok(())
 }

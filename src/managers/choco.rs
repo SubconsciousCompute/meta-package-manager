@@ -62,15 +62,15 @@ impl Display for Chocolatey {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use super::*;
+
     #[test]
-    fn choco_pkg_fmt() {
-        let pkg = Package::from("package");
-        assert_eq!(Chocolatey.pkg_format(&pkg), Cow::from("package"));
-        let pkg = pkg.with_version("0.1.0");
-        assert_eq!(
-            Chocolatey.pkg_format(&pkg),
-            Cow::from("package --version 0.1.0")
-        );
+    fn test_choco_pkg_fmt() {
+        let pkg = Package::from_str("package").unwrap();
+        assert_eq!(Chocolatey.pkg_format(&pkg), "package".to_string());
+        let pkg = Package::from_str("package@0.1.0").unwrap();
+        assert_eq!(&Chocolatey.pkg_format(&pkg), "package --version 0.1.0");
     }
 }

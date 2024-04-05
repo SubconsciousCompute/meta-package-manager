@@ -95,7 +95,7 @@ impl std::fmt::Display for MetaPackageManager {
 #[cfg(test)]
 mod tests {
 
-    use crate::{crate::common::PackageManager, mpm::Verify};
+    use crate::PackageManager;
 
     #[cfg(target_os = "osx")]
     #[test]
@@ -107,14 +107,18 @@ mod tests {
         // search
         assert!(hb.search("hello").iter().any(|p| p.name() == "hello"));
         // install
-        assert!(hb.exec_op(&["hello".into()], Operation::Install).success());
+        assert!(hb
+            .exec_op(&["hello".parse().unwrap()], Operation::Install)
+            .success());
         // list
         assert!(hb.list_installed().iter().any(|p| p.name() == "hello"));
         // update
-        assert!(hb.exec_op(&["hello".into()], Operation::Update).success());
+        assert!(hb
+            .exec_op(&["hello".parse().unwrap()], Operation::Update)
+            .success());
         // uninstall
         assert!(hb
-            .exec_op(&["hello".into()], Operation::Uninstall)
+            .exec_op(&["hello".parse().unwrap()], Operation::Uninstall)
             .success());
         // TODO: Test AddRepo
     }
@@ -123,20 +127,19 @@ mod tests {
     #[test]
     fn test_chocolatey() {
         let choco = crate::managers::Chocolatey;
-        let choco = choco.verify().expect("Chocolatey not found in path");
         let pkg = "tac";
         // sync
         assert!(choco.sync().success());
         // search
         assert!(choco.search(pkg).iter().any(|p| p.name() == pkg));
         // install
-        assert!(choco.install(pkg.into()).success());
+        assert!(choco.install(pkg.parse().unwrap()).success());
         // list
         assert!(choco.list_installed().iter().any(|p| p.name() == pkg));
         // update
-        assert!(choco.update(pkg.into()).success());
+        assert!(choco.update(pkg.parse().unwrap()).success());
         // uninstall
-        assert!(choco.uninstall(pkg.into()).success());
+        assert!(choco.uninstall(pkg.parse().unwrap()).success());
         // TODO: Test AddRepo
     }
 
@@ -179,27 +182,24 @@ mod tests {
         dnf_yum_cases(crate::managers::YellowdogUpdaterModified::default())
     }
 
+    #[cfg(target_os = "linux")]
     fn dnf_yum_cases(man: impl crate::PackageManager) {
-        if let Some(man) = man.verify() {
-            let pkg = "hello";
-            // sync
-            assert!(man.sync().success());
-            // search
-            assert!(man.search(pkg).iter().any(|p| p.name() == "hello.x86_64"));
-            // install
-            assert!(man.install(pkg.into()).success());
-            // list
-            assert!(man
-                .list_installed()
-                .iter()
-                .any(|p| p.name() == "hello.x86_64"));
-            // update
-            assert!(man.update(pkg.into()).success());
-            // uninstall
-            assert!(man.uninstall(pkg.into()).success());
-            // TODO: Test AddRepo
-        } else {
-            eprintln!("dnf not found");
-        }
+        let pkg = "hello";
+        // sync
+        assert!(man.sync().success());
+        // search
+        assert!(man.search(pkg).iter().any(|p| p.name() == "hello.x86_64"));
+        // install
+        assert!(man.install(pkg.parse().unwrap()).success());
+        // list
+        assert!(man
+            .list_installed()
+            .iter()
+            .any(|p| p.name() == "hello.x86_64"));
+        // update
+        assert!(man.update(pkg.parse().unwrap()).success());
+        // uninstall
+        assert!(man.uninstall(pkg.parse().unwrap()).success());
+        // TODO: Test AddRepo
     }
 }

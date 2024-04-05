@@ -110,10 +110,13 @@ impl Commands for AdvancedPackageTool {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use super::AdvancedPackageTool;
     use crate::{Cmd, Commands, Package, PackageManager};
+
     #[test]
-    fn parse_pkg() {
+    fn test_parse_pkg() {
         let input = r#"
 hello/stable 2.10-3 amd64
   example package based on GNU hello
@@ -125,21 +128,12 @@ mount/now 2.38.1-5+b1 amd64 [installed,local]
 mysql-common/now 5.8+1.1.0 all [installed,local]"#;
         let apt = AdvancedPackageTool;
         let mut iter = input.lines().filter_map(|l| apt.parse_pkg(l));
+        assert_eq!(iter.next(), Package::from_str("hello@2.10-3").ok());
+        assert_eq!(iter.next(), Package::from_str("iagno@1:3.38.1-2").ok());
+        assert_eq!(iter.next(), Package::from_str("mount@2.38.1-5+b1").ok());
         assert_eq!(
             iter.next(),
-            Some(Package::from("hello").with_version("2.10-3"))
-        );
-        assert_eq!(
-            iter.next(),
-            Some(Package::from("iagno").with_version("1:3.38.1-2"))
-        );
-        assert_eq!(
-            iter.next(),
-            Some(Package::from("mount").with_version("2.38.1-5+b1"))
-        );
-        assert_eq!(
-            iter.next(),
-            Some(Package::from("mysql-common").with_version("5.8+1.1.0"))
+            Package::from_str("mysql-common@5.8+1.1.0").ok()
         );
     }
 
@@ -148,7 +142,6 @@ mysql-common/now 5.8+1.1.0 all [installed,local]"#;
         let apt = AdvancedPackageTool;
         let alt = "apt";
         let reg = "apt-get";
-        let func = AdvancedPackageTool::alt_cmd;
         let cmds = &[
             Cmd::Install,
             Cmd::Uninstall,
@@ -159,12 +152,13 @@ mysql-common/now 5.8+1.1.0 all [installed,local]"#;
             Cmd::AddRepo,
             Cmd::Search,
         ];
-        for cmd in cmds {
+
+        for cmd in cmds.iter() {
             let should_match = match cmd {
                 Cmd::Search | Cmd::List => alt,
                 _ => reg,
             };
-            assert_eq!(func(apt.get_cmds(*cmd)).get_program(), should_match);
+            assert_eq!(apt.alt_cmd(&apt.get_cmds(*cmd)).get_program(), should_match);
         }
     }
 }

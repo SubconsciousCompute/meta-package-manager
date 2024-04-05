@@ -49,6 +49,7 @@ mod tests {
     use std::{
         fmt::Display,
         process::{Command, ExitStatus, Output},
+        str::FromStr,
     };
 
     use super::{Cmd, Commands};
@@ -60,11 +61,11 @@ mod tests {
         fn cmd(&self) -> Command {
             Command::new("")
         }
-        fn get_cmds(&self, _: crate::Cmd) -> &'static [&'static str] {
-            &["command"]
+        fn get_cmds(&self, _: crate::Cmd) -> Vec<String> {
+            vec!["command".to_string()]
         }
-        fn get_flags(&self, _: crate::Cmd) -> &'static [&'static str] {
-            &["flag"]
+        fn get_flags(&self, _: crate::Cmd) -> Vec<String> {
+            vec!["flag".to_string()]
         }
     }
 
@@ -87,10 +88,10 @@ mod tests {
         fn cmd(&self) -> Command {
             Command::new("")
         }
-        fn get_cmds(&self, _: Cmd) -> &'static [&'static str] {
-            &[""]
+        fn get_cmds(&self, _: Cmd) -> Vec<String> {
+            vec!["".to_string()]
         }
-        fn exec_cmds(&self, _: &[&str]) -> Output {
+        fn exec_cmds(&self, _: &[String]) -> Output {
             let out = br#"
             package1
             package2+1.1.0
@@ -109,9 +110,9 @@ mod tests {
         let mock = MockCommands;
         let con = mock.consolidated(Cmd::Install, &["arg"]);
         let mut coniter = con.into_iter();
-        assert_eq!(coniter.next(), Some("command"));
-        assert_eq!(coniter.next(), Some("arg"));
-        assert_eq!(coniter.next(), Some("flag"));
+        assert_eq!(coniter.next(), Some("command".to_string()));
+        assert_eq!(coniter.next(), Some("arg".to_string()));
+        assert_eq!(coniter.next(), Some("flag".to_string()));
     }
 
     #[test]
@@ -121,37 +122,34 @@ mod tests {
         package_assertions(pm.search("").into_iter());
     }
 
-    fn package_assertions<'a>(mut listiter: impl Iterator<Item = Package<'a>>) {
-        assert_eq!(listiter.next(), Some(Package::from("package1")));
-        assert_eq!(
-            listiter.next(),
-            Some(Package::from("package2").with_version("1.1.0"))
-        );
-        assert_eq!(listiter.next(), Some(Package::from("package3")));
+    fn package_assertions(mut listiter: impl Iterator<Item = Package>) {
+        assert_eq!(listiter.next(), Package::from_str("package1").ok());
+        assert_eq!(listiter.next(), Package::from_str("package2@1.1.0").ok());
+        assert_eq!(listiter.next(), Package::from_str("package3").ok());
         assert_eq!(listiter.next(), None);
     }
 
     #[test]
     fn package_formatting() {
-        let pkg = Package::from("package");
+        let pkg = Package::from_str("package").unwrap();
         assert_eq!(MockPackageManager.pkg_format(&pkg), "package");
-        let pkg = pkg.with_version("0.1.0");
+        let pkg = Package::from_str("package@0.1.0").unwrap();
         assert_eq!(MockPackageManager.pkg_format(&pkg), "package+0.1.0");
     }
 
     #[test]
     fn package_version() {
-        let pkg = Package::from("test");
-        assert!(!pkg.has_version());
-        let pkg = pkg.with_version("1.1");
-        assert!(pkg.has_version());
+        let pkg = Package::from_str("test").unwrap();
+        assert!(pkg.version().is_none());
+        let pkg = Package::from_str("test@1.1").unwrap();
+        assert!(pkg.version().is_some());
     }
 
     #[test]
     fn package_version_replace() {
-        let pkg = Package::from("test").with_version("1.0");
+        let pkg = Package::from_str("test@1.0").unwrap();
         assert_eq!(pkg.version(), Some("1.0"));
-        let pkg = pkg.with_version("2.0");
+        let pkg = Package::from_str("test@2.0").unwrap();
         assert_eq!(pkg.version(), Some("2.0"));
     }
 }

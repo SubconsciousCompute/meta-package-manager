@@ -2,7 +2,7 @@
 
 use std::{error::Error, fmt::Display};
 
-const NO_VERSION: &'static str = "~";
+const NO_VERSION: &str = "~";
 
 /// Primary interface for implementing a package manager
 ///
@@ -293,7 +293,7 @@ pub trait Commands {
 /// A representation of a package
 ///
 /// This struct contains package's name and version information (optional).
-#[derive(Clone, PartialEq, Eq, Hash, serde::Serialize, tabled::Tabled)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, tabled::Tabled)]
 pub struct Package {
     /// name of the package
     name: String,

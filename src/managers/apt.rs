@@ -1,7 +1,7 @@
 use crate::{Cmd, Commands, Package, PackageManager, RepoError};
 use std::{fmt::Display, fs, io::Write, process::Command};
 
-use crate::{common::Package, Cmd, Commands, PackageManager, RepoError};
+use crate::{common::Package, Cmd, Commands, PackageManager};
 
 /// Wrapper for Advanced Pacakge Tool (APT), the default package management
 /// user-facing utilities in Debian and Debian-based distributions.
@@ -50,14 +50,10 @@ impl PackageManager for AdvancedPackageTool {
         }
     }
 
-    fn add_repo(&self, repo: &str) -> Result<(), RepoError> {
-        let mut sources = fs::File::options()
-            .append(true)
-            .open(Self::SOURCES)
-            .map_err(RepoError::new)?;
-        sources
-            .write_fmt(format_args!("\n{}", repo))
-            .map_err(RepoError::new)
+    fn add_repo(&self, repo: &str) -> anyhow::Result<()> {
+        let mut sources = fs::File::options().append(true).open(Self::SOURCES)?;
+        sources.write_fmt(format_args!("\n{}", repo))?;
+        Ok(())
     }
 }
 

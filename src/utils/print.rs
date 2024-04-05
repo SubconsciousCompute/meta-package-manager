@@ -6,8 +6,7 @@ use tabled::{
     Table, Tabled,
 };
 
-use crate::common::AvailablePackageManager;
-use crate::{managers::MetaPackageManager, Package};
+use crate::{common::AvailablePackageManager, managers::MetaPackageManager, Package};
 
 use super::manager::PkgFormat;
 

@@ -15,30 +15,13 @@ pub trait PackageManager: Commands + std::fmt::Debug + std::fmt::Display {
     /// formatting, overriding the default trait methods would be the way to go.
     fn pkg_delimiter(&self) -> char;
 
-    /// Try to create a new `PackageManager`. If available, return Ok else Error.
-    fn try_new(self) -> anyhow::Result<Box<Self>>
-    where
-        Self: Sized + Default,
-    {
-        match self.cmd().arg("--version").status() {
-            Ok(x) => {
-                if x.success() {
-                    Ok(Box::new(Self::default()))
-                } else {
-                    anyhow::bail!("failed to run pkg-manager command: {x:?}")
-                }
-            }
-            Err(e) => anyhow::bail!("not available: {e}"),
-        }
-    }
-
     /// Get a formatted string of the package as <name><delimiter><version>
     ///
     /// Note: this functions returns a formatted string only if version
     /// information is present. Otherwise, only a borrowed name string is
     /// returned. Which is why this function returns a 'Cow<str>' and not a
     /// `String`.
-    fn pkg_format<'a>(&self, pkg: &'a Package) -> std::borrow::Cow<'a, str> {
+    fn pkg_format(&self, pkg: &Package) -> String {
         if let Some(v) = pkg.version() {
             format!("{}{}{}", pkg.name, self.pkg_delimiter(), v).into()
         } else {
@@ -59,7 +42,7 @@ pub trait PackageManager: Commands + std::fmt::Debug + std::fmt::Display {
     /// For package maangers that have unusual or complex output, users are free
     /// to override this method. Note: Remember to construct a package with
     /// owned values in this method.
-    fn parse_pkg<'a>(&self, line: &str) -> Option<Package> {
+    fn parse_pkg(&self, line: &str) -> Option<Package> {
         let pkg = if let Some((name, version)) = line.split_once(self.pkg_delimiter()) {
             Package::new(name.trim(), Some(version.trim()))
         } else {
@@ -152,12 +135,11 @@ pub trait PackageManager: Commands + std::fmt::Debug + std::fmt::Display {
     /// Since the implementation might greatly vary among different package
     /// managers this method returns a `Result` instead of the usual
     /// `std::process::ExitStatus`.
-    fn add_repo(&self, repo: &str) -> Result<(), RepoError> {
+    fn add_repo(&self, repo: &str) -> anyhow::Result<()> {
         let cmds = self.consolidated(crate::common::Cmd::AddRepo, &[repo.to_string()]);
-        self.exec_cmds_status(&cmds)
-            .success()
-            .then_some(())
-            .ok_or(RepoError::default())
+        let s = self.exec_cmds_status(&cmds);
+        anyhow::ensure!(s.success(), "Error adding repo");
+        Ok(())
     }
 }
 
@@ -325,6 +307,15 @@ impl Package {
         Self {
             name: name.to_string(),
             version: version.map(|x| x.to_string()),
+        }
+    }
+
+    /// Parse a string into [`Self`]
+    pub fn from_str(s: &str) -> Self {
+        if let Some((name, version)) = s.split_once('@') {
+            Package::new(name, Some(version))
+        } else {
+            Package::new(s, None)
         }
     }
 

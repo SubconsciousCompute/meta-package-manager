@@ -26,8 +26,8 @@ use crate::common::*;
 
 /// Enum of all supported package managers.
 #[derive(Debug, Delegate, strum::EnumIter, strum::EnumCount)]
-#[delegate(crate::PackageManager)]
 #[delegate(crate::Commands)]
+#[delegate(crate::PackageManager)]
 pub enum MetaPackageManager {
     Apt(AdvancedPackageTool),
     Brew(Homebrew),
@@ -47,17 +47,25 @@ impl MetaPackageManager {
     /// Construct a new `MetaPackageManager` from a given package manager.
     pub fn try_new(manager: AvailablePackageManager) -> anyhow::Result<Self> {
         tracing::info!("Creating meta package manager interface for {manager:?}");
-        Ok(match manager {
-            AvailablePackageManager::Apt => Self::Apt(*AdvancedPackageTool::default().try_new()?),
-            AvailablePackageManager::Brew => Self::Brew(*Homebrew::default().try_new()?),
-            AvailablePackageManager::Choco => Self::Choco(*Chocolatey::default().try_new()?),
-            AvailablePackageManager::Dnf => Self::Dnf(*DandifiedYUM::default().try_new()?),
-            AvailablePackageManager::Yum => {
-                Self::Yum(*YellowdogUpdaterModified::default().try_new()?)
+        let mpm = match manager {
+            AvailablePackageManager::Apt => Self::Apt(AdvancedPackageTool::default()),
+            AvailablePackageManager::Brew => Self::Brew(Homebrew::default()),
+            AvailablePackageManager::Choco => Self::Choco(Chocolatey::default()),
+            AvailablePackageManager::Dnf => Self::Dnf(DandifiedYUM::default()),
+            AvailablePackageManager::Yum => Self::Yum(YellowdogUpdaterModified::default()),
+            AvailablePackageManager::Zypper => Self::Zypper(Zypper::default()),
+        };
+
+        match mpm.cmd().arg("--version").status() {
+            Ok(status) => {
+                if status.success() {
+                    Ok(mpm)
+                } else {
+                    anyhow::bail!("failed to run {mpm} command")
+                }
             }
-            AvailablePackageManager::Zypper => Self::Zypper(*Zypper::default().try_new()?),
-            _ => anyhow::bail!("unknown"),
-        })
+            Err(e) => anyhow::bail!("{mpm} not found on this system: {e}"),
+        }
     }
 
     /// Try to find the system package manager.

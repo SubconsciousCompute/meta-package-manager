@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt::Display, process::Command};
+use std::{fmt::Display, process::Command};
 
 use crate::{common::Package, Cmd, Commands, PackageManager};
 
@@ -12,7 +12,7 @@ impl PackageManager for Chocolatey {
     fn pkg_delimiter(&self) -> char {
         '|'
     }
-    fn pkg_format<'a>(&self, pkg: &'a Package) -> Cow<'a, str> {
+    fn pkg_format(&self, pkg: &Package) -> String {
         if let Some(v) = pkg.version() {
             format!("{} --version {}", pkg.name(), v).into()
         } else {

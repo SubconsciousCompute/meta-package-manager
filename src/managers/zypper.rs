@@ -2,7 +2,7 @@
 
 use std::{fmt::Display, process::Command};
 
-use crate::{Cmd, Commands, Package, PackageManager, RepoError};
+use crate::{Cmd, Commands, Package, PackageManager};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -57,20 +57,19 @@ impl PackageManager for Zypper {
         }
     }
 
-    fn add_repo(&self, repo: &str) -> Result<(), RepoError> {
-        if !self
-            .install(Package::new("dnf-command(config-manager)", None))
-            .success()
-        {
-            return Err(RepoError::with_msg(
-                "failed to install config-manager plugin",
-            ));
-        }
+    fn add_repo(&self, repo: &str) -> anyhow::Result<()> {
+        anyhow::ensure!(
+            self.install(Package::new("dnf-command(config-manager)", None))
+                .success(),
+            "failed to install config-manager plugin",
+        );
 
-        self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, &[repo]))
-            .success()
-            .then_some(())
-            .ok_or(RepoError::default())
+        anyhow::ensure!(
+            self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, &[repo]))
+                .success(),
+            "Failed to add repo"
+        );
+        Ok(())
     }
 }
 

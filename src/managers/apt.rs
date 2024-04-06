@@ -1,6 +1,6 @@
 use std::{fmt::Display, fs, io::Write, process::Command};
 
-use crate::{common::Package, Cmd, Commands, PackageManager};
+use crate::{common::Package, Cmd, PackageManager, PackageManagerCommands};
 
 /// Wrapper for Advanced Pacakge Tool (APT), the default package management
 /// user-facing utilities in Debian and Debian-based distributions.
@@ -60,7 +60,7 @@ impl Display for AdvancedPackageTool {
     }
 }
 
-impl Commands for AdvancedPackageTool {
+impl PackageManagerCommands for AdvancedPackageTool {
     fn cmd(&self) -> Command {
         Command::new("apt-get")
     }
@@ -93,10 +93,12 @@ impl Commands for AdvancedPackageTool {
     }
 
     fn exec_cmds(&self, cmds: &[String]) -> std::process::Output {
+        self.ensure_sudo();
         self.alt_cmd(cmds).args(cmds).output().unwrap()
     }
 
     fn exec_cmds_status<S: AsRef<str>>(&self, cmds: &[S]) -> std::process::ExitStatus {
+        self.ensure_sudo();
         self.alt_cmd(cmds)
             .args(cmds.iter().map(AsRef::as_ref))
             .status()
@@ -104,6 +106,7 @@ impl Commands for AdvancedPackageTool {
     }
 
     fn exec_cmds_spawn(&self, cmds: &[String]) -> std::process::Child {
+        self.ensure_sudo();
         self.alt_cmd(cmds).args(cmds).spawn().unwrap()
     }
 }
@@ -113,7 +116,7 @@ mod tests {
     use std::str::FromStr;
 
     use super::AdvancedPackageTool;
-    use crate::{Cmd, Commands, Package, PackageManager};
+    use crate::{Cmd, Package, PackageManager, PackageManagerCommands};
 
     #[test]
     fn test_parse_pkg() {

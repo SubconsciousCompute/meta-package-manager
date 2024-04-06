@@ -8,7 +8,7 @@ const NO_VERSION: &str = "~";
 ///
 /// Multiple package managers can be grouped together as dyn PackageManager.
 #[ambassador::delegatable_trait]
-pub trait PackageManager: Commands + std::fmt::Debug + std::fmt::Display {
+pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::Display {
     /// Defines a delimeter to use while formatting package name and version
     ///
     /// For example, HomeBrew supports `<name>@<version>` and APT supports
@@ -196,7 +196,7 @@ impl Error for RepoError {
 /// Representation of a package manager command
 ///
 /// All the variants are the type of commands that a type that imlements
-/// [``Commands``] and [``PackageManager``] (should) support.
+/// [``PackageManagerCommands``] and [``PackageManager``] (should) support.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Cmd {
     Install,
@@ -211,12 +211,12 @@ pub enum Cmd {
 
 /// Trait for defining package panager commands in one place
 ///
-/// Only [``Commands::cmd``] and [``Commands::commands``] are required, the rest
-/// are simply conviniece methods that internally call [``Commands::commands``].
-/// The trait [``PackageManager``] depends on this to provide default
-/// implementations.
+/// Only [``PackageManagerCommands::cmd``] and [``Commands::commands``] are
+/// required, the rest are simply conviniece methods that internally call
+/// [``PackageManagerCommands::commands``]. The trait [``PackageManager``]
+/// depends on this to provide default implementations.
 #[ambassador::delegatable_trait]
-pub trait Commands {
+pub trait PackageManagerCommands {
     /// Primary command of the package manager. For example, 'brew', 'apt', and
     /// 'dnf', constructed with [``std::process::Command::new``].
     fn cmd(&self) -> std::process::Command;
@@ -248,45 +248,70 @@ pub trait Commands {
         commands.append(&mut self.get_flags(cmd));
         commands
     }
+
     /// Run arbitrary commands against the package manager command and get
     /// output
     ///
     /// # Panics
-    /// This fn can panic when the defined [``Commands::cmd``] is not found in
-    /// path. This can be avoided by using [``verified::Verified``]
-    /// or manually ensuring that the [``Commands::cmd``] is valid.
+    /// This fn can panic when the defined [``PackageManagerCommands::cmd``] is
+    /// not found in path. This can be avoided by using
+    /// [``verified::Verified``] or manually ensuring that the
+    /// [``PackageManagerCommands::cmd``] is valid.
     fn exec_cmds(&self, cmds: &[String]) -> std::process::Output {
         tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
+        self.ensure_sudo();
         self.cmd()
             .args(cmds)
             .output()
             .expect("command executed without a prior check")
     }
+
     /// Run arbitrary commands against the package manager command and wait for
     /// std::process::ExitStatus
     ///
     /// # Panics
-    /// This fn can panic when the defined [``Commands::cmd``] is not found in
-    /// path. This can be avoided by using [``verified::Verified``]
-    /// or manually ensuring that the [``Commands::cmd``] is valid.
+    /// This fn can panic when the defined [``PackageManagerCommands::cmd``] is
+    /// not found in path. This can be avoided by using
+    /// [``verified::Verified``] or manually ensuring that the
+    /// [``PackageManagerCommands::cmd``] is valid.
     fn exec_cmds_status<S: AsRef<str>>(&self, cmds: &[S]) -> std::process::ExitStatus {
+        self.ensure_sudo();
         self.cmd()
             .args(cmds.iter().map(AsRef::as_ref))
             .status()
             .expect("command executed without a prior check")
     }
+
     /// Run arbitrary commands against the package manager command and return
     /// handle to the spawned process
     ///
     /// # Panics
-    /// This fn can panic when the defined [``Commands::cmd``] is not found in
-    /// path. This can be avoided by using [``verified::Verified``]
-    /// or manually ensuring that the [``Commands::cmd``] is valid.
+    /// This fn can panic when the defined [``PackageManagerCommands::cmd``] is
+    /// not found in path. This can be avoided by using
+    /// [``verified::Verified``] or manually ensuring that the
+    /// [``PackageManagerCommands::cmd``] is valid.
     fn exec_cmds_spawn(&self, cmds: &[String]) -> std::process::Child {
+        self.ensure_sudo();
         self.cmd()
             .args(cmds)
             .spawn()
             .expect("command executed without a prior check")
+    }
+
+    /// Ensure that we are in sudo mode.
+    fn ensure_sudo(&self) {
+        #[cfg(target_os = "linux")]
+        if let Err(e) = sudo::escalate_if_needed() {
+            tracing::warn!("Failed to elevate privileges: {e}.");
+        }
+    }
+
+    /// Check is package manager is available.
+    fn is_available(&self) -> bool {
+        match self.cmd().arg("--version").output() {
+            Err(_) => false,
+            Ok(output) => output.status.success(),
+        }
     }
 }
 
@@ -381,8 +406,8 @@ pub enum Operation {
     Update,
 }
 
-/// General purpose version of [``Commands::consolidated``] for consolidating
-/// different types of arguments into a single Vec
+/// General purpose version of [``PackageManagerCommands::consolidated``] for
+/// consolidating different types of arguments into a single Vec
 #[inline]
 pub fn consolidate_args<'a>(cmds: &[&'a str], args: &[&'a str], flags: &[&'a str]) -> Vec<&'a str> {
     let mut vec = Vec::with_capacity(cmds.len() + args.len() + flags.len());

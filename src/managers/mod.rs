@@ -26,7 +26,7 @@ use crate::common::*;
 
 /// Enum of all supported package managers.
 #[derive(Debug, Delegate, strum::EnumIter, strum::EnumCount)]
-#[delegate(crate::Commands)]
+#[delegate(crate::PackageManagerCommands)]
 #[delegate(crate::PackageManager)]
 pub enum MetaPackageManager {
     Apt(AdvancedPackageTool),
@@ -56,16 +56,10 @@ impl MetaPackageManager {
             AvailablePackageManager::Zypper => Self::Zypper(Zypper),
         };
 
-        match mpm.cmd().arg("--version").output() {
-            Ok(output) => {
-                if output.status.success() {
-                    Ok(mpm)
-                } else {
-                    anyhow::bail!("failed to run {mpm} command")
-                }
-            }
-            Err(e) => anyhow::bail!("{mpm} not found on this system: {e}"),
+        if !mpm.is_available() {
+            anyhow::bail!("failed to run {mpm} command")
         }
+        Ok(mpm)
     }
 
     /// Try to find the system package manager.
@@ -95,7 +89,7 @@ impl std::fmt::Display for MetaPackageManager {
 #[cfg(test)]
 mod tests {
 
-    use crate::PackageManager;
+    use crate::{PackageManager, PackageManagerCommands};
 
     #[cfg(target_os = "osx")]
     #[test]
@@ -148,24 +142,25 @@ mod tests {
     #[test]
     fn test_apt() {
         let apt = crate::managers::AdvancedPackageTool;
-        if let Some(apt) = apt.verify() {
-            let pkg = "hello";
-            // sync
-            assert!(apt.sync().success());
-            // search
-            assert!(apt.search(pkg).iter().any(|p| p.name() == "hello"));
-            // install
-            assert!(apt.install(pkg.into()).success());
-            // list
-            assert!(apt.list_installed().iter().any(|p| p.name() == "hello"));
-            // update
-            assert!(apt.update(pkg.into()).success());
-            // uninstall
-            assert!(apt.uninstall(pkg.into()).success());
-            // TODO: Test AddRepo
-        } else {
-            eprintln!("apt is not found");
+        if !apt.is_available() {
+            println!("apt is not available");
+            return;
         }
+
+        let pkg = "hello";
+        // sync
+        assert!(apt.sync().success());
+        // search
+        assert!(apt.search(pkg).iter().any(|p| p.name() == "hello"));
+        // install
+        assert!(apt.install(pkg.parse().unwrap()).success());
+        // list
+        assert!(apt.list_installed().iter().any(|p| p.name() == "hello"));
+        // update
+        assert!(apt.update(pkg.parse().unwrap()).success());
+        // uninstall
+        assert!(apt.uninstall(pkg.parse().unwrap()).success());
+        // TODO: Test AddRepo
     }
 
     // Requires elevated privilages to work
@@ -184,6 +179,10 @@ mod tests {
 
     #[cfg(target_os = "linux")]
     fn dnf_yum_cases(man: impl crate::PackageManager) {
+        if !man.is_available() {
+            println!("Yum is not available");
+            return;
+        }
         let pkg = "hello";
         // sync
         assert!(man.sync().success());

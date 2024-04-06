@@ -1,6 +1,6 @@
 use std::{fmt::Display, process::Command};
 
-use crate::{managers::DandifiedYUM, Cmd, Commands, PackageManager};
+use crate::{managers::DandifiedYUM, Cmd, PackageManager, PackageManagerCommands};
 
 /// Wrapper for Yellowdog Updater Modified (YUM) package manager.
 ///
@@ -36,7 +36,7 @@ impl PackageManager for YellowdogUpdaterModified {
     }
 }
 
-impl Commands for YellowdogUpdaterModified {
+impl PackageManagerCommands for YellowdogUpdaterModified {
     fn cmd(&self) -> Command {
         Command::new("yum")
     }

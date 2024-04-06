@@ -52,12 +52,12 @@ mod tests {
         str::FromStr,
     };
 
-    use super::{Cmd, Commands};
+    use super::{Cmd, PackageManagerCommands};
     use crate::{Package, PackageManager};
 
     struct MockCommands;
 
-    impl Commands for MockCommands {
+    impl PackageManagerCommands for MockCommands {
         fn cmd(&self) -> Command {
             Command::new("")
         }
@@ -84,7 +84,7 @@ mod tests {
         }
     }
 
-    impl Commands for MockPackageManager {
+    impl PackageManagerCommands for MockPackageManager {
         fn cmd(&self) -> Command {
             Command::new("")
         }

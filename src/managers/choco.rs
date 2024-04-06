@@ -1,6 +1,6 @@
 use std::{fmt::Display, process::Command};
 
-use crate::{common::Package, Cmd, Commands, PackageManager};
+use crate::{common::Package, Cmd, PackageManager, PackageManagerCommands};
 
 /// Wrapper for the Chocolatey package manager for windows
 ///
@@ -21,7 +21,7 @@ impl PackageManager for Chocolatey {
     }
 }
 
-impl Commands for Chocolatey {
+impl PackageManagerCommands for Chocolatey {
     fn cmd(&self) -> Command {
         Command::new("choco")
     }

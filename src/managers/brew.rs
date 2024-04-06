@@ -1,6 +1,6 @@
 use std::{fmt::Display, process::Command};
 
-use crate::{Cmd, Commands, PackageManager};
+use crate::{Cmd, PackageManager, PackageManagerCommands};
 
 /// Wrapper for the Homebrew package manager.
 ///
@@ -14,7 +14,7 @@ impl PackageManager for Homebrew {
     }
 }
 
-impl Commands for Homebrew {
+impl PackageManagerCommands for Homebrew {
     fn cmd(&self) -> Command {
         Command::new("brew")
     }

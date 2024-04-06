@@ -302,7 +302,7 @@ pub trait PackageManagerCommands {
     fn ensure_sudo(&self) {
         #[cfg(target_os = "linux")]
         if let Err(e) = sudo::escalate_if_needed() {
-            tracing::warn!("Failed to elevate privilege to admin: {e}.");
+            tracing::warn!("Failed to elevate privileges: {e}.");
         }
     }
 

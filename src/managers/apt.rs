@@ -93,10 +93,12 @@ impl PackageManagerCommands for AdvancedPackageTool {
     }
 
     fn exec_cmds(&self, cmds: &[String]) -> std::process::Output {
+        self.ensure_sudo();
         self.alt_cmd(cmds).args(cmds).output().unwrap()
     }
 
     fn exec_cmds_status<S: AsRef<str>>(&self, cmds: &[S]) -> std::process::ExitStatus {
+        self.ensure_sudo();
         self.alt_cmd(cmds)
             .args(cmds.iter().map(AsRef::as_ref))
             .status()
@@ -104,6 +106,7 @@ impl PackageManagerCommands for AdvancedPackageTool {
     }
 
     fn exec_cmds_spawn(&self, cmds: &[String]) -> std::process::Child {
+        self.ensure_sudo();
         self.alt_cmd(cmds).args(cmds).spawn().unwrap()
     }
 }

@@ -374,7 +374,10 @@ impl Display for Package {
 
 /// Available package manager. This is from cli because I can't use
 /// MetaPackageManager as `clap::ValueEnum`.
-#[derive(Clone, PartialEq, Debug, clap::ValueEnum, strum::EnumIter, strum::EnumCount)]
+#[derive(
+    Clone, PartialEq, Debug, clap::ValueEnum, strum::EnumIter, strum::EnumCount, strum::EnumString,
+)]
+#[strum(ascii_case_insensitive)]
 pub enum AvailablePackageManager {
     Apt,
     Brew,

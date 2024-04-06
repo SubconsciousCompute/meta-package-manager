@@ -18,7 +18,7 @@ use crate::common::{Package, PackageManager};
 /// line args.
 pub struct Cli {
     #[command(subcommand)]
-    command: MpmCommands,
+    command: MpmPackageManagerCommands,
 
     /// Optionally specify a package manager that you want to use. If not given,
     /// mpm will search for default package manager on this system.
@@ -31,7 +31,7 @@ pub struct Cli {
 }
 
 #[derive(Subcommand)]
-pub enum MpmCommands {
+pub enum MpmPackageManagerCommands {
     #[command(about = "List supported package managers and display their availability")]
     Managers,
 
@@ -88,29 +88,29 @@ pub fn execute(args: Cli) -> anyhow::Result<()> {
     };
 
     match args.command {
-        MpmCommands::Managers => crate::print::print_managers(),
-        MpmCommands::Search { string } => {
+        MpmPackageManagerCommands::Managers => crate::print::print_managers(),
+        MpmPackageManagerCommands::Search { string } => {
             let pkgs = mpm.search(&string);
             print_pkgs(&pkgs, args.json)?;
         }
-        MpmCommands::List => {
+        MpmPackageManagerCommands::List => {
             let pkgs = mpm.list_installed();
             print_pkgs(&pkgs, args.json)?;
         }
-        MpmCommands::Install { packages } => {
+        MpmPackageManagerCommands::Install { packages } => {
             for pkg in packages {
                 let s = mpm.install(Package::from_str(&pkg)?);
                 anyhow::ensure!(s.success(), "Failed to install {pkg}");
             }
         }
-        MpmCommands::Uninstall { packages } => {
+        MpmPackageManagerCommands::Uninstall { packages } => {
             for pkg in packages {
                 let s = mpm.uninstall(Package::from_str(&pkg)?);
                 anyhow::ensure!(s.success(), "Failed to uninstall pacakge {pkg}");
             }
         }
 
-        MpmCommands::Update { packages, all } => {
+        MpmPackageManagerCommands::Update { packages, all } => {
             if all {
                 mpm.update_all();
             } else {
@@ -120,10 +120,10 @@ pub fn execute(args: Cli) -> anyhow::Result<()> {
                 }
             }
         }
-        MpmCommands::Repo { repo } => {
+        MpmPackageManagerCommands::Repo { repo } => {
             mpm.add_repo(&repo)?;
         }
-        MpmCommands::Sync => {
+        MpmPackageManagerCommands::Sync => {
             let s = mpm.sync();
             anyhow::ensure!(s.success(), "Failed to sync repositories");
         }

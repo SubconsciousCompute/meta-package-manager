@@ -49,7 +49,7 @@ fn main() {
 ## Advanced usage
 ```rust
 
-use mpm::{managers, verify::Verify, Cmd, Commands, PackageManager};
+use mpm::{managers, verify::Verify, Cmd, PackageManagerCommands, PackageManager};
 
 fn main() {
     // creating a verified instance (package manager known to be in path/installed)

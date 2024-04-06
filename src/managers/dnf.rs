@@ -1,6 +1,6 @@
 use std::{fmt::Display, process::Command};
 
-use crate::{Cmd, Commands, Package, PackageManager};
+use crate::{Cmd, Package, PackageManager, PackageManagerCommands};
 
 /// Wrapper for DandifiedYUM or DNF, the next upcoming major version of YUM
 ///
@@ -49,7 +49,7 @@ impl Display for DandifiedYUM {
     }
 }
 
-impl Commands for DandifiedYUM {
+impl PackageManagerCommands for DandifiedYUM {
     fn cmd(&self) -> Command {
         Command::new("dnf")
     }

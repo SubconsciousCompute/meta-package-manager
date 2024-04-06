@@ -2,7 +2,7 @@
 
 use std::{fmt::Display, process::Command};
 
-use crate::{Cmd, Commands, Package, PackageManager};
+use crate::{Cmd, Package, PackageManager, PackageManagerCommands};
 
 /// Wrapper for Zypper package manager. Some openSUSE might support dnf as well.
 #[derive(Debug, Default)]
@@ -76,7 +76,7 @@ impl Display for Zypper {
     }
 }
 
-impl Commands for Zypper {
+impl PackageManagerCommands for Zypper {
     /// return a primary command.
     fn cmd(&self) -> Command {
         Command::new("zypper")

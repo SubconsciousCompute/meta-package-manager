@@ -37,12 +37,6 @@ pub enum MetaPackageManager {
     Zypper(Zypper),
 }
 
-impl Default for MetaPackageManager {
-    fn default() -> Self {
-        Self::Choco(Chocolatey)
-    }
-}
-
 impl MetaPackageManager {
     /// Construct a new `MetaPackageManager` from a given package manager.
     pub fn try_new(manager: AvailablePackageManager) -> anyhow::Result<Self> {

@@ -225,14 +225,6 @@ pub trait PackageManagerCommands {
     /// Check [``crate::common::Cmd``] enum to see all supported commands.
     fn get_cmds(&self, cmd: Cmd) -> Vec<String>;
 
-    /// Check is package manager is available.
-    fn is_available(&self) -> bool {
-        match self.cmd().arg("--version").output() {
-            Err(_) => false,
-            Ok(output) => output.status.success(),
-        }
-    }
-
     /// Returns the appropriate flags for the given command type. Check
     /// [``crate::common::Cmd``] enum to see all supported commands.
     ///
@@ -267,10 +259,7 @@ pub trait PackageManagerCommands {
     /// [``PackageManagerCommands::cmd``] is valid.
     fn exec_cmds(&self, cmds: &[String]) -> std::process::Output {
         tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
-        #[cfg(target_os = "linux")]
-        if let Err(e) = sudo::escalate_if_needed() {
-            tracing::warn!("Failed to elevate privilege to admin: {e}.");
-        }
+        self.ensure_sudo();
         self.cmd()
             .args(cmds)
             .output()
@@ -286,6 +275,7 @@ pub trait PackageManagerCommands {
     /// [``verified::Verified``] or manually ensuring that the
     /// [``PackageManagerCommands::cmd``] is valid.
     fn exec_cmds_status<S: AsRef<str>>(&self, cmds: &[S]) -> std::process::ExitStatus {
+        self.ensure_sudo();
         self.cmd()
             .args(cmds.iter().map(AsRef::as_ref))
             .status()
@@ -301,10 +291,27 @@ pub trait PackageManagerCommands {
     /// [``verified::Verified``] or manually ensuring that the
     /// [``PackageManagerCommands::cmd``] is valid.
     fn exec_cmds_spawn(&self, cmds: &[String]) -> std::process::Child {
+        self.ensure_sudo();
         self.cmd()
             .args(cmds)
             .spawn()
             .expect("command executed without a prior check")
+    }
+
+    /// Ensure that we are in sudo mode.
+    fn ensure_sudo(&self) {
+        #[cfg(target_os = "linux")]
+        if let Err(e) = sudo::escalate_if_needed() {
+            tracing::warn!("Failed to elevate privilege to admin: {e}.");
+        }
+    }
+
+    /// Check is package manager is available.
+    fn is_available(&self) -> bool {
+        match self.cmd().arg("--version").output() {
+            Err(_) => false,
+            Ok(output) => output.status.success(),
+        }
     }
 }
 

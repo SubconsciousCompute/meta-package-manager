@@ -146,6 +146,7 @@ mod tests {
             println!("apt is not available");
             return;
         }
+
         let pkg = "hello";
         // sync
         assert!(apt.sync().success());

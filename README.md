@@ -11,17 +11,20 @@ ahead in functionality.
 ## Basic Usage
 
 ```rust
-use mpm::{managers, Package, PackageManager, Operation};
+/// use trait
+use mpm::PackageManager;
+use mpm::{MetaPackageManager, Operation};
 
-fn main() {
-    let brew = managers::HomeBrew; // no constructor is called because it's a unit struct
+fn main() -> anyhow::Result<()> {
+    let brew = MetaPackageManager::try_new("brew".parse().unwrap())
+        .expect("brew could not be initialised");
 
-    // Important: running any commands through the package manager if it is not in path/not installed
-    // will result in a panic. See advanced usage for safely constructing verified instances.
-    
+    // Important: running any commands through the package manager if it is not in
+    // path/not installed will result in a panic. See advanced usage for safely
+    // constructing verified instances.
     // single package operation (blocking call)
-    brew.install("mypackage".into());
-    brew.install(Package::from("packwithver").with_version("1.0.0"));
+    brew.install("mypackage".parse()?);
+    brew.install("packwithver@1.0.0".parse()?);
 
     // most methods return `ExitStatus` which can be used to check if
     // the operation was successful
@@ -31,7 +34,7 @@ fn main() {
 
     // multi pacakge operation (blocking call)
     brew.exec_op(
-        &["mypackage".into(), "packwithver".into()],
+        &["mypackage".parse().unwrap(), "packwithver".parse().unwrap()],
         Operation::Uninstall,
     );
 
@@ -44,39 +47,8 @@ fn main() {
     for p in brew.list_installed() {
         println!("{p}");
     }
-```
-
-## Advanced usage
-```rust
-
-use mpm::{managers, verify::Verify, Cmd, PackageManagerCommands, PackageManager};
-
-fn main() {
-    // creating a verified instance (package manager known to be in path/installed)
-    // requires enabling the feature `verify`
-    let Some(verified) = managers::Chocolatey.verify() else {
-        return println!("HomeBrew not in path / not installed");
-    };
-
-    // get output by manually executing package manager commands (blocking call)
-    let cmds = verified.consolidated(Cmd::Install, &["mypacakge"]); // gets appropriate Install command and flags
-    let _output = verified.exec_cmds(&cmds);
-
-    // get handle to child process (non-blocking)
-    let cmds = verified.consolidated(Cmd::Update, &["some", "packages", "--quiet"]); // flags can also be included
-    let _handle = verified.exec_cmds_spawn(&cmds);
-
-    // fully customize commands with the general purpose `consolidated_args` fn
-    // this example is impractical, but it shows how you can mix custom commands with default ones
-    // default command is retrieved for `List` and default flags for `Install`
-    let cmds = mpm::consolidate_args(
-        verified.get_cmds(Cmd::List),
-        &["anything"],
-        verified.get_flags(Cmd::Install),
-    );
-    let _status = verified.exec_cmds_status(&cmds); // blocking call returns ExitStatus
+    Ok(())
 }
-  
 ```
 
 # Command-line Interface

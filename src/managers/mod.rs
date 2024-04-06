@@ -56,16 +56,10 @@ impl MetaPackageManager {
             AvailablePackageManager::Zypper => Self::Zypper(Zypper),
         };
 
-        match mpm.cmd().arg("--version").output() {
-            Ok(output) => {
-                if output.status.success() {
-                    Ok(mpm)
-                } else {
-                    anyhow::bail!("failed to run {mpm} command")
-                }
-            }
-            Err(e) => anyhow::bail!("{mpm} not found on this system: {e}"),
+        if !mpm.is_available() {
+            anyhow::bail!("failed to run {mpm} command")
         }
+        Ok(mpm)
     }
 
     /// Try to find the system package manager.

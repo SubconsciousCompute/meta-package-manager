@@ -267,6 +267,10 @@ pub trait PackageManagerCommands {
     /// [``PackageManagerCommands::cmd``] is valid.
     fn exec_cmds(&self, cmds: &[String]) -> std::process::Output {
         tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
+        #[cfg(target_os = "linux")]
+        if let Err(e) = sudo::escalate_if_needed() {
+            tracing::warn!("Failed to elevate privilege to admin: {e}.");
+        }
         self.cmd()
             .args(cmds)
             .output()

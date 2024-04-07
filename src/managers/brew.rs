@@ -54,7 +54,6 @@ mod tests {
     #[test]
     fn test_homebrew() {
         let hb = Homebrew;
-        let hb = hb.verify().expect("Homebrew not found in path");
         // sync
         assert!(hb.sync().success());
         // search

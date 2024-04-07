@@ -49,7 +49,7 @@ impl Display for Homebrew {
 mod tests {
     #![cfg(target_os = "macos")]
     use super::*;
-    use crate::{PackageManager, PackageManagerCommands};
+    use crate::{PackageManager, PackageManagerCommands, Operation};
 
     #[test]
     fn test_homebrew() {

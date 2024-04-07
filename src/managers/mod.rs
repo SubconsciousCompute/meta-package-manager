@@ -51,8 +51,8 @@ impl MetaPackageManager {
         }
     }
 
-    /// Construct a new `MetaPackageManager` from a given package manager but make sure that it
-    /// exists on this system.
+    /// Construct a new `MetaPackageManager` from a given package manager but
+    /// make sure that it exists on this system.
     pub fn new_if_available(manager: AvailablePackageManager) -> anyhow::Result<Self> {
         let mpm = Self::new(manager);
         if !mpm.is_available() {

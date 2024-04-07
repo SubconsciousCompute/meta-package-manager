@@ -1,5 +1,6 @@
-use crate::{Cmd, PackageManager, PackageManagerCommands, PkgFormat};
 use std::{fmt::Display, process::Command};
+
+use crate::{Cmd, PackageManager, PackageManagerCommands, PkgFormat};
 
 /// Wrapper for the Homebrew package manager.
 ///

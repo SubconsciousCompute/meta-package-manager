@@ -2,7 +2,7 @@
 
 use std::{fmt::Display, process::Command};
 
-use crate::{Cmd, Package, PackageManager, PkgFormat, PackageManagerCommands};
+use crate::{Cmd, Package, PackageManager, PackageManagerCommands, PkgFormat};
 
 /// Wrapper for Zypper package manager. Some openSUSE might support dnf as well.
 #[derive(Debug, Default)]

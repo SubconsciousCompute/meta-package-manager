@@ -22,17 +22,17 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
 
     /// Get a formatted string of the package that can be passed into package manager's cli.
     ///
-    /// Note: this functions returns a formatted string only if version
-    /// information is present. Otherwise, only a borrowed name string is
-    /// returned. Which is why this function returns a 'Cow<str>' and not a
-    /// `String`.
+    /// If package URL is set, the url is passed to cli. Note that not all package manager supports
+    /// installing using url. For now, we rely on package manager to handle it.
     fn reformat_for_command<P: Into<Package>>(&self, pkg: P) -> String {
         let pkg: Package = pkg.into();
-        if let Some(v) = pkg.version() {
-            format!("{}{}{}", pkg.name, self.pkg_delimiter(), v)
-        } else {
-            pkg.name().into()
+        if let Some(url) = pkg.url() {
+            return url.to_string();
         }
+        if let Some(v) = pkg.version() {
+            return format!("{}{}{}", pkg.name, self.pkg_delimiter(), v);
+        }
+        pkg.name().to_string()
     }
 
     /// Returns a package after parsing a line of stdout output from the
@@ -268,7 +268,6 @@ pub trait PackageManagerCommands {
     /// [``verified::Verified``] or manually ensuring that the
     /// [``PackageManagerCommands::cmd``] is valid.
     fn exec_cmds(&self, cmds: &[String]) -> std::process::Output {
-        tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
         self.ensure_sudo();
         tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
         self.cmd()
@@ -362,6 +361,11 @@ impl Package {
     /// Get version information if present
     pub fn version(&self) -> Option<&str> {
         self.version.as_deref()
+    }
+
+    /// Get version information if present
+    pub fn url(&self) -> Option<url::Url> {
+        self.url.clone()
     }
 }
 

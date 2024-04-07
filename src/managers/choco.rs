@@ -12,7 +12,7 @@ impl PackageManager for Chocolatey {
     fn pkg_delimiter(&self) -> char {
         '|'
     }
-    fn pkg_format<P: Into<Package>>(&self, pkg: P) -> String {
+    fn reformat_for_command<P: Into<Package>>(&self, pkg: P) -> String {
         let pkg = pkg.into();
         if let Some(v) = pkg.version() {
             format!("{} --version {}", pkg.name(), v)
@@ -72,9 +72,12 @@ mod tests {
 
     #[test]
     fn test_choco_pkg_fmt() {
-        assert_eq!(Chocolatey.pkg_format("package"), "package".to_string());
         assert_eq!(
-            &Chocolatey.pkg_format("package@0.1.0"),
+            Chocolatey.reformat_for_command("package"),
+            "package".to_string()
+        );
+        assert_eq!(
+            &Chocolatey.reformat_for_command("package@0.1.0"),
             "package --version 0.1.0"
         );
     }

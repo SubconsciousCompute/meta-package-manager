@@ -134,7 +134,10 @@ mod tests {
 
     #[test]
     fn package_formatting() {
-        assert_eq!(MockPackageManager.pkg_format("foo"), "foo");
-        assert_eq!(MockPackageManager.pkg_format("foo@0.1.2"), "foo+0.1.2");
+        assert_eq!(MockPackageManager.reformat_for_command("foo"), "foo");
+        assert_eq!(
+            MockPackageManager.reformat_for_command("foo@0.1.2"),
+            "foo+0.1.2"
+        );
     }
 }

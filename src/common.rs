@@ -20,13 +20,13 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     /// Return the list of supported package extensions.
     fn supported_pkg_formats(&self) -> Vec<PkgFormat>;
 
-    /// Get a formatted string of the package as <name><delimiter><version>
+    /// Get a formatted string of the package that can be passed into package manager's cli.
     ///
     /// Note: this functions returns a formatted string only if version
     /// information is present. Otherwise, only a borrowed name string is
     /// returned. Which is why this function returns a 'Cow<str>' and not a
     /// `String`.
-    fn pkg_format<P: Into<Package>>(&self, pkg: P) -> String {
+    fn reformat_for_command<P: Into<Package>>(&self, pkg: P) -> String {
         let pkg: Package = pkg.into();
         if let Some(v) = pkg.version() {
             format!("{}{}{}", pkg.name, self.pkg_delimiter(), v)
@@ -136,7 +136,7 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
         let fmt: Vec<_> = pkgs
             .iter()
             .cloned()
-            .map(|p| self.pkg_format::<P>(p))
+            .map(|p| self.reformat_for_command::<P>(p))
             .collect();
         let cmds = self.consolidated(command, &fmt);
         self.exec_cmds_status(&cmds)

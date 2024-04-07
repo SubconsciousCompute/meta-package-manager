@@ -49,7 +49,7 @@ impl Display for Homebrew {
 mod tests {
     #![cfg(target_os = "macos")]
     use super::*;
-    use crate::{Operation, PackageManager, PackageManagerCommands};
+    use crate::{Operation, PackageManager};
 
     #[test]
     fn test_homebrew() {
@@ -60,17 +60,15 @@ mod tests {
         assert!(hb.search("hello").iter().any(|p| p.name() == "hello"));
         // install
         assert!(hb
-            .execute_pkg_command(&["hello".parse().unwrap()], Operation::Install)
+            .execute_pkg_command("hello", Operation::Install)
             .success());
         // list
         assert!(hb.list_installed().iter().any(|p| p.name() == "hello"));
         // update
-        assert!(hb
-            .execute_pkg_command(&["hello".parse().unwrap()], Operation::Update)
-            .success());
+        assert!(hb.execute_pkg_command("hello", Operation::Update).success());
         // uninstall
         assert!(hb
-            .execute_pkg_command(&["hello".parse().unwrap()], Operation::Uninstall)
+            .execute_pkg_command("hello", Operation::Uninstall)
             .success());
         // TODO: Test AddRepo
     }

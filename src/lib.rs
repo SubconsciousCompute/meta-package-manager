@@ -53,7 +53,7 @@ mod tests {
     };
 
     use super::{Cmd, PackageManagerCommands};
-    use crate::{Package, PackageManager};
+    use crate::{Package, PackageManager, PkgFormat};
 
     struct MockCommands;
 
@@ -81,6 +81,9 @@ mod tests {
     impl PackageManager for MockPackageManager {
         fn pkg_delimiter(&self) -> char {
             '+'
+        }
+        fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
+            vec![]
         }
     }
 

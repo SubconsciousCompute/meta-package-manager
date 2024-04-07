@@ -87,10 +87,12 @@ impl std::fmt::Display for MetaPackageManager {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn test_supported_fmts() {
         let mpm = MetaPackageManager::new_default().unwrap();
-        let exts = mpm.supported_extensions();
+        let exts = mpm.supported_pkg_formats();
         assert!(!exts.is_empty());
     }
 }

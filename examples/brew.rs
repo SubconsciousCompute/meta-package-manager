@@ -3,7 +3,7 @@ use mpm::PackageManager;
 use mpm::{MetaPackageManager, Operation};
 
 fn main() -> anyhow::Result<()> {
-    let brew = MetaPackageManager::try_new("brew".parse().unwrap())
+    let brew = MetaPackageManager::new_if_available("brew".parse().unwrap())
         .expect("brew could not be initialised");
 
     // Important: running any commands through the package manager if it is not in

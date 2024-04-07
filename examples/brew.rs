@@ -1,6 +1,4 @@
-/// use trait
-use mpm::PackageManager;
-use mpm::{MetaPackageManager, Operation};
+use mpm::{MetaPackageManager, Operation, PackageManager};
 
 fn main() -> anyhow::Result<()> {
     let brew = MetaPackageManager::new_if_available("brew".parse().unwrap())
@@ -10,8 +8,8 @@ fn main() -> anyhow::Result<()> {
     // path/not installed will result in a panic. See advanced usage for safely
     // constructing verified instances.
     // single package operation (blocking call)
-    brew.install("mypackage".parse()?);
-    brew.install("packwithver@1.0.0".parse()?);
+    brew.install("mypackage");
+    brew.install("packwithver@1.0.0");
 
     // most methods return `ExitStatus` which can be used to check if
     // the operation was successful
@@ -20,10 +18,7 @@ fn main() -> anyhow::Result<()> {
     }
 
     // multi pacakge operation (blocking call)
-    brew.exec_op(
-        &["mypackage".parse().unwrap(), "packwithver".parse().unwrap()],
-        Operation::Uninstall,
-    );
+    brew.execute_pkg_command("mypackage", Operation::Uninstall);
 
     // get packages matching search string
     for p in brew.search("python") {

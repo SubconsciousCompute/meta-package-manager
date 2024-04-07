@@ -66,7 +66,7 @@ impl PackageManager for Zypper {
         );
 
         anyhow::ensure!(
-            self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, &[repo]))
+            self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, None, &[repo]))
                 .success(),
             "Failed to add repo"
         );
@@ -86,7 +86,7 @@ impl PackageManagerCommands for Zypper {
         Command::new("zypper")
     }
 
-    fn get_cmds(&self, cmd: Cmd) -> Vec<String> {
+    fn get_cmds(&self, cmd: Cmd, pkg: Option<&Package>) -> Vec<String> {
         let mut cmd: Vec<_> = match cmd {
             Cmd::Install => vec!["install"],
             Cmd::Uninstall => vec!["remove"],
@@ -103,6 +103,9 @@ impl PackageManagerCommands for Zypper {
 
         // run zypper in non-interactive mode.
         cmd.insert(0, "-n".to_string());
+        if pkg.and_then(|p| p.url()).is_some() {
+            cmd.insert(1, "--no-gpg-check".to_string());
+        }
         cmd
     }
 

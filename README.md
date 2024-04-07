@@ -33,7 +33,7 @@ fn main() -> anyhow::Result<()> {
     }
 
     // multi pacakge operation (blocking call)
-    brew.exec_op(
+    brew.execute_pkg_command(
         &["mypackage".parse().unwrap(), "packwithver".parse().unwrap()],
         Operation::Uninstall,
     );

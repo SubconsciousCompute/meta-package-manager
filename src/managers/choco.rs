@@ -12,7 +12,7 @@ impl PackageManager for Chocolatey {
     fn pkg_delimiter(&self) -> char {
         '|'
     }
-    fn pkg_format(&self, pkg: &Package) -> String {
+    fn reformat_for_command(&self, pkg: &Package) -> String {
         if let Some(v) = pkg.version() {
             format!("{} --version {}", pkg.name(), v)
         } else {
@@ -29,7 +29,7 @@ impl PackageManagerCommands for Chocolatey {
     fn cmd(&self) -> Command {
         Command::new("choco")
     }
-    fn get_cmds(&self, cmd: Cmd) -> Vec<String> {
+    fn get_cmds(&self, cmd: Cmd, _pkg: Option<&Package>) -> Vec<String> {
         match cmd {
             Cmd::Install => vec!["install"],
             Cmd::Uninstall => vec!["uninstall"],
@@ -66,16 +66,19 @@ impl Display for Chocolatey {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
 
     use super::*;
 
     #[test]
     fn test_choco_pkg_fmt() {
-        let pkg = Package::from_str("package").unwrap();
-        assert_eq!(Chocolatey.pkg_format(&pkg), "package".to_string());
-        let pkg = Package::from_str("package@0.1.0").unwrap();
-        assert_eq!(&Chocolatey.pkg_format(&pkg), "package --version 0.1.0");
+        assert_eq!(
+            Chocolatey.reformat_for_command(&"package".into()),
+            "package".to_string()
+        );
+        assert_eq!(
+            &Chocolatey.reformat_for_command(&"package@0.1.0".into()),
+            "package --version 0.1.0"
+        );
     }
 
     #[cfg(windows)]
@@ -88,13 +91,13 @@ mod tests {
         // search
         assert!(choco.search(pkg).iter().any(|p| p.name() == pkg));
         // install
-        assert!(choco.install(pkg.parse().unwrap()).success());
+        assert!(choco.install(pkg).success());
         // list
         assert!(choco.list_installed().iter().any(|p| p.name() == pkg));
         // update
-        assert!(choco.update(pkg.parse().unwrap()).success());
+        assert!(choco.update(pkg).success());
         // uninstall
-        assert!(choco.uninstall(pkg.parse().unwrap()).success());
+        assert!(choco.uninstall(pkg).success());
         // TODO: Test AddRepo
     }
 }

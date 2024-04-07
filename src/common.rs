@@ -1,8 +1,8 @@
 //! Common types and traits.
 
-use std::{error::Error, fmt::Display};
+use std::{borrow::Cow, error::Error, fmt::Display};
 
-const NO_VERSION: &str = "~";
+use anyhow::Context;
 
 /// Primary interface for implementing a package manager
 ///
@@ -20,18 +20,20 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     /// Return the list of supported package extensions.
     fn supported_pkg_formats(&self) -> Vec<PkgFormat>;
 
-    /// Get a formatted string of the package as <name><delimiter><version>
+    /// Get a formatted string of the package that can be passed into package
+    /// manager's cli.
     ///
-    /// Note: this functions returns a formatted string only if version
-    /// information is present. Otherwise, only a borrowed name string is
-    /// returned. Which is why this function returns a 'Cow<str>' and not a
-    /// `String`.
-    fn pkg_format(&self, pkg: &Package) -> String {
-        if let Some(v) = pkg.version() {
-            format!("{}{}{}", pkg.name, self.pkg_delimiter(), v)
-        } else {
-            pkg.name().into()
+    /// If package URL is set, the url is passed to cli. Note that not all
+    /// package manager supports installing using url. For now, we rely on
+    /// package manager to handle it.
+    fn reformat_for_command(&self, pkg: &Package) -> String {
+        if let Some(url) = pkg.url() {
+            return url.to_string();
         }
+        if let Some(v) = pkg.version() {
+            return format!("{}{}{}", pkg.name, self.pkg_delimiter(), v);
+        }
+        pkg.name().to_string()
     }
 
     /// Returns a package after parsing a line of stdout output from the
@@ -76,62 +78,67 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     }
 
     /// General package search
-    fn search(&self, pack: &str) -> Vec<Package> {
-        let cmds = self.consolidated(Cmd::Search, &[pack.to_string()]);
+    fn search(&self, query: &str) -> Vec<Package> {
+        let cmds = self.consolidated(Cmd::Search, None, &[query.to_string()]);
         let out = self.exec_cmds(&cmds);
         self.parse_output(&out.stdout)
     }
 
     /// Sync package manaager repositories
     fn sync(&self) -> std::process::ExitStatus {
-        self.exec_cmds_status(&self.consolidated::<&str>(Cmd::Sync, &[]))
+        self.exec_cmds_status(&self.consolidated::<&str>(Cmd::Sync, None, &[]))
     }
 
     /// Update/upgrade all packages
     fn update_all(&self) -> std::process::ExitStatus {
-        self.exec_cmds_status(&self.consolidated::<&str>(Cmd::UpdateAll, &[]))
+        self.exec_cmds_status(&self.consolidated::<&str>(Cmd::UpdateAll, None, &[]))
     }
 
     /// Install a single package
     ///
-    /// For multi-package operations, see [``PackageManager::exec_op``]
-    fn install(&self, pkg: Package) -> std::process::ExitStatus {
-        self.exec_op(&[pkg], Operation::Install)
+    /// For multi-package operations, see
+    /// [``PackageManager::execute_pkg_command``]
+    fn install<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
+        self.execute_pkg_command(pkg, Operation::Install)
     }
 
     /// Uninstall a single package
     ///
-    /// For multi-package operations, see [``PackageManager::exec_op``]
-    fn uninstall(&self, pkg: Package) -> std::process::ExitStatus {
-        self.exec_op(&[pkg], Operation::Uninstall)
+    /// For multi-package operations, see
+    /// [``PackageManager::execute_pkg_command``]
+    fn uninstall<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
+        self.execute_pkg_command(pkg, Operation::Uninstall)
     }
 
     /// Update a single package
     ///
-    /// For multi-package operations, see [``PackageManager::exec_op``]
-    fn update(&self, pkg: Package) -> std::process::ExitStatus {
-        self.exec_op(&[pkg], Operation::Update)
+    /// For multi-package operations, see
+    /// [``PackageManager::execute_pkg_command``]
+    fn update<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
+        self.execute_pkg_command(pkg, Operation::Update)
     }
 
     /// List installed packages
     fn list_installed(&self) -> Vec<Package> {
-        let out = self.exec_cmds(&self.consolidated::<&str>(Cmd::List, &[]));
+        let out = self.exec_cmds(&self.consolidated::<&str>(Cmd::List, None, &[]));
         self.parse_output(&out.stdout)
     }
 
-    /// Execute an operation on multiple packages, such as install, uninstall
-    /// and update
-    fn exec_op(&self, pkgs: &[Package], op: Operation) -> std::process::ExitStatus {
+    /// Execute package manager command.
+    fn execute_pkg_command<P: Into<Package> + std::clone::Clone>(
+        &self,
+        pkg: P,
+        op: Operation,
+    ) -> std::process::ExitStatus {
         let command = match op {
             Operation::Install => Cmd::Install,
             Operation::Uninstall => Cmd::Uninstall,
             Operation::Update => Cmd::Update,
         };
-        let fmt: Vec<_> = pkgs
-            .iter()
-            .map(|p| self.pkg_format(p).to_string())
-            .collect();
-        let cmds = self.consolidated(command, &fmt);
+
+        let pkg = pkg.into();
+        let fmt = self.reformat_for_command(&pkg);
+        let cmds = self.consolidated(command, Some(&pkg), &[fmt]);
         self.exec_cmds_status(&cmds)
     }
 
@@ -141,7 +148,7 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     /// managers this method returns a `Result` instead of the usual
     /// `std::process::ExitStatus`.
     fn add_repo(&self, repo: &str) -> anyhow::Result<()> {
-        let cmds = self.consolidated(Cmd::AddRepo, &[repo.to_string()]);
+        let cmds = self.consolidated(Cmd::AddRepo, None, &[repo.to_string()]);
         let s = self.exec_cmds_status(&cmds);
         anyhow::ensure!(s.success(), "Error adding repo");
         Ok(())
@@ -226,7 +233,7 @@ pub trait PackageManagerCommands {
 
     /// Returns the appropriate command/s for the given supported command type.
     /// Check [``crate::common::Cmd``] enum to see all supported commands.
-    fn get_cmds(&self, cmd: Cmd) -> Vec<String>;
+    fn get_cmds(&self, cmd: Cmd, pkg: Option<&Package>) -> Vec<String>;
 
     /// Returns the appropriate flags for the given command type. Check
     /// [``crate::common::Cmd``] enum to see all supported commands.
@@ -245,8 +252,13 @@ pub trait PackageManagerCommands {
     /// enum [``crate::common::Cmd``] For finer control, a general purpose
     /// function [``consolidated_args``] is also provided.
     #[inline]
-    fn consolidated<S: AsRef<str>>(&self, cmd: Cmd, args: &[S]) -> Vec<String> {
-        let mut commands = self.get_cmds(cmd);
+    fn consolidated<S: AsRef<str>>(
+        &self,
+        cmd: Cmd,
+        pkg: Option<&Package>,
+        args: &[S],
+    ) -> Vec<String> {
+        let mut commands = self.get_cmds(cmd, pkg);
         commands.append(&mut self.get_flags(cmd));
         commands.append(&mut args.iter().map(|x| x.as_ref().to_string()).collect());
         commands
@@ -261,7 +273,6 @@ pub trait PackageManagerCommands {
     /// [``verified::Verified``] or manually ensuring that the
     /// [``PackageManagerCommands::cmd``] is valid.
     fn exec_cmds(&self, cmds: &[String]) -> std::process::Output {
-        tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
         self.ensure_sudo();
         tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
         self.cmd()
@@ -327,24 +338,14 @@ pub trait PackageManagerCommands {
 /// A representation of a package
 ///
 /// This struct contains package's name and version information (optional).
-#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, tabled::Tabled)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize)]
 pub struct Package {
     /// name of the package
     name: String,
     // Untyped version, might be replaced with a strongly typed one
-    version: String,
-}
-
-impl std::str::FromStr for Package {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> anyhow::Result<Self> {
-        if let Some((name, version)) = s.split_once('@') {
-            Ok(Package::new(name, Some(version)))
-        } else {
-            Ok(Package::new(s, None))
-        }
-    }
+    version: Option<String>,
+    /// Url of this package
+    url: Option<url::Url>,
 }
 
 impl Package {
@@ -352,7 +353,8 @@ impl Package {
     pub fn new(name: &str, version: Option<&str>) -> Self {
         Self {
             name: name.to_string(),
-            version: version.unwrap_or(NO_VERSION).to_string(),
+            version: version.map(|v| v.to_string()),
+            url: None,
         }
     }
 
@@ -363,10 +365,52 @@ impl Package {
 
     /// Get version information if present
     pub fn version(&self) -> Option<&str> {
-        if self.version == NO_VERSION {
-            return None;
+        self.version.as_deref()
+    }
+
+    /// Get version information if present
+    pub fn url(&self) -> Option<url::Url> {
+        self.url.clone()
+    }
+}
+
+impl std::str::FromStr for Package {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> anyhow::Result<Self> {
+        if let Ok(url) = url::Url::parse(s) {
+            let name = url
+                .path_segments()
+                .context("can not determine pane from the url")?
+                .last()
+                .expect("can't determine package name from the url");
+            let mut fragments = std::collections::HashMap::new();
+            for frag in url.fragment().unwrap_or("").split(',') {
+                let mut fs = frag.splitn(2, '=');
+                if let Some(key) = fs.next() {
+                    if let Some(value) = fs.next() {
+                        fragments.insert(key, value.to_string());
+                    }
+                }
+            }
+            return Ok(Self {
+                name: name.to_string(),
+                version: fragments.remove("version"),
+                url: Some(url),
+            });
         }
-        Some(&self.version)
+
+        if let Some((name, version)) = s.split_once('@') {
+            Ok(Package::new(name, Some(version)))
+        } else {
+            Ok(Package::new(s, None))
+        }
+    }
+}
+
+impl std::convert::From<&str> for Package {
+    fn from(s: &str) -> Self {
+        s.parse().expect("invalid format")
     }
 }
 
@@ -378,6 +422,21 @@ impl Display for Package {
         } else {
             write!(f, "{}", self.name)
         }
+    }
+}
+
+impl tabled::Tabled for Package {
+    const LENGTH: usize = 40;
+
+    fn fields(&self) -> Vec<Cow<'_, str>> {
+        vec![
+            self.name.clone().into(),
+            self.version.as_deref().unwrap_or("~").into(),
+        ]
+    }
+
+    fn headers() -> Vec<Cow<'static, str>> {
+        vec!["name".into(), "version".into()]
     }
 }
 
@@ -403,21 +462,12 @@ pub enum AvailablePackageManager {
     Zypper,
 }
 
-/// Operation type to execute using [``Package::exec_op``]
+/// Operation type to execute using [``Package::execute_pkg_command``]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Operation {
     Install,
     Uninstall,
     Update,
-}
-
-/// General purpose version of [``PackageManagerCommands::consolidated``] for
-/// consolidating different types of arguments into a single Vec
-#[inline]
-pub fn consolidate_args<'a>(cmds: &[&'a str], args: &[&'a str], flags: &[&'a str]) -> Vec<&'a str> {
-    let mut vec = Vec::with_capacity(cmds.len() + args.len() + flags.len());
-    vec.extend(cmds.iter().chain(args.iter()).chain(flags.iter()).copied());
-    vec
 }
 
 /// Pkg Format.

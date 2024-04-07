@@ -1,5 +1,4 @@
-use mpm::PackageManager;
-use mpm::{MetaPackageManager, Operation};
+use mpm::{MetaPackageManager, Operation, PackageManager};
 
 fn main() -> anyhow::Result<()> {
     let brew = MetaPackageManager::new_if_available("brew".parse().unwrap())
@@ -19,10 +18,7 @@ fn main() -> anyhow::Result<()> {
     }
 
     // multi pacakge operation (blocking call)
-    brew.exec_op(
-        &["mypackage", "packwithver"],
-        Operation::Uninstall,
-    );
+    brew.exec_op(&["mypackage", "packwithver"], Operation::Uninstall);
 
     // get packages matching search string
     for p in brew.search("python") {

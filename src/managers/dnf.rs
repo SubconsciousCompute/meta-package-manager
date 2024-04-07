@@ -118,4 +118,35 @@ rubygem-mixlib-shellout-doc.noarch : Documentation for rubygem-mixlib-shellout"#
             Package::from_str("rubygem-mixlib-shellout-doc.noarch").ok()
         );
     }
+
+    // Requires elevated privilages to work
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn test_dnf() {
+        dnf_yum_cases(crate::managers::DandifiedYUM)
+    }
+    #[cfg(target_os = "linux")]
+    fn dnf_yum_cases(man: impl crate::PackageManager) {
+        if !man.is_available() {
+            println!("Yum is not available");
+            return;
+        }
+        let pkg = "hello";
+        // sync
+        assert!(man.sync().success());
+        // search
+        assert!(man.search(pkg).iter().any(|p| p.name() == "hello.x86_64"));
+        // install
+        assert!(man.install(pkg.parse().unwrap()).success());
+        // list
+        assert!(man
+            .list_installed()
+            .iter()
+            .any(|p| p.name() == "hello.x86_64"));
+        // update
+        assert!(man.update(pkg.parse().unwrap()).success());
+        // uninstall
+        assert!(man.uninstall(pkg.parse().unwrap()).success());
+        // TODO: Test AddRepo
+    }
 }

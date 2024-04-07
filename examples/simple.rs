@@ -1,8 +1,7 @@
 //! Simple Usage.
 
+use mpm::{MetaPackageManager, PackageManager};
 use tracing_subscriber::{fmt, prelude::*, EnvFilter};
-use mpm::MetaPackageManager;
-use mpm::PackageManager;
 
 fn main() -> anyhow::Result<()> {
     tracing_subscriber::registry()

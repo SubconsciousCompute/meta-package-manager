@@ -1,6 +1,5 @@
-use std::{fmt::Display, process::Command};
-
 use crate::{Cmd, PackageManager, PackageManagerCommands};
+use std::{fmt::Display, process::Command};
 
 /// Wrapper for the Homebrew package manager.
 ///
@@ -38,5 +37,37 @@ impl PackageManagerCommands for Homebrew {
 impl Display for Homebrew {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("Homebrew")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #![cfg(target_os = "macos")]
+    use super::*;
+    use crate::{PackageManager, PackageManagerCommands};
+
+    #[test]
+    fn test_homebrew() {
+        let hb = Homebrew;
+        let hb = hb.verify().expect("Homebrew not found in path");
+        // sync
+        assert!(hb.sync().success());
+        // search
+        assert!(hb.search("hello").iter().any(|p| p.name() == "hello"));
+        // install
+        assert!(hb
+            .exec_op(&["hello".parse().unwrap()], Operation::Install)
+            .success());
+        // list
+        assert!(hb.list_installed().iter().any(|p| p.name() == "hello"));
+        // update
+        assert!(hb
+            .exec_op(&["hello".parse().unwrap()], Operation::Update)
+            .success());
+        // uninstall
+        assert!(hb
+            .exec_op(&["hello".parse().unwrap()], Operation::Uninstall)
+            .success());
+        // TODO: Test AddRepo
     }
 }

@@ -164,4 +164,30 @@ mysql-common/now 5.8+1.1.0 all [installed,local]"#;
             assert_eq!(apt.alt_cmd(&apt.get_cmds(*cmd)).get_program(), should_match);
         }
     }
+
+    // Requires elevated privilages to work
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn test_apt() {
+        let apt = crate::managers::AdvancedPackageTool;
+        if !apt.is_available() {
+            println!("apt is not available");
+            return;
+        }
+
+        let pkg = "hello";
+        // sync
+        assert!(apt.sync().success());
+        // search
+        assert!(apt.search(pkg).iter().any(|p| p.name() == "hello"));
+        // install
+        assert!(apt.install(pkg.parse().unwrap()).success());
+        // list
+        assert!(apt.list_installed().iter().any(|p| p.name() == "hello"));
+        // update
+        assert!(apt.update(pkg.parse().unwrap()).success());
+        // uninstall
+        assert!(apt.uninstall(pkg.parse().unwrap()).success());
+        // TODO: Test AddRepo
+    }
 }

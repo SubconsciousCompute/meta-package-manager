@@ -73,4 +73,24 @@ mod tests {
         let pkg = Package::from_str("package@0.1.0").unwrap();
         assert_eq!(&Chocolatey.pkg_format(&pkg), "package --version 0.1.0");
     }
+
+    #[cfg(windows)]
+    #[test]
+    fn test_chocolatey() {
+        let choco = Chocolatey;
+        let pkg = "tac";
+        // sync
+        assert!(choco.sync().success());
+        // search
+        assert!(choco.search(pkg).iter().any(|p| p.name() == pkg));
+        // install
+        assert!(choco.install(pkg.parse().unwrap()).success());
+        // list
+        assert!(choco.list_installed().iter().any(|p| p.name() == pkg));
+        // update
+        assert!(choco.update(pkg.parse().unwrap()).success());
+        // uninstall
+        assert!(choco.uninstall(pkg.parse().unwrap()).success());
+        // TODO: Test AddRepo
+    }
 }

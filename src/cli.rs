@@ -29,7 +29,6 @@ pub struct Cli {
     // /// Set interactive mode
     // #[arg(long, short, default_value_t = false)]
     // interactive: bool,
-
     /// Set output to be in json format.
     #[arg(long, default_value_t = false)]
     json: bool,

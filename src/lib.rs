@@ -111,8 +111,8 @@ mod tests {
         let con = mock.consolidated(Cmd::Install, &["arg"]);
         let mut coniter = con.into_iter();
         assert_eq!(coniter.next(), Some("command".to_string()));
-        assert_eq!(coniter.next(), Some("arg".to_string()));
         assert_eq!(coniter.next(), Some("flag".to_string()));
+        assert_eq!(coniter.next(), Some("arg".to_string()));
     }
 
     #[test]

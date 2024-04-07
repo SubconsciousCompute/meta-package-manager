@@ -244,8 +244,8 @@ pub trait PackageManagerCommands {
     #[inline]
     fn consolidated<S: AsRef<str>>(&self, cmd: Cmd, args: &[S]) -> Vec<String> {
         let mut commands = self.get_cmds(cmd);
-        commands.append(&mut args.iter().map(|x| x.as_ref().to_string()).collect());
         commands.append(&mut self.get_flags(cmd));
+        commands.append(&mut args.iter().map(|x| x.as_ref().to_string()).collect());
         commands
     }
 
@@ -260,6 +260,7 @@ pub trait PackageManagerCommands {
     fn exec_cmds(&self, cmds: &[String]) -> std::process::Output {
         tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
         self.ensure_sudo();
+        tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
         self.cmd()
             .args(cmds)
             .output()
@@ -274,8 +275,12 @@ pub trait PackageManagerCommands {
     /// not found in path. This can be avoided by using
     /// [``verified::Verified``] or manually ensuring that the
     /// [``PackageManagerCommands::cmd``] is valid.
-    fn exec_cmds_status<S: AsRef<str>>(&self, cmds: &[S]) -> std::process::ExitStatus {
+    fn exec_cmds_status<S: AsRef<str> + std::fmt::Debug>(
+        &self,
+        cmds: &[S],
+    ) -> std::process::ExitStatus {
         self.ensure_sudo();
+        tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
         self.cmd()
             .args(cmds.iter().map(AsRef::as_ref))
             .status()
@@ -292,6 +297,7 @@ pub trait PackageManagerCommands {
     /// [``PackageManagerCommands::cmd``] is valid.
     fn exec_cmds_spawn(&self, cmds: &[String]) -> std::process::Child {
         self.ensure_sudo();
+        tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
         self.cmd()
             .args(cmds)
             .spawn()
@@ -300,9 +306,9 @@ pub trait PackageManagerCommands {
 
     /// Ensure that we are in sudo mode.
     fn ensure_sudo(&self) {
-        #[cfg(target_os = "linux")]
-        if let Err(e) = sudo::escalate_if_needed() {
-            tracing::warn!("Failed to elevate privileges: {e}.");
+        #[cfg(unix)]
+        if let Err(e) = sudo::with_env(&["CARGO_", "MPM_LOG", "RUST_LOG"]) {
+            tracing::warn!("Failed to elevate to sudo: {e}.");
         }
     }
 

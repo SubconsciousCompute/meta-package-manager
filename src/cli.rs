@@ -25,6 +25,11 @@ pub struct Cli {
     #[arg(long, short)]
     manager: Option<crate::common::AvailablePackageManager>,
 
+    // TODO: See issue #33
+    // /// Set interactive mode
+    // #[arg(long, short, default_value_t = false)]
+    // interactive: bool,
+
     /// Set output to be in json format.
     #[arg(long, default_value_t = false)]
     json: bool,

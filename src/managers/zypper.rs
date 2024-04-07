@@ -83,7 +83,7 @@ impl PackageManagerCommands for Zypper {
     }
 
     fn get_cmds(&self, cmd: Cmd) -> Vec<String> {
-        match cmd {
+        let mut cmd: Vec<_> = match cmd {
             Cmd::Install => vec!["install"],
             Cmd::Uninstall => vec!["remove"],
             Cmd::Update => vec!["update"],
@@ -95,16 +95,20 @@ impl PackageManagerCommands for Zypper {
         }
         .iter()
         .map(|x| x.to_string())
-        .collect()
+        .collect();
+
+        // run zypper in non-interactive mode.
+        cmd.insert(0, "-n".to_string());
+        cmd
     }
 
     fn get_flags(&self, cmd: Cmd) -> Vec<String> {
         match cmd {
-            Cmd::Install | Cmd::Uninstall | Cmd::Update | Cmd::UpdateAll => vec!["-n"],
+            Cmd::Install | Cmd::Uninstall | Cmd::Update | Cmd::UpdateAll => vec![],
             Cmd::List => vec!["-i"],
             Cmd::Search => vec!["--no-refresh", "-q"],
             Cmd::AddRepo => vec!["-f"],
-            _ => vec!["-n"],
+            _ => vec![],
         }
         .iter()
         .map(|x| x.to_string())

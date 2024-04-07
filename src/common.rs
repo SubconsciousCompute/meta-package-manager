@@ -309,7 +309,7 @@ pub trait PackageManagerCommands {
 
     /// Ensure that we are in sudo mode.
     fn ensure_sudo(&self) {
-        #[cfg(unix)]
+        #[cfg(target_os = "linux")]
         if let Err(e) = sudo::with_env(&["CARGO_", "MPM_LOG", "RUST_LOG"]) {
             tracing::warn!("Failed to elevate to sudo: {e}.");
         }

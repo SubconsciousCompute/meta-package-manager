@@ -1,6 +1,8 @@
 use std::{fmt::Display, process::Command};
 
-use crate::{managers::DandifiedYUM, Cmd, PackageManager, PackageManagerCommands, PkgFormat};
+use crate::{
+    managers::DandifiedYUM, Cmd, Package, PackageManager, PackageManagerCommands, PkgFormat,
+};
 
 /// Wrapper for Yellowdog Updater Modified (YUM) package manager.
 ///
@@ -45,8 +47,8 @@ impl PackageManagerCommands for YellowdogUpdaterModified {
     fn cmd(&self) -> Command {
         Command::new("yum")
     }
-    fn get_cmds(&self, cmd: crate::Cmd) -> Vec<String> {
-        self.0.get_cmds(cmd)
+    fn get_cmds(&self, cmd: crate::Cmd, pkg: Option<&Package>) -> Vec<String> {
+        self.0.get_cmds(cmd, pkg)
     }
     fn get_flags(&self, cmd: Cmd) -> Vec<String> {
         self.0.get_flags(cmd)

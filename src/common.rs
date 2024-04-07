@@ -20,12 +20,13 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     /// Return the list of supported package extensions.
     fn supported_pkg_formats(&self) -> Vec<PkgFormat>;
 
-    /// Get a formatted string of the package that can be passed into package manager's cli.
+    /// Get a formatted string of the package that can be passed into package
+    /// manager's cli.
     ///
-    /// If package URL is set, the url is passed to cli. Note that not all package manager supports
-    /// installing using url. For now, we rely on package manager to handle it.
-    fn reformat_for_command<P: Into<Package>>(&self, pkg: P) -> String {
-        let pkg: Package = pkg.into();
+    /// If package URL is set, the url is passed to cli. Note that not all
+    /// package manager supports installing using url. For now, we rely on
+    /// package manager to handle it.
+    fn reformat_for_command(&self, pkg: &Package) -> String {
         if let Some(url) = pkg.url() {
             return url.to_string();
         }
@@ -78,45 +79,48 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
 
     /// General package search
     fn search(&self, query: &str) -> Vec<Package> {
-        let cmds = self.consolidated(Cmd::Search, &[query.to_string()]);
+        let cmds = self.consolidated(Cmd::Search, None, &[query.to_string()]);
         let out = self.exec_cmds(&cmds);
         self.parse_output(&out.stdout)
     }
 
     /// Sync package manaager repositories
     fn sync(&self) -> std::process::ExitStatus {
-        self.exec_cmds_status(&self.consolidated::<&str>(Cmd::Sync, &[]))
+        self.exec_cmds_status(&self.consolidated::<&str>(Cmd::Sync, None, &[]))
     }
 
     /// Update/upgrade all packages
     fn update_all(&self) -> std::process::ExitStatus {
-        self.exec_cmds_status(&self.consolidated::<&str>(Cmd::UpdateAll, &[]))
+        self.exec_cmds_status(&self.consolidated::<&str>(Cmd::UpdateAll, None, &[]))
     }
 
     /// Install a single package
     ///
-    /// For multi-package operations, see [``PackageManager::execute_pkg_command``]
+    /// For multi-package operations, see
+    /// [``PackageManager::execute_pkg_command``]
     fn install<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
         self.execute_pkg_command(pkg, Operation::Install)
     }
 
     /// Uninstall a single package
     ///
-    /// For multi-package operations, see [``PackageManager::execute_pkg_command``]
+    /// For multi-package operations, see
+    /// [``PackageManager::execute_pkg_command``]
     fn uninstall<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
         self.execute_pkg_command(pkg, Operation::Uninstall)
     }
 
     /// Update a single package
     ///
-    /// For multi-package operations, see [``PackageManager::execute_pkg_command``]
+    /// For multi-package operations, see
+    /// [``PackageManager::execute_pkg_command``]
     fn update<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
         self.execute_pkg_command(pkg, Operation::Update)
     }
 
     /// List installed packages
     fn list_installed(&self) -> Vec<Package> {
-        let out = self.exec_cmds(&self.consolidated::<&str>(Cmd::List, &[]));
+        let out = self.exec_cmds(&self.consolidated::<&str>(Cmd::List, None, &[]));
         self.parse_output(&out.stdout)
     }
 
@@ -132,8 +136,9 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
             Operation::Update => Cmd::Update,
         };
 
-        let fmt = self.reformat_for_command(pkg);
-        let cmds = self.consolidated(command, &[fmt]);
+        let pkg = pkg.into();
+        let fmt = self.reformat_for_command(&pkg);
+        let cmds = self.consolidated(command, Some(&pkg), &[fmt]);
         self.exec_cmds_status(&cmds)
     }
 
@@ -143,7 +148,7 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     /// managers this method returns a `Result` instead of the usual
     /// `std::process::ExitStatus`.
     fn add_repo(&self, repo: &str) -> anyhow::Result<()> {
-        let cmds = self.consolidated(Cmd::AddRepo, &[repo.to_string()]);
+        let cmds = self.consolidated(Cmd::AddRepo, None, &[repo.to_string()]);
         let s = self.exec_cmds_status(&cmds);
         anyhow::ensure!(s.success(), "Error adding repo");
         Ok(())
@@ -228,7 +233,7 @@ pub trait PackageManagerCommands {
 
     /// Returns the appropriate command/s for the given supported command type.
     /// Check [``crate::common::Cmd``] enum to see all supported commands.
-    fn get_cmds(&self, cmd: Cmd) -> Vec<String>;
+    fn get_cmds(&self, cmd: Cmd, pkg: Option<&Package>) -> Vec<String>;
 
     /// Returns the appropriate flags for the given command type. Check
     /// [``crate::common::Cmd``] enum to see all supported commands.
@@ -247,8 +252,13 @@ pub trait PackageManagerCommands {
     /// enum [``crate::common::Cmd``] For finer control, a general purpose
     /// function [``consolidated_args``] is also provided.
     #[inline]
-    fn consolidated<S: AsRef<str>>(&self, cmd: Cmd, args: &[S]) -> Vec<String> {
-        let mut commands = self.get_cmds(cmd);
+    fn consolidated<S: AsRef<str>>(
+        &self,
+        cmd: Cmd,
+        pkg: Option<&Package>,
+        args: &[S],
+    ) -> Vec<String> {
+        let mut commands = self.get_cmds(cmd, pkg);
         commands.append(&mut self.get_flags(cmd));
         commands.append(&mut args.iter().map(|x| x.as_ref().to_string()).collect());
         commands

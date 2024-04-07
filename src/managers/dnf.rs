@@ -41,7 +41,7 @@ impl PackageManager for DandifiedYUM {
             "failed to install config-manager plugin"
         );
 
-        let s = self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, &[repo]));
+        let s = self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, None, &[repo]));
         anyhow::ensure!(s.success(), "failed to add repo");
         Ok(())
     }
@@ -58,7 +58,7 @@ impl PackageManagerCommands for DandifiedYUM {
         Command::new("dnf")
     }
 
-    fn get_cmds(&self, cmd: Cmd) -> Vec<String> {
+    fn get_cmds(&self, cmd: Cmd, _pkg: Option<&Package>) -> Vec<String> {
         match cmd {
             Cmd::Install => vec!["install"],
             Cmd::Uninstall => vec!["remove"],

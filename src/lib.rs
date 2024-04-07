@@ -61,7 +61,7 @@ mod tests {
         fn cmd(&self) -> Command {
             Command::new("")
         }
-        fn get_cmds(&self, _: crate::Cmd) -> Vec<String> {
+        fn get_cmds(&self, _: crate::Cmd, _: Option<&Package>) -> Vec<String> {
             vec!["command".to_string()]
         }
         fn get_flags(&self, _: crate::Cmd) -> Vec<String> {
@@ -91,7 +91,7 @@ mod tests {
         fn cmd(&self) -> Command {
             Command::new("")
         }
-        fn get_cmds(&self, _: Cmd) -> Vec<String> {
+        fn get_cmds(&self, _: Cmd, _: Option<&Package>) -> Vec<String> {
             vec!["".to_string()]
         }
         fn exec_cmds(&self, _: &[String]) -> Output {
@@ -111,7 +111,7 @@ mod tests {
     #[test]
     fn default_cmd_consolidated_order() {
         let mock = MockCommands;
-        let con = mock.consolidated(Cmd::Install, &["arg"]);
+        let con = mock.consolidated(Cmd::Install, None, &["arg"]);
         let mut coniter = con.into_iter();
         assert_eq!(coniter.next(), Some("command".to_string()));
         assert_eq!(coniter.next(), Some("flag".to_string()));
@@ -134,9 +134,12 @@ mod tests {
 
     #[test]
     fn package_formatting() {
-        assert_eq!(MockPackageManager.reformat_for_command("foo"), "foo");
         assert_eq!(
-            MockPackageManager.reformat_for_command("foo@0.1.2"),
+            MockPackageManager.reformat_for_command(&"foo".into()),
+            "foo"
+        );
+        assert_eq!(
+            MockPackageManager.reformat_for_command(&"foo@0.1.2".into()),
             "foo+0.1.2"
         );
     }

@@ -68,7 +68,7 @@ impl PackageManagerCommands for AdvancedPackageTool {
     fn cmd(&self) -> Command {
         Command::new("apt-get")
     }
-    fn get_cmds(&self, cmd: Cmd) -> Vec<String> {
+    fn get_cmds(&self, cmd: Cmd, _: Option<&Package>) -> Vec<String> {
         match cmd {
             Cmd::Install => vec!["install"],
             Cmd::Uninstall => vec!["remove"],
@@ -165,7 +165,10 @@ mysql-common/now 5.8+1.1.0 all [installed,local]"#;
                 Cmd::Search | Cmd::List => alt,
                 _ => reg,
             };
-            assert_eq!(apt.alt_cmd(&apt.get_cmds(*cmd)).get_program(), should_match);
+            assert_eq!(
+                apt.alt_cmd(&apt.get_cmds(*cmd, None)).get_program(),
+                should_match
+            );
         }
     }
 

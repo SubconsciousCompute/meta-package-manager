@@ -1,6 +1,6 @@
 use std::{fmt::Display, process::Command};
 
-use crate::{Cmd, PackageManager, PackageManagerCommands, PkgFormat};
+use crate::{Cmd, Package, PackageManager, PackageManagerCommands, PkgFormat};
 
 /// Wrapper for the Homebrew package manager.
 ///
@@ -23,7 +23,7 @@ impl PackageManagerCommands for Homebrew {
         Command::new("brew")
     }
 
-    fn get_cmds(&self, cmd: Cmd) -> Vec<String> {
+    fn get_cmds(&self, cmd: Cmd, _pkg: Option<&Package>) -> Vec<String> {
         match cmd {
             Cmd::Install => vec!["install"],
             Cmd::Uninstall => vec!["uninstall"],

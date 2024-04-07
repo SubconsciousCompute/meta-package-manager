@@ -18,7 +18,7 @@ fn main() -> anyhow::Result<()> {
     }
 
     // multi pacakge operation (blocking call)
-    brew.exec_op(&["mypackage", "packwithver"], Operation::Uninstall);
+    brew.execute_pkg_command("mypackage", Operation::Uninstall);
 
     // get packages matching search string
     for p in brew.search("python") {

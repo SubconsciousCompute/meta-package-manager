@@ -60,17 +60,17 @@ mod tests {
         assert!(hb.search("hello").iter().any(|p| p.name() == "hello"));
         // install
         assert!(hb
-            .exec_op(&["hello".parse().unwrap()], Operation::Install)
+            .execute_pkg_command(&["hello".parse().unwrap()], Operation::Install)
             .success());
         // list
         assert!(hb.list_installed().iter().any(|p| p.name() == "hello"));
         // update
         assert!(hb
-            .exec_op(&["hello".parse().unwrap()], Operation::Update)
+            .execute_pkg_command(&["hello".parse().unwrap()], Operation::Update)
             .success());
         // uninstall
         assert!(hb
-            .exec_op(&["hello".parse().unwrap()], Operation::Uninstall)
+            .execute_pkg_command(&["hello".parse().unwrap()], Operation::Uninstall)
             .success());
         // TODO: Test AddRepo
     }

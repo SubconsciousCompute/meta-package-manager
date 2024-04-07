@@ -77,8 +77,8 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     }
 
     /// General package search
-    fn search(&self, pack: &str) -> Vec<Package> {
-        let cmds = self.consolidated(Cmd::Search, &[pack.to_string()]);
+    fn search(&self, query: &str) -> Vec<Package> {
+        let cmds = self.consolidated(Cmd::Search, &[query.to_string()]);
         let out = self.exec_cmds(&cmds);
         self.parse_output(&out.stdout)
     }
@@ -95,23 +95,23 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
 
     /// Install a single package
     ///
-    /// For multi-package operations, see [``PackageManager::exec_op``]
+    /// For multi-package operations, see [``PackageManager::execute_pkg_command``]
     fn install<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
-        self.exec_op(&[pkg], Operation::Install)
+        self.execute_pkg_command(pkg, Operation::Install)
     }
 
     /// Uninstall a single package
     ///
-    /// For multi-package operations, see [``PackageManager::exec_op``]
+    /// For multi-package operations, see [``PackageManager::execute_pkg_command``]
     fn uninstall<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
-        self.exec_op(&[pkg], Operation::Uninstall)
+        self.execute_pkg_command(pkg, Operation::Uninstall)
     }
 
     /// Update a single package
     ///
-    /// For multi-package operations, see [``PackageManager::exec_op``]
+    /// For multi-package operations, see [``PackageManager::execute_pkg_command``]
     fn update<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
-        self.exec_op(&[pkg], Operation::Update)
+        self.execute_pkg_command(pkg, Operation::Update)
     }
 
     /// List installed packages
@@ -120,11 +120,10 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
         self.parse_output(&out.stdout)
     }
 
-    /// Execute an operation on multiple packages, such as install, uninstall
-    /// and update
-    fn exec_op<P: Into<Package> + std::clone::Clone>(
+    /// Execute package manager command.
+    fn execute_pkg_command<P: Into<Package> + std::clone::Clone>(
         &self,
-        pkgs: &[P],
+        pkg: P,
         op: Operation,
     ) -> std::process::ExitStatus {
         let command = match op {
@@ -133,12 +132,8 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
             Operation::Update => Cmd::Update,
         };
 
-        let fmt: Vec<_> = pkgs
-            .iter()
-            .cloned()
-            .map(|p| self.reformat_for_command::<P>(p))
-            .collect();
-        let cmds = self.consolidated(command, &fmt);
+        let fmt = self.reformat_for_command(pkg);
+        let cmds = self.consolidated(command, &[fmt]);
         self.exec_cmds_status(&cmds)
     }
 
@@ -457,21 +452,12 @@ pub enum AvailablePackageManager {
     Zypper,
 }
 
-/// Operation type to execute using [``Package::exec_op``]
+/// Operation type to execute using [``Package::execute_pkg_command``]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Operation {
     Install,
     Uninstall,
     Update,
-}
-
-/// General purpose version of [``PackageManagerCommands::consolidated``] for
-/// consolidating different types of arguments into a single Vec
-#[inline]
-pub fn consolidate_args<'a>(cmds: &[&'a str], args: &[&'a str], flags: &[&'a str]) -> Vec<&'a str> {
-    let mut vec = Vec::with_capacity(cmds.len() + args.len() + flags.len());
-    vec.extend(cmds.iter().chain(args.iter()).chain(flags.iter()).copied());
-    vec
 }
 
 /// Pkg Format.

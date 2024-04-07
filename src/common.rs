@@ -1,8 +1,8 @@
 //! Common types and traits.
 
-use std::{error::Error, fmt::Display};
+use std::{borrow::Cow, error::Error, fmt::Display};
 
-const NO_VERSION: &str = "~";
+use anyhow::Context;
 
 /// Primary interface for implementing a package manager
 ///
@@ -334,18 +334,63 @@ pub trait PackageManagerCommands {
 /// A representation of a package
 ///
 /// This struct contains package's name and version information (optional).
-#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, tabled::Tabled)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize)]
 pub struct Package {
     /// name of the package
     name: String,
     // Untyped version, might be replaced with a strongly typed one
-    version: String,
+    version: Option<String>,
+    /// Url of this package
+    url: Option<url::Url>,
+}
+
+impl Package {
+    /// Create new Package with name and version.
+    pub fn new(name: &str, version: Option<&str>) -> Self {
+        Self {
+            name: name.to_string(),
+            version: version.map(|v| v.to_string()),
+            url: None,
+        }
+    }
+
+    /// Package name
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Get version information if present
+    pub fn version(&self) -> Option<&str> {
+        self.version.as_deref()
+    }
 }
 
 impl std::str::FromStr for Package {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> anyhow::Result<Self> {
+        if let Ok(url) = url::Url::parse(s) {
+            let name = url
+                .path_segments()
+                .context("can not determine pane from the url")?
+                .last()
+                .expect("can't determine package name from the url");
+            let mut fragments = std::collections::HashMap::new();
+            for frag in url.fragment().unwrap_or("").split(',') {
+                let mut fs = frag.splitn(2, '=');
+                if let Some(key) = fs.next() {
+                    if let Some(value) = fs.next() {
+                        fragments.insert(key, value.to_string());
+                    }
+                }
+            }
+            return Ok(Self {
+                name: name.to_string(),
+                version: fragments.remove("version"),
+                url: Some(url),
+            });
+        }
+
         if let Some((name, version)) = s.split_once('@') {
             Ok(Package::new(name, Some(version)))
         } else {
@@ -360,29 +405,6 @@ impl std::convert::From<&str> for Package {
     }
 }
 
-impl Package {
-    /// Create new Package with name and version.
-    pub fn new(name: &str, version: Option<&str>) -> Self {
-        Self {
-            name: name.to_string(),
-            version: version.unwrap_or(NO_VERSION).to_string(),
-        }
-    }
-
-    /// Package name
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    /// Get version information if present
-    pub fn version(&self) -> Option<&str> {
-        if self.version == NO_VERSION {
-            return None;
-        }
-        Some(&self.version)
-    }
-}
-
 impl Display for Package {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(v) = self.version() {
@@ -391,6 +413,21 @@ impl Display for Package {
         } else {
             write!(f, "{}", self.name)
         }
+    }
+}
+
+impl tabled::Tabled for Package {
+    const LENGTH: usize = 40;
+
+    fn fields(&self) -> Vec<Cow<'_, str>> {
+        vec![
+            self.name.clone().into(),
+            self.version.as_deref().unwrap_or("~").into(),
+        ]
+    }
+
+    fn headers() -> Vec<Cow<'static, str>> {
+        vec!["name".into(), "version".into()]
     }
 }
 

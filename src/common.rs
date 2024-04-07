@@ -26,7 +26,8 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     /// information is present. Otherwise, only a borrowed name string is
     /// returned. Which is why this function returns a 'Cow<str>' and not a
     /// `String`.
-    fn pkg_format(&self, pkg: &Package) -> String {
+    fn pkg_format<P: Into<Package>>(&self, pkg: P) -> String {
+        let pkg: Package = pkg.into();
         if let Some(v) = pkg.version() {
             format!("{}{}{}", pkg.name, self.pkg_delimiter(), v)
         } else {
@@ -95,21 +96,21 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     /// Install a single package
     ///
     /// For multi-package operations, see [``PackageManager::exec_op``]
-    fn install(&self, pkg: Package) -> std::process::ExitStatus {
+    fn install<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
         self.exec_op(&[pkg], Operation::Install)
     }
 
     /// Uninstall a single package
     ///
     /// For multi-package operations, see [``PackageManager::exec_op``]
-    fn uninstall(&self, pkg: Package) -> std::process::ExitStatus {
+    fn uninstall<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
         self.exec_op(&[pkg], Operation::Uninstall)
     }
 
     /// Update a single package
     ///
     /// For multi-package operations, see [``PackageManager::exec_op``]
-    fn update(&self, pkg: Package) -> std::process::ExitStatus {
+    fn update<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
         self.exec_op(&[pkg], Operation::Update)
     }
 
@@ -121,15 +122,21 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
 
     /// Execute an operation on multiple packages, such as install, uninstall
     /// and update
-    fn exec_op(&self, pkgs: &[Package], op: Operation) -> std::process::ExitStatus {
+    fn exec_op<P: Into<Package> + std::clone::Clone>(
+        &self,
+        pkgs: &[P],
+        op: Operation,
+    ) -> std::process::ExitStatus {
         let command = match op {
             Operation::Install => Cmd::Install,
             Operation::Uninstall => Cmd::Uninstall,
             Operation::Update => Cmd::Update,
         };
+
         let fmt: Vec<_> = pkgs
             .iter()
-            .map(|p| self.pkg_format(p).to_string())
+            .cloned()
+            .map(|p| self.pkg_format::<P>(p))
             .collect();
         let cmds = self.consolidated(command, &fmt);
         self.exec_cmds_status(&cmds)
@@ -344,6 +351,12 @@ impl std::str::FromStr for Package {
         } else {
             Ok(Package::new(s, None))
         }
+    }
+}
+
+impl std::convert::From<&str> for Package {
+    fn from(s: &str) -> Self {
+        s.parse().expect("invalid format")
     }
 }
 

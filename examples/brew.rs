@@ -1,4 +1,3 @@
-/// use trait
 use mpm::PackageManager;
 use mpm::{MetaPackageManager, Operation};
 
@@ -10,8 +9,8 @@ fn main() -> anyhow::Result<()> {
     // path/not installed will result in a panic. See advanced usage for safely
     // constructing verified instances.
     // single package operation (blocking call)
-    brew.install("mypackage".parse()?);
-    brew.install("packwithver@1.0.0".parse()?);
+    brew.install("mypackage");
+    brew.install("packwithver@1.0.0");
 
     // most methods return `ExitStatus` which can be used to check if
     // the operation was successful
@@ -21,7 +20,7 @@ fn main() -> anyhow::Result<()> {
 
     // multi pacakge operation (blocking call)
     brew.exec_op(
-        &["mypackage".parse().unwrap(), "packwithver".parse().unwrap()],
+        &["mypackage", "packwithver"],
         Operation::Uninstall,
     );
 

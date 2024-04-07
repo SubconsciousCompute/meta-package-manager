@@ -185,13 +185,13 @@ mysql-common/now 5.8+1.1.0 all [installed,local]"#;
         // search
         assert!(apt.search(pkg).iter().any(|p| p.name() == "hello"));
         // install
-        assert!(apt.install(pkg.parse().unwrap()).success());
+        assert!(apt.install(pkg).success());
         // list
         assert!(apt.list_installed().iter().any(|p| p.name() == "hello"));
         // update
-        assert!(apt.update(pkg.parse().unwrap()).success());
+        assert!(apt.update(pkg).success());
         // uninstall
-        assert!(apt.uninstall(pkg.parse().unwrap()).success());
+        assert!(apt.uninstall(pkg).success());
         // TODO: Test AddRepo
     }
 }

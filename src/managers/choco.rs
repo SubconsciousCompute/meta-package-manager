@@ -12,7 +12,8 @@ impl PackageManager for Chocolatey {
     fn pkg_delimiter(&self) -> char {
         '|'
     }
-    fn pkg_format(&self, pkg: &Package) -> String {
+    fn pkg_format<P: Into<Package>>(&self, pkg: P) -> String {
+        let pkg = pkg.into();
         if let Some(v) = pkg.version() {
             format!("{} --version {}", pkg.name(), v)
         } else {
@@ -66,16 +67,16 @@ impl Display for Chocolatey {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
 
     use super::*;
 
     #[test]
     fn test_choco_pkg_fmt() {
-        let pkg = Package::from_str("package").unwrap();
-        assert_eq!(Chocolatey.pkg_format(&pkg), "package".to_string());
-        let pkg = Package::from_str("package@0.1.0").unwrap();
-        assert_eq!(&Chocolatey.pkg_format(&pkg), "package --version 0.1.0");
+        assert_eq!(Chocolatey.pkg_format("package"), "package".to_string());
+        assert_eq!(
+            &Chocolatey.pkg_format("package@0.1.0"),
+            "package --version 0.1.0"
+        );
     }
 
     #[cfg(windows)]

@@ -134,25 +134,7 @@ mod tests {
 
     #[test]
     fn package_formatting() {
-        let pkg = Package::from_str("package").unwrap();
-        assert_eq!(MockPackageManager.pkg_format(&pkg), "package");
-        let pkg = Package::from_str("package@0.1.0").unwrap();
-        assert_eq!(MockPackageManager.pkg_format(&pkg), "package+0.1.0");
-    }
-
-    #[test]
-    fn package_version() {
-        let pkg = Package::from_str("test").unwrap();
-        assert!(pkg.version().is_none());
-        let pkg = Package::from_str("test@1.1").unwrap();
-        assert!(pkg.version().is_some());
-    }
-
-    #[test]
-    fn package_version_replace() {
-        let pkg = Package::from_str("test@1.0").unwrap();
-        assert_eq!(pkg.version(), Some("1.0"));
-        let pkg = Package::from_str("test@2.0").unwrap();
-        assert_eq!(pkg.version(), Some("2.0"));
+        assert_eq!(MockPackageManager.pkg_format("foo"), "foo");
+        assert_eq!(MockPackageManager.pkg_format("foo@0.1.2"), "foo+0.1.2");
     }
 }

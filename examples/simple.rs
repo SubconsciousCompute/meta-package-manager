@@ -15,7 +15,7 @@ fn main() -> anyhow::Result<()> {
     // path/not installed will result in a panic. See advanced usage for safely
     // constructing verified instances.
     // single package operation (blocking call)
-    manager.install("gimp".parse()?);
+    manager.install("gimp");
 
     // most methods return `ExitStatus` which can be used to check if
     // the operation was successful

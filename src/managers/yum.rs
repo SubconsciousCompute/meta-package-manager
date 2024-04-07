@@ -1,6 +1,6 @@
 use std::{fmt::Display, process::Command};
 
-use crate::{managers::DandifiedYUM, Cmd, PackageManager, PackageManagerCommands};
+use crate::{managers::DandifiedYUM, Cmd, PackageManager, PackageManagerCommands, PkgFormat};
 
 /// Wrapper for Yellowdog Updater Modified (YUM) package manager.
 ///
@@ -28,6 +28,11 @@ impl PackageManager for YellowdogUpdaterModified {
     fn pkg_delimiter(&self) -> char {
         self.0.pkg_delimiter()
     }
+
+    fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
+        vec![PkgFormat::Rpm]
+    }
+
     fn parse_pkg<'a>(&self, line: &str) -> Option<crate::Package> {
         self.0.parse_pkg(line)
     }

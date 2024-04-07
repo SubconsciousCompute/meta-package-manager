@@ -53,7 +53,7 @@ mod tests {
     };
 
     use super::{Cmd, PackageManagerCommands};
-    use crate::{Package, PackageManager};
+    use crate::{Package, PackageManager, PkgFormat};
 
     struct MockCommands;
 
@@ -81,6 +81,9 @@ mod tests {
     impl PackageManager for MockPackageManager {
         fn pkg_delimiter(&self) -> char {
             '+'
+        }
+        fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
+            vec![]
         }
     }
 
@@ -111,8 +114,8 @@ mod tests {
         let con = mock.consolidated(Cmd::Install, &["arg"]);
         let mut coniter = con.into_iter();
         assert_eq!(coniter.next(), Some("command".to_string()));
-        assert_eq!(coniter.next(), Some("arg".to_string()));
         assert_eq!(coniter.next(), Some("flag".to_string()));
+        assert_eq!(coniter.next(), Some("arg".to_string()));
     }
 
     #[test]

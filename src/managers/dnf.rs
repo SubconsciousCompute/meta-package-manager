@@ -1,6 +1,6 @@
 use std::{fmt::Display, process::Command};
 
-use crate::{Cmd, Package, PackageManager, PackageManagerCommands};
+use crate::{Cmd, Package, PackageManager, PackageManagerCommands, PkgFormat};
 
 /// Wrapper for DandifiedYUM or DNF, the next upcoming major version of YUM
 ///
@@ -14,6 +14,10 @@ pub struct DandifiedYUM;
 impl PackageManager for DandifiedYUM {
     fn pkg_delimiter(&self) -> char {
         '-'
+    }
+
+    fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
+        vec![PkgFormat::Rpm]
     }
 
     fn parse_pkg<'a>(&self, line: &str) -> Option<Package> {
@@ -117,5 +121,36 @@ rubygem-mixlib-shellout-doc.noarch : Documentation for rubygem-mixlib-shellout"#
             iter.next(),
             Package::from_str("rubygem-mixlib-shellout-doc.noarch").ok()
         );
+    }
+
+    // Requires elevated privilages to work
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn test_dnf() {
+        dnf_yum_cases(crate::managers::DandifiedYUM)
+    }
+    #[cfg(target_os = "linux")]
+    fn dnf_yum_cases(man: impl crate::PackageManager) {
+        if !man.is_available() {
+            println!("Yum is not available");
+            return;
+        }
+        let pkg = "hello";
+        // sync
+        assert!(man.sync().success());
+        // search
+        assert!(man.search(pkg).iter().any(|p| p.name() == "hello.x86_64"));
+        // install
+        assert!(man.install(pkg.parse().unwrap()).success());
+        // list
+        assert!(man
+            .list_installed()
+            .iter()
+            .any(|p| p.name() == "hello.x86_64"));
+        // update
+        assert!(man.update(pkg.parse().unwrap()).success());
+        // uninstall
+        assert!(man.uninstall(pkg.parse().unwrap()).success());
+        // TODO: Test AddRepo
     }
 }

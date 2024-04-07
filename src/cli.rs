@@ -25,6 +25,10 @@ pub struct Cli {
     #[arg(long, short)]
     manager: Option<crate::common::AvailablePackageManager>,
 
+    // TODO: See issue #33
+    // /// Set interactive mode
+    // #[arg(long, short, default_value_t = false)]
+    // interactive: bool,
     /// Set output to be in json format.
     #[arg(long, default_value_t = false)]
     json: bool,
@@ -82,7 +86,7 @@ pub enum MpmPackageManagerCommands {
 /// Function that handles the parsed CLI arguments in one place
 pub fn execute(args: Cli) -> anyhow::Result<()> {
     let mpm = if let Some(manager) = args.manager {
-        crate::MetaPackageManager::try_new(manager)?
+        crate::MetaPackageManager::new_if_available(manager)?
     } else {
         crate::MetaPackageManager::new_default()?
     };

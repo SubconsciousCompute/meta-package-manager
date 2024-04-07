@@ -1,6 +1,6 @@
 use std::{fmt::Display, fs, io::Write, process::Command};
 
-use crate::{common::Package, Cmd, PackageManager, PackageManagerCommands};
+use crate::{common::Package, Cmd, PackageManager, PackageManagerCommands, PkgFormat};
 
 /// Wrapper for Advanced Pacakge Tool (APT), the default package management
 /// user-facing utilities in Debian and Debian-based distributions.
@@ -35,6 +35,10 @@ impl AdvancedPackageTool {
 impl PackageManager for AdvancedPackageTool {
     fn pkg_delimiter(&self) -> char {
         '='
+    }
+
+    fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
+        vec![PkgFormat::Deb]
     }
 
     fn parse_pkg<'a>(&self, line: &str) -> Option<Package> {
@@ -163,5 +167,31 @@ mysql-common/now 5.8+1.1.0 all [installed,local]"#;
             };
             assert_eq!(apt.alt_cmd(&apt.get_cmds(*cmd)).get_program(), should_match);
         }
+    }
+
+    // Requires elevated privilages to work
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn test_apt() {
+        let apt = crate::managers::AdvancedPackageTool;
+        if !apt.is_available() {
+            println!("apt is not available");
+            return;
+        }
+
+        let pkg = "hello";
+        // sync
+        assert!(apt.sync().success());
+        // search
+        assert!(apt.search(pkg).iter().any(|p| p.name() == "hello"));
+        // install
+        assert!(apt.install(pkg.parse().unwrap()).success());
+        // list
+        assert!(apt.list_installed().iter().any(|p| p.name() == "hello"));
+        // update
+        assert!(apt.update(pkg.parse().unwrap()).success());
+        // uninstall
+        assert!(apt.uninstall(pkg.parse().unwrap()).success());
+        // TODO: Test AddRepo
     }
 }

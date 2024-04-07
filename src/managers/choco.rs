@@ -1,6 +1,6 @@
 use std::{fmt::Display, process::Command};
 
-use crate::{common::Package, Cmd, PackageManager, PackageManagerCommands};
+use crate::{common::Package, Cmd, PackageManager, PackageManagerCommands, PkgFormat};
 
 /// Wrapper for the Chocolatey package manager for windows
 ///
@@ -18,6 +18,10 @@ impl PackageManager for Chocolatey {
         } else {
             pkg.name().into()
         }
+    }
+
+    fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
+        vec![PkgFormat::Msi, PkgFormat::Exe]
     }
 }
 
@@ -72,5 +76,25 @@ mod tests {
         assert_eq!(Chocolatey.pkg_format(&pkg), "package".to_string());
         let pkg = Package::from_str("package@0.1.0").unwrap();
         assert_eq!(&Chocolatey.pkg_format(&pkg), "package --version 0.1.0");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn test_chocolatey() {
+        let choco = Chocolatey;
+        let pkg = "tac";
+        // sync
+        assert!(choco.sync().success());
+        // search
+        assert!(choco.search(pkg).iter().any(|p| p.name() == pkg));
+        // install
+        assert!(choco.install(pkg.parse().unwrap()).success());
+        // list
+        assert!(choco.list_installed().iter().any(|p| p.name() == pkg));
+        // update
+        assert!(choco.update(pkg.parse().unwrap()).success());
+        // uninstall
+        assert!(choco.uninstall(pkg.parse().unwrap()).success());
+        // TODO: Test AddRepo
     }
 }

@@ -86,7 +86,7 @@ pub enum MpmPackageManagerCommands {
 /// Function that handles the parsed CLI arguments in one place
 pub fn execute(args: Cli) -> anyhow::Result<()> {
     let mpm = if let Some(manager) = args.manager {
-        crate::MetaPackageManager::try_new(manager)?
+        crate::MetaPackageManager::new_if_available(manager)?
     } else {
         crate::MetaPackageManager::new_default()?
     };

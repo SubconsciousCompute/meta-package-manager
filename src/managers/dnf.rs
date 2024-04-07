@@ -1,6 +1,6 @@
 use std::{fmt::Display, process::Command};
 
-use crate::{Cmd, Package, PackageManager, PackageManagerCommands};
+use crate::{Cmd, Package, PackageManager, PackageManagerCommands, PkgFormat};
 
 /// Wrapper for DandifiedYUM or DNF, the next upcoming major version of YUM
 ///
@@ -14,6 +14,10 @@ pub struct DandifiedYUM;
 impl PackageManager for DandifiedYUM {
     fn pkg_delimiter(&self) -> char {
         '-'
+    }
+
+    fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
+        vec![PkgFormat::Rpm]
     }
 
     fn parse_pkg<'a>(&self, line: &str) -> Option<Package> {

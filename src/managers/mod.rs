@@ -39,17 +39,22 @@ pub enum MetaPackageManager {
 
 impl MetaPackageManager {
     /// Construct a new `MetaPackageManager` from a given package manager.
-    pub fn try_new(manager: AvailablePackageManager) -> anyhow::Result<Self> {
-        tracing::info!("Creating meta package manager interface for {manager:?}");
-        let mpm = match manager {
+    pub fn new(manager: AvailablePackageManager) -> Self {
+        tracing::debug!("Creating meta-package-manager interface for {manager:?}");
+        match manager {
             AvailablePackageManager::Apt => Self::Apt(AdvancedPackageTool),
             AvailablePackageManager::Brew => Self::Brew(Homebrew),
             AvailablePackageManager::Choco => Self::Choco(Chocolatey),
             AvailablePackageManager::Dnf => Self::Dnf(DandifiedYUM),
             AvailablePackageManager::Yum => Self::Yum(YellowdogUpdaterModified::default()),
             AvailablePackageManager::Zypper => Self::Zypper(Zypper),
-        };
+        }
+    }
 
+    /// Construct a new `MetaPackageManager` from a given package manager but make sure that it
+    /// exists on this system.
+    pub fn new_if_available(manager: AvailablePackageManager) -> anyhow::Result<Self> {
+        let mpm = Self::new(manager);
         if !mpm.is_available() {
             anyhow::bail!("failed to run {mpm} command")
         }
@@ -62,7 +67,7 @@ impl MetaPackageManager {
     /// highest, and so on.
     pub fn new_default() -> anyhow::Result<Self> {
         AvailablePackageManager::iter()
-            .find_map(|m| Self::try_new(m).ok())
+            .find_map(|m| Self::new_if_available(m).ok())
             .context("no supported package manager found")
     }
 }
@@ -82,4 +87,10 @@ impl std::fmt::Display for MetaPackageManager {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn test_supported_fmts() {
+        let mpm = MetaPackageManager::new_default().unwrap();
+        let exts = mpm.supported_extensions();
+        assert!(!exts.is_empty());
+    }
 }

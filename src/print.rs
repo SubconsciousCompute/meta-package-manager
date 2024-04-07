@@ -5,7 +5,10 @@ use tabled::{
     Table, Tabled,
 };
 
-use crate::{common::AvailablePackageManager, managers::MetaPackageManager};
+use crate::{
+    common::AvailablePackageManager, managers::MetaPackageManager, PackageManager,
+    PackageManagerCommands,
+};
 
 /// Takes a format string and prints it in the format "Info {format_str}"
 #[macro_export]
@@ -29,16 +32,17 @@ struct Listing {
 
 impl Listing {
     pub(crate) fn new(pm: AvailablePackageManager) -> Self {
+        let mpm = MetaPackageManager::new(pm.clone());
         Listing {
-            supported: format!("{pm:?}").green(),
-            file_extensions: pm
+            supported: format!("{pm}").green(),
+            file_extensions: mpm
                 .supported_pkg_formats()
                 .iter()
                 .map(|pkg| pkg.file_extention())
                 .collect::<Vec<_>>()
                 .join(", ")
                 .green(),
-            available: if MetaPackageManager::try_new(pm).is_ok() {
+            available: if mpm.is_available() {
                 "Yes".green()
             } else {
                 "No".red()

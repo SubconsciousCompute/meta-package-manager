@@ -2,7 +2,7 @@
 
 use std::{fmt::Display, process::Command};
 
-use crate::{Cmd, Package, PackageManager, PackageManagerCommands};
+use crate::{Cmd, Package, PackageManager, PkgFormat, PackageManagerCommands};
 
 /// Wrapper for Zypper package manager. Some openSUSE might support dnf as well.
 #[derive(Debug, Default)]
@@ -11,6 +11,10 @@ pub struct Zypper;
 impl PackageManager for Zypper {
     fn pkg_delimiter(&self) -> char {
         '-'
+    }
+
+    fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
+        vec![PkgFormat::Rpm]
     }
 
     /// Parses output, generally from stdout, to a Vec of Packages.

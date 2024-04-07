@@ -1,6 +1,6 @@
 use std::{fmt::Display, fs, io::Write, process::Command};
 
-use crate::{common::Package, Cmd, PackageManager, PackageManagerCommands};
+use crate::{common::Package, Cmd, PackageManager, PackageManagerCommands, PkgFormat};
 
 /// Wrapper for Advanced Pacakge Tool (APT), the default package management
 /// user-facing utilities in Debian and Debian-based distributions.
@@ -35,6 +35,10 @@ impl AdvancedPackageTool {
 impl PackageManager for AdvancedPackageTool {
     fn pkg_delimiter(&self) -> char {
         '='
+    }
+
+    fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
+        vec![PkgFormat::Deb]
     }
 
     fn parse_pkg<'a>(&self, line: &str) -> Option<Package> {

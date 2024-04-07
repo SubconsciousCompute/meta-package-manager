@@ -1,6 +1,6 @@
 use std::{fmt::Display, process::Command};
 
-use crate::{common::Package, Cmd, PackageManager, PackageManagerCommands};
+use crate::{common::Package, Cmd, PackageManager, PackageManagerCommands, PkgFormat};
 
 /// Wrapper for the Chocolatey package manager for windows
 ///
@@ -18,6 +18,10 @@ impl PackageManager for Chocolatey {
         } else {
             pkg.name().into()
         }
+    }
+
+    fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
+        vec![PkgFormat::Msi, PkgFormat::Exe]
     }
 }
 

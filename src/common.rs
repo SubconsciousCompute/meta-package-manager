@@ -17,6 +17,9 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     /// formatting, overriding the default trait methods would be the way to go.
     fn pkg_delimiter(&self) -> char;
 
+    /// Return the list of supported package extensions.
+    fn supported_pkg_formats(&self) -> Vec<PkgFormat>;
+
     /// Get a formatted string of the package as <name><delimiter><version>
     ///
     /// Note: this functions returns a formatted string only if version
@@ -381,7 +384,14 @@ impl Display for Package {
 /// Available package manager. This is from cli because I can't use
 /// MetaPackageManager as `clap::ValueEnum`.
 #[derive(
-    Clone, PartialEq, Debug, clap::ValueEnum, strum::EnumIter, strum::EnumCount, strum::EnumString,
+    Clone,
+    PartialEq,
+    Debug,
+    clap::ValueEnum,
+    strum::Display,
+    strum::EnumIter,
+    strum::EnumCount,
+    strum::EnumString,
 )]
 #[strum(ascii_case_insensitive)]
 pub enum AvailablePackageManager {
@@ -391,20 +401,6 @@ pub enum AvailablePackageManager {
     Dnf,
     Yum,
     Zypper,
-}
-
-impl AvailablePackageManager {
-    /// Return the supported pkg format e.g. deb, rpm etc.
-    pub fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
-        match self {
-            Self::Brew => vec![PkgFormat::Bottle],
-            Self::Choco => vec![PkgFormat::Exe, PkgFormat::Msi],
-            Self::Apt => vec![PkgFormat::Deb],
-            Self::Dnf => vec![PkgFormat::Rpm],
-            Self::Yum => vec![PkgFormat::Rpm],
-            Self::Zypper => vec![PkgFormat::Rpm],
-        }
-    }
 }
 
 /// Operation type to execute using [``Package::exec_op``]

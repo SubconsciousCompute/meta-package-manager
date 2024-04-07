@@ -1,4 +1,4 @@
-use crate::{Cmd, PackageManager, PackageManagerCommands};
+use crate::{Cmd, PackageManager, PackageManagerCommands, PkgFormat};
 use std::{fmt::Display, process::Command};
 
 /// Wrapper for the Homebrew package manager.
@@ -10,6 +10,10 @@ pub struct Homebrew;
 impl PackageManager for Homebrew {
     fn pkg_delimiter(&self) -> char {
         '@'
+    }
+
+    fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
+        vec![PkgFormat::Bottle]
     }
 }
 

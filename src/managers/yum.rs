@@ -47,7 +47,7 @@ impl PackageManagerCommands for YellowdogUpdaterModified {
     fn cmd(&self) -> Command {
         Command::new("yum")
     }
-    fn get_cmds(&self, cmd: crate::Cmd, pkg: Option<&Package>) -> Vec<String> {
+    fn get_cmds(&self, cmd: crate::Cmd, pkg: Option<&mut Package>) -> Vec<String> {
         self.0.get_cmds(cmd, pkg)
     }
     fn get_flags(&self, cmd: Cmd) -> Vec<String> {

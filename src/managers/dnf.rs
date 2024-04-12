@@ -58,7 +58,7 @@ impl PackageManagerCommands for DandifiedYUM {
         Command::new("dnf")
     }
 
-    fn get_cmds(&self, cmd: Cmd, _pkg: Option<&Package>) -> Vec<String> {
+    fn get_cmds(&self, cmd: Cmd, _pkg: Option<&mut Package>) -> Vec<String> {
         match cmd {
             Cmd::Install => vec!["install"],
             Cmd::Uninstall => vec!["remove"],

@@ -14,9 +14,9 @@ impl PackageManager for Chocolatey {
     }
     fn reformat_for_command(&self, pkg: &Package) -> String {
         if let Some(v) = pkg.version() {
-            format!("{} --version {}", pkg.name(), v)
+            format!("{} --version {}", pkg.cli_display(), v)
         } else {
-            pkg.name().into()
+            pkg.cli_display().into()
         }
     }
 
@@ -29,7 +29,7 @@ impl PackageManagerCommands for Chocolatey {
     fn cmd(&self) -> Command {
         Command::new("choco")
     }
-    fn get_cmds(&self, cmd: Cmd, _pkg: Option<&Package>) -> Vec<String> {
+    fn get_cmds(&self, cmd: Cmd, _pkg: Option<&mut Package>) -> Vec<String> {
         match cmd {
             Cmd::Install => vec!["install"],
             Cmd::Uninstall => vec!["uninstall"],

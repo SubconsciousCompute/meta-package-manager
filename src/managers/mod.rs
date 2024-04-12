@@ -88,6 +88,7 @@ impl std::fmt::Display for MetaPackageManager {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tracing_test::traced_test;
 
     #[test]
     fn test_supported_fmts() {
@@ -97,8 +98,9 @@ mod tests {
     }
 
     #[test]
+    #[traced_test]
     #[cfg(target_os = "linux")]
-    fn test_clamav_installation() {
+    fn test_url_support() {
         let mpm = MetaPackageManager::new_default().unwrap();
         let exts = mpm.supported_pkg_formats();
         let url = if exts.contains(&PkgFormat::Deb) {

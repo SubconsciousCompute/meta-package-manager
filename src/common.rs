@@ -33,7 +33,7 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
         if let Some(v) = pkg.version() {
             return format!("{}{}{}", pkg.name, self.pkg_delimiter(), v);
         }
-        pkg.name().to_string()
+        pkg.cli_display().to_string()
     }
 
     /// Returns a package after parsing a line of stdout output from the
@@ -136,9 +136,9 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
             Operation::Update => Cmd::Update,
         };
 
-        let pkg = pkg.into();
+        let mut pkg = pkg.into();
         let fmt = self.reformat_for_command(&pkg);
-        let cmds = self.consolidated(command, Some(&pkg), &[fmt]);
+        let cmds = self.consolidated(command, Some(&mut pkg), &[fmt]);
         self.exec_cmds_status(&cmds)
     }
 
@@ -233,7 +233,7 @@ pub trait PackageManagerCommands {
 
     /// Returns the appropriate command/s for the given supported command type.
     /// Check [``crate::common::Cmd``] enum to see all supported commands.
-    fn get_cmds(&self, cmd: Cmd, pkg: Option<&Package>) -> Vec<String>;
+    fn get_cmds(&self, cmd: Cmd, pkg: Option<&mut Package>) -> Vec<String>;
 
     /// Returns the appropriate flags for the given command type. Check
     /// [``crate::common::Cmd``] enum to see all supported commands.
@@ -255,7 +255,7 @@ pub trait PackageManagerCommands {
     fn consolidated<S: AsRef<str>>(
         &self,
         cmd: Cmd,
-        pkg: Option<&Package>,
+        pkg: Option<&mut Package>,
         args: &[S],
     ) -> Vec<String> {
         let mut commands = self.get_cmds(cmd, pkg);
@@ -359,8 +359,14 @@ impl Package {
         }
     }
 
-    /// Package name
-    pub fn name(&self) -> &str {
+    /// Package name for cli.
+    pub fn cli_display(&self) -> &str {
+        if let Some(url) = self.url() {
+            if url.scheme() == "file" {
+                return url.as_str().strip_prefix("file://").unwrap();
+            }
+            return url.as_str();
+        }
         &self.name
     }
 
@@ -370,8 +376,26 @@ impl Package {
     }
 
     /// Get version information if present
-    pub fn url(&self) -> Option<url::Url> {
-        self.url.clone()
+    pub fn url(&self) -> Option<&url::Url> {
+        self.url.as_ref()
+    }
+
+    /// Turn remote url to local file based URI 
+    pub fn make_available_on_disk(&mut self, output: Option<&std::path::Path>) -> anyhow::Result<std::path::PathBuf> {
+        anyhow::ensure!(self.url().is_some(), "There is no URL associated with this package");
+        let url = self.url().context("missing URL")?;
+        anyhow::ensure!(url.scheme() != "file", "Package already points to local file {url:?}");
+
+        let pkgpath = match output {
+            Some(p) => p.into(),
+            None => std::env::temp_dir().join(url.path_segments().context("missing path in url")?.last().context("missing filepath in url")?)
+        };
+
+        // download to disk.
+
+        anyhow::ensure!(pkgpath.is_file(), "Failed to download {pkgpath:?}");
+        self.url = format!("file://{}", pkgpath.display()).parse().ok();
+        Ok(pkgpath)
     }
 }
 

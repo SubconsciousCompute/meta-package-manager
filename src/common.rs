@@ -252,10 +252,12 @@ pub trait PackageManagerCommands {
     ) -> std::process::ExitStatus {
         self.ensure_sudo();
         tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
-        self.cmd()
+        let o = self.cmd()
             .args(cmds.iter().map(AsRef::as_ref))
-            .status()
-            .expect("command executed without a prior check")
+            .output()
+            .expect("command executed without a prior check");
+        tracing::debug!(" >> {o:?}");
+        o.status
     }
 
     /// Run arbitrary commands against the package manager command and return

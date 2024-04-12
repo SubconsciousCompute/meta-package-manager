@@ -1,0 +1,4 @@
+debian:
+  image: rust:buster
+  script:
+    - cargo test

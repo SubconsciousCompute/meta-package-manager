@@ -61,7 +61,7 @@ mod tests {
         fn cmd(&self) -> Command {
             Command::new("")
         }
-        fn get_cmds(&self, _: crate::Cmd, _: Option<&mut Package>) -> Vec<String> {
+        fn get_cmds(&self, _: crate::Cmd, _: Option<&Package>) -> Vec<String> {
             vec!["command".to_string()]
         }
         fn get_flags(&self, _: crate::Cmd) -> Vec<String> {
@@ -91,7 +91,7 @@ mod tests {
         fn cmd(&self) -> Command {
             Command::new("")
         }
-        fn get_cmds(&self, _: Cmd, _: Option<&mut Package>) -> Vec<String> {
+        fn get_cmds(&self, _: Cmd, _: Option<&Package>) -> Vec<String> {
             vec!["".to_string()]
         }
         fn exec_cmds(&self, _: &[String]) -> Output {
@@ -135,11 +135,11 @@ mod tests {
     #[test]
     fn package_formatting() {
         assert_eq!(
-            MockPackageManager.reformat_for_command(&"foo".into()),
+            MockPackageManager.reformat_for_command(&mut "foo".into()),
             "foo"
         );
         assert_eq!(
-            MockPackageManager.reformat_for_command(&"foo@0.1.2".into()),
+            MockPackageManager.reformat_for_command(&mut "foo@0.1.2".into()),
             "foo+0.1.2"
         );
     }

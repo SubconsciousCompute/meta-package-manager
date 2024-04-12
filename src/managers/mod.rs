@@ -87,8 +87,9 @@ impl std::fmt::Display for MetaPackageManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tracing_test::traced_test;
+
+    use super::*;
 
     #[test]
     fn test_supported_fmts() {

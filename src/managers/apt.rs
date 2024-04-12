@@ -51,6 +51,21 @@ impl PackageManager for AdvancedPackageTool {
         }
     }
 
+    // Apt doesn't support installing from URL.
+    fn reformat_for_command(&self, pkg: &mut Package) -> String {
+        if let Some(url) = pkg.url() {
+            if url.scheme() != "file://" {
+                tracing::info!(
+                    "Apt doesn't support installing directory from URL. Downloading locally..."
+                );
+                pkg.make_available_on_disk(None, false)
+                    .expect("failed to ensure that package exists locally");
+            }
+        }
+
+        pkg.cli_display(self.pkg_delimiter()).to_string()
+    }
+
     fn add_repo(&self, repo: &str) -> anyhow::Result<()> {
         let mut sources = fs::File::options().append(true).open(Self::SOURCES)?;
         sources.write_fmt(format_args!("\n{}", repo))?;
@@ -69,19 +84,7 @@ impl PackageManagerCommands for AdvancedPackageTool {
         Command::new("apt-get")
     }
 
-    fn get_cmds(&self, cmd: Cmd, mut pkg: Option<&mut Package>) -> Vec<String> {
-        if let Some(url) = pkg.as_ref().and_then(|p| p.url()) {
-            if url.scheme() != "file://" {
-                tracing::info!(
-                    "Apt doesn't support installing directory from URL. Downloading locally..."
-                );
-                pkg.as_deref_mut()
-                    .expect("wont panic")
-                    .make_available_on_disk(None, false)
-                    .expect("failed to ensure that package exists locally");
-            }
-        }
-
+    fn get_cmds(&self, cmd: Cmd, _pkg: Option<&Package>) -> Vec<String> {
         match cmd {
             Cmd::Install => vec!["install"],
             Cmd::Uninstall => vec!["remove"],
@@ -205,14 +208,17 @@ mysql-common/now 5.8+1.1.0 all [installed,local]"#;
         // sync
         assert!(apt.sync().success());
         // search
-        assert!(apt.search(pkg).iter().any(|p| p.cli_display() == "hello"));
+        assert!(apt
+            .search(pkg)
+            .iter()
+            .any(|p| p.cli_display(apt.pkg_delimiter()) == "hello"));
         // install
         assert!(apt.install(pkg).success());
         // list
         assert!(apt
             .list_installed()
             .iter()
-            .any(|p| p.cli_display() == "hello"));
+            .any(|p| p.cli_display(apt.pkg_delimiter()) == "hello"));
         // update
         assert!(apt.update(pkg).success());
         // uninstall

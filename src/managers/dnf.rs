@@ -58,7 +58,7 @@ impl PackageManagerCommands for DandifiedYUM {
         Command::new("dnf")
     }
 
-    fn get_cmds(&self, cmd: Cmd, _pkg: Option<&mut Package>) -> Vec<String> {
+    fn get_cmds(&self, cmd: Cmd, _pkg: Option<&Package>) -> Vec<String> {
         match cmd {
             Cmd::Install => vec!["install"],
             Cmd::Uninstall => vec!["remove"],
@@ -139,14 +139,17 @@ rubygem-mixlib-shellout-doc.noarch : Documentation for rubygem-mixlib-shellout"#
         // sync
         assert!(man.sync().success());
         // search
-        assert!(man.search(pkg).iter().any(|p| p.cli_display() == "hello.x86_64"));
+        assert!(man
+            .search(pkg)
+            .iter()
+            .any(|p| p.cli_display(man.pkg_delimiter()) == "hello.x86_64"));
         // install
         assert!(man.install(pkg).success());
         // list
         assert!(man
             .list_installed()
             .iter()
-            .any(|p| p.cli_display() == "hello.x86_64"));
+            .any(|p| p.cli_display(man.pkg_delimiter()) == "hello.x86_64"));
         // update
         assert!(man.update(pkg).success());
         // uninstall

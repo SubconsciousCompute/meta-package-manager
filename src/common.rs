@@ -1,6 +1,6 @@
 //! Common types and traits.
 
-use std::{borrow::Cow, error::Error, fmt::Display};
+use std::{borrow::Cow, fmt::Display};
 
 use anyhow::Context;
 
@@ -24,10 +24,10 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     /// manager's cli.
     ///
     /// If package URL is set, the url is passed to cli. Note that not all
-    /// package manager supports installing using url. For now, we rely on
-    /// package manager to handle it.
-    fn reformat_for_command(&self, pkg: &Package) -> String {
-        pkg.cli_display().to_string()
+    /// package manager supports installing using url. We override this
+    /// function.
+    fn reformat_for_command(&self, pkg: &mut Package) -> String {
+        pkg.cli_display(self.pkg_delimiter())
     }
 
     /// Returns a package after parsing a line of stdout output from the
@@ -132,7 +132,7 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
 
     /// Execute package manager command.
     fn execute_pkg_command(&self, pkg: &mut Package, op: Operation) -> std::process::ExitStatus {
-        tracing::debug!("Operation {op:?} on {pkg:?}...");
+        tracing::debug!("> Operation {op:?} on {pkg:?}...");
         let command = match op {
             Operation::Install => Cmd::Install,
             Operation::Uninstall => Cmd::Uninstall,
@@ -140,10 +140,10 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
         };
 
         let fmt = self.reformat_for_command(pkg);
-        tracing::debug!("111: {pkg:?} -> {fmt}");
+        tracing::debug!(">> {pkg:?} -> {fmt}");
 
         let cmds = self.consolidated(command, Some(pkg), &[fmt.clone()]);
-        tracing::debug!("112: {pkg} -> {fmt} -> {cmds:?}");
+        tracing::debug!(">> {pkg} -> {fmt} -> {cmds:?}");
         self.exec_cmds_status(&cmds)
     }
 
@@ -157,54 +157,6 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
         let s = self.exec_cmds_status(&cmds);
         anyhow::ensure!(s.success(), "Error adding repo");
         Ok(())
-    }
-}
-
-/// Error type for indicating failure in [``PackageManager::add_repo``]
-///
-/// Use [``RepoError::default``] when no meaningful source of the error is
-/// available.
-#[derive(Default, Debug)]
-pub struct RepoError {
-    pub source: Option<Box<dyn Error + 'static>>,
-}
-
-impl RepoError {
-    /// Construct `RepoError` with underlying error source/cause
-    ///
-    /// Use [``RepoError::default``] when no meaningful source of the error is
-    /// available.
-    pub fn new<E: Error + 'static>(source: E) -> Self {
-        Self {
-            source: Some(Box::new(source)),
-        }
-    }
-
-    /// Construct 'RepoError' with an error message set as its error source
-    ///
-    /// Use [``RepoError::new``] to wrap an existing error.
-    /// Use [``RepoError::default``] when no meaningful source of the error is
-    /// available.
-    pub fn with_msg(msg: &'static str) -> Self {
-        Self {
-            source: Some(msg.into()),
-        }
-    }
-}
-
-impl Display for RepoError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(s) = self.source() {
-            f.write_fmt(format_args!("failed to add repo: {}", s))
-        } else {
-            f.write_str("failed to add repo")
-        }
-    }
-}
-
-impl Error for RepoError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        self.source.as_deref()
     }
 }
 
@@ -238,7 +190,7 @@ pub trait PackageManagerCommands {
 
     /// Returns the appropriate command/s for the given supported command type.
     /// Check [``crate::common::Cmd``] enum to see all supported commands.
-    fn get_cmds(&self, cmd: Cmd, pkg: Option<&mut Package>) -> Vec<String>;
+    fn get_cmds(&self, cmd: Cmd, pkg: Option<&Package>) -> Vec<String>;
 
     /// Returns the appropriate flags for the given command type. Check
     /// [``crate::common::Cmd``] enum to see all supported commands.
@@ -260,7 +212,7 @@ pub trait PackageManagerCommands {
     fn consolidated<S: AsRef<str>>(
         &self,
         cmd: Cmd,
-        pkg: Option<&mut Package>,
+        pkg: Option<&Package>,
         args: &[S],
     ) -> Vec<String> {
         let mut commands = self.get_cmds(cmd, pkg);
@@ -365,16 +317,24 @@ impl Package {
         }
     }
 
+    /// Name of the package
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
     /// Package name for cli.
-    pub fn cli_display(&self) -> &str {
+    pub fn cli_display(&self, pkg_delimiter: char) -> String {
         if let Some(url) = self.url() {
             if url.scheme() == "file" {
                 tracing::debug!("Found on-disk path. Stripping file://...");
-                return url.as_str().strip_prefix("file://").unwrap();
+                return url.as_str().strip_prefix("file://").unwrap().to_string();
             }
-            return url.as_str();
+            return url.as_str().to_string();
         }
-        &self.name
+        if let Some(version) = &self.version {
+            return format!("{}{}{}", self.name, pkg_delimiter, version);
+        }
+        self.name.clone()
     }
 
     /// Get version information if present

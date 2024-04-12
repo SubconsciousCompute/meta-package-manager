@@ -86,7 +86,7 @@ impl PackageManagerCommands for Zypper {
         Command::new("zypper")
     }
 
-    fn get_cmds(&self, cmd: Cmd, pkg: Option<&mut Package>) -> Vec<String> {
+    fn get_cmds(&self, cmd: Cmd, pkg: Option<&Package>) -> Vec<String> {
         let mut cmd: Vec<_> = match cmd {
             Cmd::Install => vec!["install"],
             Cmd::Uninstall => vec!["remove"],

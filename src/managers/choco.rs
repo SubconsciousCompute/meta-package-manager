@@ -12,11 +12,13 @@ impl PackageManager for Chocolatey {
     fn pkg_delimiter(&self) -> char {
         '|'
     }
-    fn reformat_for_command(&self, pkg: &Package) -> String {
+
+    /// Reformat for chocolatey.
+    fn reformat_for_command(&self, pkg: &mut Package) -> String {
         if let Some(v) = pkg.version() {
-            format!("{} --version {}", pkg.cli_display(), v)
+            format!("{} --version {}", pkg.name(), v)
         } else {
-            pkg.cli_display().into()
+            pkg.name().to_string()
         }
     }
 
@@ -29,7 +31,7 @@ impl PackageManagerCommands for Chocolatey {
     fn cmd(&self) -> Command {
         Command::new("choco")
     }
-    fn get_cmds(&self, cmd: Cmd, _pkg: Option<&mut Package>) -> Vec<String> {
+    fn get_cmds(&self, cmd: Cmd, _pkg: Option<&Package>) -> Vec<String> {
         match cmd {
             Cmd::Install => vec!["install"],
             Cmd::Uninstall => vec!["uninstall"],
@@ -72,11 +74,11 @@ mod tests {
     #[test]
     fn test_choco_pkg_fmt() {
         assert_eq!(
-            Chocolatey.reformat_for_command(&"package".into()),
+            Chocolatey.reformat_for_command(&mut "package".into()),
             "package".to_string()
         );
         assert_eq!(
-            &Chocolatey.reformat_for_command(&"package@0.1.0".into()),
+            &Chocolatey.reformat_for_command(&mut "package@0.1.0".into()),
             "package --version 0.1.0"
         );
     }

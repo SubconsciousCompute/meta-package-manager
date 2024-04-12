@@ -256,7 +256,7 @@ pub trait PackageManagerCommands {
             .args(cmds.iter().map(AsRef::as_ref))
             .output()
             .expect("command executed without a prior check");
-        tracing::debug!(" >> {o:?}");
+        tracing::debug!(">>> {o:?}");
         o.status
     }
 

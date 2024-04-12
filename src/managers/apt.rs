@@ -197,6 +197,7 @@ mysql-common/now 5.8+1.1.0 all [installed,local]"#;
     // Requires elevated privilages to work
     #[cfg(target_os = "linux")]
     #[test]
+    #[tracing_test::traced_test]
     fn test_apt() {
         let apt = crate::managers::AdvancedPackageTool;
         if !apt.is_available() {

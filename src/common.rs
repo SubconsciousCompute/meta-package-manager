@@ -344,7 +344,8 @@ pub struct Package {
     name: String,
     // Untyped version, might be replaced with a strongly typed one
     version: Option<String>,
-    /// Url of this package
+
+    /// Url of this package. A local package can be passed as "file://" URI.
     url: Option<url::Url>,
 }
 
@@ -410,6 +411,13 @@ impl std::str::FromStr for Package {
 
 impl std::convert::From<&str> for Package {
     fn from(s: &str) -> Self {
+        s.parse().expect("invalid format")
+    }
+}
+
+impl std::convert::From<&std::path::Path> for Package {
+    fn from(p: &std::path::Path) -> Self {
+        let s = format!("file://{}", p.display());
         s.parse().expect("invalid format")
     }
 }

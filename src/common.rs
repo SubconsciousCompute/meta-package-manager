@@ -27,12 +27,6 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     /// package manager supports installing using url. For now, we rely on
     /// package manager to handle it.
     fn reformat_for_command(&self, pkg: &Package) -> String {
-        if let Some(url) = pkg.url() {
-            return url.to_string();
-        }
-        if let Some(v) = pkg.version() {
-            return format!("{}{}{}", pkg.name, self.pkg_delimiter(), v);
-        }
         pkg.cli_display().to_string()
     }
 
@@ -98,24 +92,36 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     ///
     /// For multi-package operations, see
     /// [``PackageManager::execute_pkg_command``]
-    fn install<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
-        self.execute_pkg_command(pkg, Operation::Install)
+    fn install<P: Into<Package> + Clone + std::fmt::Debug>(
+        &self,
+        pkg: P,
+    ) -> std::process::ExitStatus {
+        let mut pkg = pkg.into();
+        self.execute_pkg_command(&mut pkg, Operation::Install)
     }
 
     /// Uninstall a single package
     ///
     /// For multi-package operations, see
     /// [``PackageManager::execute_pkg_command``]
-    fn uninstall<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
-        self.execute_pkg_command(pkg, Operation::Uninstall)
+    fn uninstall<P: Into<Package> + Clone + std::fmt::Debug>(
+        &self,
+        pkg: P,
+    ) -> std::process::ExitStatus {
+        let mut pkg = pkg.into();
+        self.execute_pkg_command(&mut pkg, Operation::Uninstall)
     }
 
     /// Update a single package
     ///
     /// For multi-package operations, see
     /// [``PackageManager::execute_pkg_command``]
-    fn update<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
-        self.execute_pkg_command(pkg, Operation::Update)
+    fn update<P: Into<Package> + Clone + std::fmt::Debug>(
+        &self,
+        pkg: P,
+    ) -> std::process::ExitStatus {
+        let mut pkg = pkg.into();
+        self.execute_pkg_command(&mut pkg, Operation::Update)
     }
 
     /// List installed packages
@@ -125,20 +131,19 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     }
 
     /// Execute package manager command.
-    fn execute_pkg_command<P: Into<Package> + std::clone::Clone>(
-        &self,
-        pkg: P,
-        op: Operation,
-    ) -> std::process::ExitStatus {
+    fn execute_pkg_command(&self, pkg: &mut Package, op: Operation) -> std::process::ExitStatus {
+        tracing::debug!("Operation {op:?} on {pkg:?}...");
         let command = match op {
             Operation::Install => Cmd::Install,
             Operation::Uninstall => Cmd::Uninstall,
             Operation::Update => Cmd::Update,
         };
 
-        let mut pkg = pkg.into();
-        let fmt = self.reformat_for_command(&pkg);
-        let cmds = self.consolidated(command, Some(&mut pkg), &[fmt]);
+        let fmt = self.reformat_for_command(pkg);
+        tracing::debug!("111: {pkg:?} -> {fmt}");
+
+        let cmds = self.consolidated(command, Some(pkg), &[fmt.clone()]);
+        tracing::debug!("112: {pkg} -> {fmt} -> {cmds:?}");
         self.exec_cmds_status(&cmds)
     }
 
@@ -342,7 +347,8 @@ pub trait PackageManagerCommands {
 pub struct Package {
     /// name of the package
     name: String,
-    // Untyped version, might be replaced with a strongly typed one
+
+    /// Untyped version, might be replaced with a strongly typed one
     version: Option<String>,
 
     /// Url of this package. A local package can be passed as "file://" URI.
@@ -363,6 +369,7 @@ impl Package {
     pub fn cli_display(&self) -> &str {
         if let Some(url) = self.url() {
             if url.scheme() == "file" {
+                tracing::debug!("Found on-disk path. Stripping file://...");
                 return url.as_str().strip_prefix("file://").unwrap();
             }
             return url.as_str();
@@ -380,20 +387,52 @@ impl Package {
         self.url.as_ref()
     }
 
-    /// Turn remote url to local file based URI 
-    pub fn make_available_on_disk(&mut self, output: Option<&std::path::Path>) -> anyhow::Result<std::path::PathBuf> {
-        anyhow::ensure!(self.url().is_some(), "There is no URL associated with this package");
+    /// Turn remote url to local file based URI
+    pub fn make_available_on_disk(
+        &mut self,
+        output: Option<&std::path::Path>,
+        force: bool,
+    ) -> anyhow::Result<std::path::PathBuf> {
+        use std::io::Write;
+
+        anyhow::ensure!(
+            self.url().is_some(),
+            "There is no URL associated with this package"
+        );
         let url = self.url().context("missing URL")?;
-        anyhow::ensure!(url.scheme() != "file", "Package already points to local file {url:?}");
+        anyhow::ensure!(
+            url.scheme() != "file",
+            "Package already points to local file {url:?}"
+        );
 
         let pkgpath = match output {
             Some(p) => p.into(),
-            None => std::env::temp_dir().join(url.path_segments().context("missing path in url")?.last().context("missing filepath in url")?)
+            None => std::env::temp_dir().join(
+                url.path_segments()
+                    .context("missing path in url")?
+                    .last()
+                    .context("missing filepath in url")?,
+            ),
         };
 
         // download to disk.
+        if !pkgpath.exists() || force {
+            tracing::debug!("Downloading package from `{url}` (force={force})...");
+            let resp = reqwest::blocking::Client::builder()
+                .timeout(None)
+                .build()?
+                .get(url.as_str())
+                .send()?;
 
-        anyhow::ensure!(pkgpath.is_file(), "Failed to download {pkgpath:?}");
+            let bytes = resp.bytes()?;
+            tracing::debug!(" ... fetched {} MB.", bytes.len() / 1024 / 1024);
+
+            let mut buffer = std::fs::File::create(&pkgpath)?;
+            buffer.write_all(&bytes)?;
+            std::thread::sleep(std::time::Duration::from_secs(1));
+        }
+
+        anyhow::ensure!(pkgpath.is_file(), "Failed to download {url} -> {pkgpath:?}");
         self.url = format!("file://{}", pkgpath.display()).parse().ok();
         Ok(pkgpath)
     }

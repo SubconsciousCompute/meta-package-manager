@@ -65,7 +65,6 @@ impl Display for AdvancedPackageTool {
 }
 
 impl PackageManagerCommands for AdvancedPackageTool {
-
     fn cmd(&self) -> Command {
         Command::new("apt-get")
     }
@@ -73,12 +72,16 @@ impl PackageManagerCommands for AdvancedPackageTool {
     fn get_cmds(&self, cmd: Cmd, mut pkg: Option<&mut Package>) -> Vec<String> {
         if let Some(url) = pkg.as_ref().and_then(|p| p.url()) {
             if url.scheme() != "file://" {
-                tracing::info!("Apt doesn't support installing directory from URL. Downloading locally...");
-                pkg.as_deref_mut().expect("wont panic").make_available_on_disk(None).expect("failed to ensure that package exists locally");
+                tracing::info!(
+                    "Apt doesn't support installing directory from URL. Downloading locally..."
+                );
+                pkg.as_deref_mut()
+                    .expect("wont panic")
+                    .make_available_on_disk(None, false)
+                    .expect("failed to ensure that package exists locally");
             }
         }
 
-        tracing::info!("Generating command for {pkg:?} ...");
         match cmd {
             Cmd::Install => vec!["install"],
             Cmd::Uninstall => vec!["remove"],
@@ -108,13 +111,16 @@ impl PackageManagerCommands for AdvancedPackageTool {
 
     fn exec_cmds(&self, cmds: &[String]) -> std::process::Output {
         self.ensure_sudo();
-        tracing::debug!("Executing {cmds:?} ...");
+        tracing::debug!("exec_cmds: Executing {cmds:?} ...");
         self.alt_cmd(cmds).args(cmds).output().unwrap()
     }
 
-    fn exec_cmds_status<S: AsRef<str> + std::fmt::Debug>(&self, cmds: &[S]) -> std::process::ExitStatus {
+    fn exec_cmds_status<S: AsRef<str> + std::fmt::Debug>(
+        &self,
+        cmds: &[S],
+    ) -> std::process::ExitStatus {
         self.ensure_sudo();
-        tracing::debug!("Executing {cmds:?} ...");
+        tracing::debug!("exec_cmds_status: Executing {cmds:?} ...");
         self.alt_cmd(cmds)
             .args(cmds.iter().map(AsRef::as_ref))
             .status()
@@ -123,7 +129,7 @@ impl PackageManagerCommands for AdvancedPackageTool {
 
     fn exec_cmds_spawn(&self, cmds: &[String]) -> std::process::Child {
         self.ensure_sudo();
-        tracing::debug!("Executing {cmds:?} ...");
+        tracing::debug!("exec_cmds_spawn: Executing {cmds:?} ...");
         self.alt_cmd(cmds).args(cmds).spawn().unwrap()
     }
 }
@@ -199,11 +205,14 @@ mysql-common/now 5.8+1.1.0 all [installed,local]"#;
         // sync
         assert!(apt.sync().success());
         // search
-        assert!(apt.search(pkg).iter().any(|p| p.name() == "hello"));
+        assert!(apt.search(pkg).iter().any(|p| p.cli_display() == "hello"));
         // install
         assert!(apt.install(pkg).success());
         // list
-        assert!(apt.list_installed().iter().any(|p| p.name() == "hello"));
+        assert!(apt
+            .list_installed()
+            .iter()
+            .any(|p| p.cli_display() == "hello"));
         // update
         assert!(apt.update(pkg).success());
         // uninstall

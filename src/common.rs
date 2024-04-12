@@ -471,7 +471,7 @@ pub enum Operation {
 }
 
 /// Pkg Format.
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub enum PkgFormat {
     Bottle,
     Exe,

@@ -58,17 +58,21 @@ mod tests {
         assert!(hb.sync().success());
         // search
         assert!(hb.search("hello").iter().any(|p| p.name() == "hello"));
+
+        let mut pkg = "hello".into();
         // install
         assert!(hb
-            .execute_pkg_command("hello", Operation::Install)
+            .execute_pkg_command(&mut pkg, Operation::Install)
             .success());
         // list
         assert!(hb.list_installed().iter().any(|p| p.name() == "hello"));
         // update
-        assert!(hb.execute_pkg_command("hello", Operation::Update).success());
+        assert!(hb
+            .execute_pkg_command(&mut pkg, Operation::Update)
+            .success());
         // uninstall
         assert!(hb
-            .execute_pkg_command("hello", Operation::Uninstall)
+            .execute_pkg_command(&mut pkg, Operation::Uninstall)
             .success());
         // TODO: Test AddRepo
     }

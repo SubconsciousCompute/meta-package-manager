@@ -87,8 +87,6 @@ impl std::fmt::Display for MetaPackageManager {
 
 #[cfg(test)]
 mod tests {
-    use tracing_test::traced_test;
-
     use super::*;
 
     #[test]
@@ -99,7 +97,7 @@ mod tests {
     }
 
     #[test]
-    #[traced_test]
+    #[tracing_test::traced_test]
     #[cfg(target_os = "linux")]
     fn test_url_support() {
         let mpm = MetaPackageManager::new_default().unwrap();

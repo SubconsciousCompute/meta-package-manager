@@ -103,9 +103,8 @@ impl PackageManagerCommands for AdvancedPackageTool {
 
 #[cfg(test)]
 mod tests {
+    #![allow(unused_imports)]
     use std::str::FromStr;
-
-    use tracing_test::traced_test;
 
     use super::AdvancedPackageTool;
     use crate::{Package, PackageManager, PackageManagerCommands};
@@ -134,7 +133,7 @@ mysql-common/now 5.8+1.1.0 all [installed,local]"#;
 
     // Requires elevated privilages to work
     #[cfg(target_os = "linux")]
-    #[traced_test]
+    #[tracing_test::traced_test]
     #[test]
     fn test_apt() {
         let apt = crate::managers::AdvancedPackageTool;

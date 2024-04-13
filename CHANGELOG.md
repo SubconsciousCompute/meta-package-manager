@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Improves support for installing from URL (apt, dnf, zypper, yum)
+- Improves code architecture (mostly refactor).
+
 ## [0.6.0] - 2024-04-07
 
 - Adds support for installing from URL

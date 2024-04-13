@@ -22,7 +22,7 @@ use dnf::DandifiedYUM;
 use yum::YellowdogUpdaterModified;
 use zypper::Zypper;
 
-use crate::common::*;
+use crate::{common::*, traits::*};
 
 /// Enum of all supported package managers.
 #[derive(Debug, Delegate, strum::EnumIter, strum::EnumCount)]
@@ -94,5 +94,23 @@ mod tests {
         let mpm = MetaPackageManager::new_default().unwrap();
         let exts = mpm.supported_pkg_formats();
         assert!(!exts.is_empty());
+    }
+
+    #[test]
+    #[tracing_test::traced_test]
+    #[cfg(target_os = "linux")]
+    fn test_url_support() {
+        let mpm = MetaPackageManager::new_default().unwrap();
+        let exts = mpm.supported_pkg_formats();
+        let url = if exts.contains(&PkgFormat::Deb) {
+            "https://www.clamav.net/downloads/production/clamav-1.3.0.linux.x86_64.deb"
+        } else if exts.contains(&PkgFormat::Rpm) {
+            "https://www.clamav.net/downloads/production/clamav-1.3.0.linux.x86_64.rpm"
+        } else {
+            eprintln!("Only deb/rpm are supported");
+            return;
+        };
+        let s = mpm.install(url);
+        assert!(s.success());
     }
 }

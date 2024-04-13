@@ -139,14 +139,17 @@ rubygem-mixlib-shellout-doc.noarch : Documentation for rubygem-mixlib-shellout"#
         // sync
         assert!(man.sync().success());
         // search
-        assert!(man.search(pkg).iter().any(|p| p.name() == "hello.x86_64"));
+        assert!(man
+            .search(pkg)
+            .iter()
+            .any(|p| p.cli_display(man.pkg_delimiter()) == "hello.x86_64"));
         // install
         assert!(man.install(pkg).success());
         // list
         assert!(man
             .list_installed()
             .iter()
-            .any(|p| p.name() == "hello.x86_64"));
+            .any(|p| p.cli_display(man.pkg_delimiter()) == "hello.x86_64"));
         // update
         assert!(man.update(pkg).success());
         // uninstall

@@ -27,6 +27,9 @@
 //! ```
 
 #[macro_use]
+pub mod traits;
+pub use traits::*;
+
 pub mod common;
 pub use common::*;
 
@@ -135,11 +138,11 @@ mod tests {
     #[test]
     fn package_formatting() {
         assert_eq!(
-            MockPackageManager.reformat_for_command(&"foo".into()),
+            MockPackageManager.reformat_for_command(&mut "foo".into()),
             "foo"
         );
         assert_eq!(
-            MockPackageManager.reformat_for_command(&"foo@0.1.2".into()),
+            MockPackageManager.reformat_for_command(&mut "foo@0.1.2".into()),
             "foo+0.1.2"
         );
     }

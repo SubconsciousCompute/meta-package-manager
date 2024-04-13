@@ -1,207 +1,13 @@
 //! Common types and traits.
 
-use std::{borrow::Cow, error::Error, fmt::Display};
+use std::{
+    borrow::Cow,
+    fmt::Display,
+    io::{BufRead, BufReader},
+    process::{Command, Stdio},
+};
 
 use anyhow::Context;
-
-/// Primary interface for implementing a package manager
-///
-/// Multiple package managers can be grouped together as dyn PackageManager.
-#[ambassador::delegatable_trait]
-pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::Display {
-    /// Defines a delimeter to use while formatting package name and version
-    ///
-    /// For example, HomeBrew supports `<name>@<version>` and APT supports
-    /// `<name>=<version>`. Their appropriate delimiters would be '@' and
-    /// '=', respectively. For package managers that require additional
-    /// formatting, overriding the default trait methods would be the way to go.
-    fn pkg_delimiter(&self) -> char;
-
-    /// Return the list of supported package extensions.
-    fn supported_pkg_formats(&self) -> Vec<PkgFormat>;
-
-    /// Get a formatted string of the package that can be passed into package
-    /// manager's cli.
-    ///
-    /// If package URL is set, the url is passed to cli. Note that not all
-    /// package manager supports installing using url. For now, we rely on
-    /// package manager to handle it.
-    fn reformat_for_command(&self, pkg: &Package) -> String {
-        if let Some(url) = pkg.url() {
-            return url.to_string();
-        }
-        if let Some(v) = pkg.version() {
-            return format!("{}{}{}", pkg.name, self.pkg_delimiter(), v);
-        }
-        pkg.name().to_string()
-    }
-
-    /// Returns a package after parsing a line of stdout output from the
-    /// underlying package manager.
-    ///
-    /// This method is internally used in other default methods like
-    /// [``PackageManager::search``] to parse packages from the output.
-    ///
-    /// The default implementation merely tries to split the line at the
-    /// provided delimiter (see [``PackageManager::pkg_delimiter``])
-    /// and trims spaces. It returns a package with version information on
-    /// success, or else it returns a package with only a package name.
-    /// For package maangers that have unusual or complex output, users are free
-    /// to override this method. Note: Remember to construct a package with
-    /// owned values in this method.
-    fn parse_pkg(&self, line: &str) -> Option<Package> {
-        let pkg = if let Some((name, version)) = line.split_once(self.pkg_delimiter()) {
-            Package::new(name.trim(), Some(version.trim()))
-        } else {
-            Package::new(line.trim(), None)
-        };
-        Some(pkg)
-    }
-
-    /// Parses output, generally from stdout, to a Vec of Packages.
-    ///
-    /// The default implementation uses [``PackageManager::parse_pkg``] for
-    /// parsing each line into a [`Package`].
-    fn parse_output(&self, out: &[u8]) -> Vec<Package> {
-        let outstr = String::from_utf8_lossy(out);
-        outstr
-            .lines()
-            .filter_map(|s| {
-                let ts = s.trim();
-                if !ts.is_empty() {
-                    self.parse_pkg(ts)
-                } else {
-                    None
-                }
-            })
-            .collect()
-    }
-
-    /// General package search
-    fn search(&self, query: &str) -> Vec<Package> {
-        let cmds = self.consolidated(Cmd::Search, None, &[query.to_string()]);
-        let out = self.exec_cmds(&cmds);
-        self.parse_output(&out.stdout)
-    }
-
-    /// Sync package manaager repositories
-    fn sync(&self) -> std::process::ExitStatus {
-        self.exec_cmds_status(&self.consolidated::<&str>(Cmd::Sync, None, &[]))
-    }
-
-    /// Update/upgrade all packages
-    fn update_all(&self) -> std::process::ExitStatus {
-        self.exec_cmds_status(&self.consolidated::<&str>(Cmd::UpdateAll, None, &[]))
-    }
-
-    /// Install a single package
-    ///
-    /// For multi-package operations, see
-    /// [``PackageManager::execute_pkg_command``]
-    fn install<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
-        self.execute_pkg_command(pkg, Operation::Install)
-    }
-
-    /// Uninstall a single package
-    ///
-    /// For multi-package operations, see
-    /// [``PackageManager::execute_pkg_command``]
-    fn uninstall<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
-        self.execute_pkg_command(pkg, Operation::Uninstall)
-    }
-
-    /// Update a single package
-    ///
-    /// For multi-package operations, see
-    /// [``PackageManager::execute_pkg_command``]
-    fn update<P: Into<Package> + Clone>(&self, pkg: P) -> std::process::ExitStatus {
-        self.execute_pkg_command(pkg, Operation::Update)
-    }
-
-    /// List installed packages
-    fn list_installed(&self) -> Vec<Package> {
-        let out = self.exec_cmds(&self.consolidated::<&str>(Cmd::List, None, &[]));
-        self.parse_output(&out.stdout)
-    }
-
-    /// Execute package manager command.
-    fn execute_pkg_command<P: Into<Package> + std::clone::Clone>(
-        &self,
-        pkg: P,
-        op: Operation,
-    ) -> std::process::ExitStatus {
-        let command = match op {
-            Operation::Install => Cmd::Install,
-            Operation::Uninstall => Cmd::Uninstall,
-            Operation::Update => Cmd::Update,
-        };
-
-        let pkg = pkg.into();
-        let fmt = self.reformat_for_command(&pkg);
-        let cmds = self.consolidated(command, Some(&pkg), &[fmt]);
-        self.exec_cmds_status(&cmds)
-    }
-
-    /// Add third-party repository to the package manager's repository list
-    ///
-    /// Since the implementation might greatly vary among different package
-    /// managers this method returns a `Result` instead of the usual
-    /// `std::process::ExitStatus`.
-    fn add_repo(&self, repo: &str) -> anyhow::Result<()> {
-        let cmds = self.consolidated(Cmd::AddRepo, None, &[repo.to_string()]);
-        let s = self.exec_cmds_status(&cmds);
-        anyhow::ensure!(s.success(), "Error adding repo");
-        Ok(())
-    }
-}
-
-/// Error type for indicating failure in [``PackageManager::add_repo``]
-///
-/// Use [``RepoError::default``] when no meaningful source of the error is
-/// available.
-#[derive(Default, Debug)]
-pub struct RepoError {
-    pub source: Option<Box<dyn Error + 'static>>,
-}
-
-impl RepoError {
-    /// Construct `RepoError` with underlying error source/cause
-    ///
-    /// Use [``RepoError::default``] when no meaningful source of the error is
-    /// available.
-    pub fn new<E: Error + 'static>(source: E) -> Self {
-        Self {
-            source: Some(Box::new(source)),
-        }
-    }
-
-    /// Construct 'RepoError' with an error message set as its error source
-    ///
-    /// Use [``RepoError::new``] to wrap an existing error.
-    /// Use [``RepoError::default``] when no meaningful source of the error is
-    /// available.
-    pub fn with_msg(msg: &'static str) -> Self {
-        Self {
-            source: Some(msg.into()),
-        }
-    }
-}
-
-impl Display for RepoError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(s) = self.source() {
-            f.write_fmt(format_args!("failed to add repo: {}", s))
-        } else {
-            f.write_str("failed to add repo")
-        }
-    }
-}
-
-impl Error for RepoError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        self.source.as_deref()
-    }
-}
 
 /// Representation of a package manager command
 ///
@@ -219,122 +25,6 @@ pub enum Cmd {
     Search,
 }
 
-/// Trait for defining package panager commands in one place
-///
-/// Only [``PackageManagerCommands::cmd``] and [``Commands::commands``] are
-/// required, the rest are simply conviniece methods that internally call
-/// [``PackageManagerCommands::commands``]. The trait [``PackageManager``]
-/// depends on this to provide default implementations.
-#[ambassador::delegatable_trait]
-pub trait PackageManagerCommands {
-    /// Primary command of the package manager. For example, 'brew', 'apt', and
-    /// 'dnf', constructed with [``std::process::Command::new``].
-    fn cmd(&self) -> std::process::Command;
-
-    /// Returns the appropriate command/s for the given supported command type.
-    /// Check [``crate::common::Cmd``] enum to see all supported commands.
-    fn get_cmds(&self, cmd: Cmd, pkg: Option<&Package>) -> Vec<String>;
-
-    /// Returns the appropriate flags for the given command type. Check
-    /// [``crate::common::Cmd``] enum to see all supported commands.
-    ///
-    /// Flags are optional, which is why the default implementation returns an
-    /// empty slice
-    fn get_flags(&self, _cmd: Cmd) -> Vec<String> {
-        vec![]
-    }
-
-    /// Retreives defined commands and flags for the given
-    /// [``crate::common::Cmd``] type and returns a Vec of args in the
-    /// order: `[commands..., user-args..., flags...]`
-    ///
-    /// The appropriate commands and flags are determined with the help of the
-    /// enum [``crate::common::Cmd``] For finer control, a general purpose
-    /// function [``consolidated_args``] is also provided.
-    #[inline]
-    fn consolidated<S: AsRef<str>>(
-        &self,
-        cmd: Cmd,
-        pkg: Option<&Package>,
-        args: &[S],
-    ) -> Vec<String> {
-        let mut commands = self.get_cmds(cmd, pkg);
-        commands.append(&mut self.get_flags(cmd));
-        commands.append(&mut args.iter().map(|x| x.as_ref().to_string()).collect());
-        commands
-    }
-
-    /// Run arbitrary commands against the package manager command and get
-    /// output
-    ///
-    /// # Panics
-    /// This fn can panic when the defined [``PackageManagerCommands::cmd``] is
-    /// not found in path. This can be avoided by using
-    /// [``verified::Verified``] or manually ensuring that the
-    /// [``PackageManagerCommands::cmd``] is valid.
-    fn exec_cmds(&self, cmds: &[String]) -> std::process::Output {
-        self.ensure_sudo();
-        tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
-        self.cmd()
-            .args(cmds)
-            .output()
-            .expect("command executed without a prior check")
-    }
-
-    /// Run arbitrary commands against the package manager command and wait for
-    /// std::process::ExitStatus
-    ///
-    /// # Panics
-    /// This fn can panic when the defined [``PackageManagerCommands::cmd``] is
-    /// not found in path. This can be avoided by using
-    /// [``verified::Verified``] or manually ensuring that the
-    /// [``PackageManagerCommands::cmd``] is valid.
-    fn exec_cmds_status<S: AsRef<str> + std::fmt::Debug>(
-        &self,
-        cmds: &[S],
-    ) -> std::process::ExitStatus {
-        self.ensure_sudo();
-        tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
-        self.cmd()
-            .args(cmds.iter().map(AsRef::as_ref))
-            .status()
-            .expect("command executed without a prior check")
-    }
-
-    /// Run arbitrary commands against the package manager command and return
-    /// handle to the spawned process
-    ///
-    /// # Panics
-    /// This fn can panic when the defined [``PackageManagerCommands::cmd``] is
-    /// not found in path. This can be avoided by using
-    /// [``verified::Verified``] or manually ensuring that the
-    /// [``PackageManagerCommands::cmd``] is valid.
-    fn exec_cmds_spawn(&self, cmds: &[String]) -> std::process::Child {
-        self.ensure_sudo();
-        tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
-        self.cmd()
-            .args(cmds)
-            .spawn()
-            .expect("command executed without a prior check")
-    }
-
-    /// Ensure that we are in sudo mode.
-    fn ensure_sudo(&self) {
-        #[cfg(target_os = "linux")]
-        if let Err(e) = sudo::with_env(&["CARGO_", "MPM_LOG", "RUST_LOG"]) {
-            tracing::warn!("Failed to elevate to sudo: {e}.");
-        }
-    }
-
-    /// Check is package manager is available.
-    fn is_available(&self) -> bool {
-        match self.cmd().arg("--version").output() {
-            Err(_) => false,
-            Ok(output) => output.status.success(),
-        }
-    }
-}
-
 /// A representation of a package
 ///
 /// This struct contains package's name and version information (optional).
@@ -342,9 +32,11 @@ pub trait PackageManagerCommands {
 pub struct Package {
     /// name of the package
     name: String,
-    // Untyped version, might be replaced with a strongly typed one
+
+    /// Untyped version, might be replaced with a strongly typed one
     version: Option<String>,
-    /// Url of this package
+
+    /// Url of this package. A local package can be passed as "file://" URI.
     url: Option<url::Url>,
 }
 
@@ -358,9 +50,24 @@ impl Package {
         }
     }
 
-    /// Package name
+    /// Name of the package
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    /// Package name for cli.
+    pub fn cli_display(&self, pkg_delimiter: char) -> String {
+        if let Some(url) = self.url() {
+            if url.scheme() == "file" {
+                tracing::debug!("Found on-disk path. Stripping file://...");
+                return url.as_str().strip_prefix("file://").unwrap().to_string();
+            }
+            return url.as_str().to_string();
+        }
+        if let Some(version) = &self.version {
+            return format!("{}{}{}", self.name, pkg_delimiter, version);
+        }
+        self.name.clone()
     }
 
     /// Get version information if present
@@ -369,8 +76,58 @@ impl Package {
     }
 
     /// Get version information if present
-    pub fn url(&self) -> Option<url::Url> {
-        self.url.clone()
+    pub fn url(&self) -> Option<&url::Url> {
+        self.url.as_ref()
+    }
+
+    /// Turn remote url to local file based URI
+    pub fn make_available_on_disk(
+        &mut self,
+        output: Option<&std::path::Path>,
+        force: bool,
+    ) -> anyhow::Result<std::path::PathBuf> {
+        use std::io::Write;
+
+        anyhow::ensure!(
+            self.url().is_some(),
+            "There is no URL associated with this package"
+        );
+        let url = self.url().context("missing URL")?;
+        anyhow::ensure!(
+            url.scheme() != "file",
+            "Package already points to local file {url:?}"
+        );
+
+        let pkgpath = match output {
+            Some(p) => p.into(),
+            None => std::env::temp_dir().join(
+                url.path_segments()
+                    .context("missing path in url")?
+                    .last()
+                    .context("missing filepath in url")?,
+            ),
+        };
+
+        // download to disk.
+        if !pkgpath.exists() || force {
+            tracing::debug!("Downloading package from `{url}` (force={force})...");
+            let resp = reqwest::blocking::Client::builder()
+                .timeout(None)
+                .build()?
+                .get(url.as_str())
+                .send()?;
+
+            let bytes = resp.bytes()?;
+            tracing::debug!(" ... fetched {} MB.", bytes.len() / 1024 / 1024);
+
+            let mut buffer = std::fs::File::create(&pkgpath)?;
+            buffer.write_all(&bytes)?;
+            std::thread::sleep(std::time::Duration::from_secs(1));
+        }
+
+        anyhow::ensure!(pkgpath.is_file(), "Failed to download {url} -> {pkgpath:?}");
+        self.url = format!("file://{}", pkgpath.display()).parse().ok();
+        Ok(pkgpath)
     }
 }
 
@@ -410,6 +167,13 @@ impl std::str::FromStr for Package {
 
 impl std::convert::From<&str> for Package {
     fn from(s: &str) -> Self {
+        s.parse().expect("invalid format")
+    }
+}
+
+impl std::convert::From<&std::path::Path> for Package {
+    fn from(p: &std::path::Path) -> Self {
+        let s = format!("file://{}", p.display());
         s.parse().expect("invalid format")
     }
 }
@@ -492,4 +256,53 @@ impl PkgFormat {
         }
         .to_string()
     }
+}
+
+/// Command result is a tuple of ExitStatus, stdout lines
+pub struct CommandResult(pub std::process::ExitStatus, pub Vec<String>);
+
+impl CommandResult {
+    /// Command executed successfully?
+    pub fn success(&self) -> bool {
+        self.0.success()
+    }
+}
+
+impl std::fmt::Display for CommandResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "<code={:?}, success={}, lines={}>",
+            self.0.code(),
+            self.0.success(),
+            self.1.len()
+        )
+    }
+}
+
+/// Execute a command and stream its output. Collect response.
+pub fn run_command<S: AsRef<str> + std::convert::AsRef<std::ffi::OsStr>>(
+    mut cmd: Command,
+    args: &[S],
+    stream_to_stdout: bool,
+) -> anyhow::Result<CommandResult> {
+    let mut result = vec![];
+    let mut child = cmd.args(args).stdout(Stdio::piped()).spawn()?;
+    {
+        let stdout = child.stdout.as_mut().unwrap();
+        let stdout_reader = BufReader::new(stdout);
+        let stdout_lines = stdout_reader.lines();
+
+        for line in stdout_lines.map_while(Result::ok) {
+            if stream_to_stdout {
+                println!(">> {line}");
+            } else {
+                tracing::debug!(">> {line}");
+            }
+            result.push(line);
+        }
+    }
+    let ec = child.wait()?;
+    tracing::trace!(">>> command response: {}", ec);
+    Ok(CommandResult(ec, result))
 }

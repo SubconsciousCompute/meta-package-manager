@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use clap::{Parser, Subcommand};
 
-use crate::common::{Package, PackageManager};
+use crate::{Package, PackageManager};
 
 #[derive(Parser)]
 #[command(

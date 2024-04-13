@@ -22,7 +22,7 @@ use dnf::DandifiedYUM;
 use yum::YellowdogUpdaterModified;
 use zypper::Zypper;
 
-use crate::common::*;
+use crate::{common::*, traits::*};
 
 /// Enum of all supported package managers.
 #[derive(Debug, Delegate, strum::EnumIter, strum::EnumCount)]

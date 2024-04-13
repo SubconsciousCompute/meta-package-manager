@@ -9,7 +9,6 @@ use crate::{common::Package, Cmd, PackageManager, PackageManagerCommands, PkgFor
 /// # Idiosyncracies
 /// [``AdvancedPackageTool::list_installed``] and
 /// [``AdvancedPackageTool::search``] internally depend on "apt" command
-/// while the rest depend on "apt-get" command.
 ///
 /// Another notable point is that the [``AdvancedPackageTool::add_repo``]
 /// implementation doesn't execute commands, but it writes to
@@ -70,7 +69,7 @@ impl Display for AdvancedPackageTool {
 
 impl PackageManagerCommands for AdvancedPackageTool {
     fn cmd(&self) -> Command {
-        Command::new("apt-get")
+        Command::new("apt")
     }
 
     fn get_cmds(&self, cmd: Cmd, _pkg: Option<&Package>) -> Vec<String> {
@@ -109,7 +108,7 @@ mod tests {
     use tracing_test::traced_test;
 
     use super::AdvancedPackageTool;
-    use crate::{ Package, PackageManager, PackageManagerCommands};
+    use crate::{Package, PackageManager, PackageManagerCommands};
 
     #[test]
     fn test_parse_pkg() {
@@ -149,17 +148,21 @@ mysql-common/now 5.8+1.1.0 all [installed,local]"#;
         assert!(apt.sync().success());
 
         // search
-        assert!(apt
-            .search(pkg)
-            .iter()
-            .any(|p| p.cli_display(apt.pkg_delimiter()) == "hello"));
+        let found_pkgs = apt.search(pkg);
+        tracing::info!("Found packages: {found_pkgs:#?}");
+        tracing::info!(
+            "Found packages: {:#?}",
+            found_pkgs
+                .iter()
+                .map(|p| p.cli_display(apt.pkg_delimiter()))
+                .collect::<Vec<_>>()
+        );
+        assert!(found_pkgs.iter().any(|p| p.name() == "hello"));
+
         // install
         assert!(apt.install(pkg).success());
         // list
-        assert!(apt
-            .list_installed()
-            .iter()
-            .any(|p| p.cli_display(apt.pkg_delimiter()) == "hello"));
+        assert!(apt.list_installed().iter().any(|p| p.name() == "hello"));
         // update
         assert!(apt.update(pkg).success());
         // uninstall

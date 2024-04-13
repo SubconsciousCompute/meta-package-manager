@@ -293,7 +293,7 @@ pub fn run_command<S: AsRef<str> + std::convert::AsRef<std::ffi::OsStr>>(
         let stdout_reader = BufReader::new(stdout);
         let stdout_lines = stdout_reader.lines();
 
-        for line in stdout_lines.filter_map(Result::ok) {
+        for line in stdout_lines.map_while(Result::ok) {
             if stream_to_stdout {
                 println!(">> {line}");
             } else {

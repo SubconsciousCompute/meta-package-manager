@@ -70,19 +70,14 @@ pub trait PackageManagerCommands {
     /// not found in path. This can be avoided by using
     /// [``verified::Verified``] or manually ensuring that the
     /// [``PackageManagerCommands::cmd``] is valid.
-    fn exec_cmds_status<S: AsRef<str> + std::fmt::Debug>(
+    fn exec_cmds_status<S: AsRef<str> + std::fmt::Debug + std::convert::AsRef<std::ffi::OsStr>>(
         &self,
         cmds: &[S],
     ) -> std::process::ExitStatus {
         self.ensure_sudo();
-        tracing::info!("Executing {:?} with args {:?}", self.cmd(), cmds);
-        let o = self
-            .cmd()
-            .args(cmds.iter().map(AsRef::as_ref))
-            .output()
-            .expect("command executed without a prior check");
-        tracing::debug!(">>> {o:?}");
-        o.status
+        tracing::debug!("Executing {:?} with args {:?}", self.cmd(), cmds);
+        let res = crate::run_command(self.cmd(), cmds, true).expect("failed to run command");
+        res.0
     }
 
     /// Run arbitrary commands against the package manager command and return
@@ -195,6 +190,7 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
 
     /// Sync package manaager repositories
     fn sync(&self) -> std::process::ExitStatus {
+        tracing::debug!("Syncing...");
         self.exec_cmds_status(&self.consolidated::<&str>(Cmd::Sync, None, &[]))
     }
 

@@ -1,6 +1,11 @@
 //! Common types and traits.
 
-use std::{borrow::Cow, fmt::Display};
+use std::{
+    borrow::Cow,
+    fmt::Display,
+    io::{BufRead, BufReader},
+    process::{Command, Stdio},
+};
 
 use anyhow::Context;
 
@@ -251,4 +256,53 @@ impl PkgFormat {
         }
         .to_string()
     }
+}
+
+/// Command result is a tuple of ExitStatus, stdout lines
+pub struct CommandResult(pub std::process::ExitStatus, pub Vec<String>);
+
+impl CommandResult {
+    /// Command executed successfully?
+    pub fn success(&self) -> bool {
+        self.0.success()
+    }
+}
+
+impl std::fmt::Display for CommandResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "<code={:?}, success={}, lines={}>",
+            self.0.code(),
+            self.0.success(),
+            self.1.len()
+        )
+    }
+}
+
+/// Execute a command and stream its output. Collect response.
+pub fn run_command<S: AsRef<str> + std::convert::AsRef<std::ffi::OsStr>>(
+    mut cmd: Command,
+    args: &[S],
+    stream_to_stdout: bool,
+) -> anyhow::Result<CommandResult> {
+    let mut result = vec![];
+    let mut child = cmd.args(args).stdout(Stdio::piped()).spawn()?;
+    {
+        let stdout = child.stdout.as_mut().unwrap();
+        let stdout_reader = BufReader::new(stdout);
+        let stdout_lines = stdout_reader.lines();
+
+        for line in stdout_lines.filter_map(Result::ok) {
+            if stream_to_stdout {
+                println!(">> {line}");
+            } else {
+                tracing::debug!(">> {line}");
+            }
+            result.push(line);
+        }
+    }
+    let ec = child.wait()?;
+    tracing::trace!(">>> command response: {}", ec);
+    Ok(CommandResult(ec, result))
 }

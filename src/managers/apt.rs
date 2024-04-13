@@ -19,17 +19,6 @@ pub struct AdvancedPackageTool;
 
 impl AdvancedPackageTool {
     const SOURCES: &'static str = "/etc/apt/sources.list";
-
-    fn alt_cmd<S: AsRef<str>>(&self, cmds: &[S]) -> Command {
-        if matches!(
-            cmds.first().map(AsRef::as_ref),
-            Some("list") | Some("search")
-        ) {
-            Command::new("apt")
-        } else {
-            self.cmd()
-        }
-    }
 }
 
 impl PackageManager for AdvancedPackageTool {
@@ -111,38 +100,16 @@ impl PackageManagerCommands for AdvancedPackageTool {
         .map(|x| x.to_string())
         .collect()
     }
-
-    fn exec_cmds(&self, cmds: &[String]) -> std::process::Output {
-        self.ensure_sudo();
-        tracing::debug!("exec_cmds: Executing {cmds:?} ...");
-        self.alt_cmd(cmds).args(cmds).output().unwrap()
-    }
-
-    fn exec_cmds_status<S: AsRef<str> + std::fmt::Debug>(
-        &self,
-        cmds: &[S],
-    ) -> std::process::ExitStatus {
-        self.ensure_sudo();
-        tracing::debug!("exec_cmds_status: Executing {cmds:?} ...");
-        self.alt_cmd(cmds)
-            .args(cmds.iter().map(AsRef::as_ref))
-            .status()
-            .unwrap()
-    }
-
-    fn exec_cmds_spawn(&self, cmds: &[String]) -> std::process::Child {
-        self.ensure_sudo();
-        tracing::debug!("exec_cmds_spawn: Executing {cmds:?} ...");
-        self.alt_cmd(cmds).args(cmds).spawn().unwrap()
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
 
+    use tracing_test::traced_test;
+
     use super::AdvancedPackageTool;
-    use crate::{Cmd, Package, PackageManager, PackageManagerCommands};
+    use crate::{ Package, PackageManager, PackageManagerCommands};
 
     #[test]
     fn test_parse_pkg() {
@@ -166,38 +133,10 @@ mysql-common/now 5.8+1.1.0 all [installed,local]"#;
         );
     }
 
-    #[test]
-    fn alt_cmd() {
-        let apt = AdvancedPackageTool;
-        let alt = "apt";
-        let reg = "apt-get";
-        let cmds = &[
-            Cmd::Install,
-            Cmd::Uninstall,
-            Cmd::Update,
-            Cmd::UpdateAll,
-            Cmd::List,
-            Cmd::Sync,
-            Cmd::AddRepo,
-            Cmd::Search,
-        ];
-
-        for cmd in cmds.iter() {
-            let should_match = match cmd {
-                Cmd::Search | Cmd::List => alt,
-                _ => reg,
-            };
-            assert_eq!(
-                apt.alt_cmd(&apt.get_cmds(*cmd, None)).get_program(),
-                should_match
-            );
-        }
-    }
-
     // Requires elevated privilages to work
     #[cfg(target_os = "linux")]
+    #[traced_test]
     #[test]
-    #[tracing_test::traced_test]
     fn test_apt() {
         let apt = crate::managers::AdvancedPackageTool;
         if !apt.is_available() {
@@ -208,6 +147,7 @@ mysql-common/now 5.8+1.1.0 all [installed,local]"#;
         let pkg = "hello";
         // sync
         assert!(apt.sync().success());
+
         // search
         assert!(apt
             .search(pkg)

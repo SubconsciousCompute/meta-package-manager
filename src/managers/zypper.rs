@@ -103,7 +103,7 @@ impl PackageManagerCommands for Zypper {
 
         // run zypper in non-interactive mode.
         cmd.insert(0, "-n".to_string());
-        if pkg.and_then(|p| p.url()).is_some() {
+        if pkg.is_some() {
             cmd.insert(1, "--no-gpg-checks".to_string());
         }
         cmd

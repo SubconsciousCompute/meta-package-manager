@@ -4,6 +4,7 @@ use std::{
     borrow::Cow,
     fmt::Display,
     io::{BufRead, BufReader},
+    path::{Path, PathBuf},
     process::{Command, Stdio},
 };
 
@@ -83,11 +84,9 @@ impl Package {
     /// Turn remote url to local file based URI
     pub fn make_available_on_disk(
         &mut self,
-        output: Option<&std::path::Path>,
+        output: Option<&Path>,
         force: bool,
-    ) -> anyhow::Result<std::path::PathBuf> {
-        use std::io::Write;
-
+    ) -> anyhow::Result<PathBuf> {
         anyhow::ensure!(
             self.url().is_some(),
             "There is no URL associated with this package"
@@ -109,21 +108,7 @@ impl Package {
         };
 
         // download to disk.
-        if !pkgpath.exists() || force {
-            tracing::debug!("Downloading package from `{url}` (force={force})...");
-            let resp = reqwest::blocking::Client::builder()
-                .timeout(None)
-                .build()?
-                .get(url.as_str())
-                .send()?;
-
-            let bytes = resp.bytes()?;
-            tracing::debug!(" ... fetched {} MB.", bytes.len() / 1024 / 1024);
-
-            let mut buffer = std::fs::File::create(&pkgpath)?;
-            buffer.write_all(&bytes)?;
-            std::thread::sleep(std::time::Duration::from_secs(1));
-        }
+        download_url(&url, &pkgpath, force)?;
 
         anyhow::ensure!(pkgpath.is_file(), "Failed to download {url} -> {pkgpath:?}");
         self.url = format!("file://{}", pkgpath.display()).parse().ok();
@@ -136,6 +121,7 @@ impl std::str::FromStr for Package {
 
     fn from_str(s: &str) -> anyhow::Result<Self> {
         if let Ok(url) = url::Url::parse(s) {
+            tracing::debug!("Given package is a URL: {url:?}");
             let name = url
                 .path_segments()
                 .context("can not determine pane from the url")?
@@ -171,10 +157,18 @@ impl std::convert::From<&str> for Package {
     }
 }
 
-impl std::convert::From<&std::path::Path> for Package {
-    fn from(p: &std::path::Path) -> Self {
+impl std::convert::From<&Path> for Package {
+    fn from(p: &Path) -> Self {
+        let p = std::fs::canonicalize(p).unwrap_or(p.to_path_buf());
         let s = format!("file://{}", p.display());
+        tracing::trace!("Converting path {p:?} to Package: {s}");
         s.parse().expect("invalid format")
+    }
+}
+
+impl std::convert::From<&PathBuf> for Package {
+    fn from(p: &PathBuf) -> Self {
+        Package::from(p.as_path())
     }
 }
 
@@ -305,4 +299,27 @@ pub fn run_command<S: AsRef<str> + std::convert::AsRef<std::ffi::OsStr>>(
     let ec = child.wait()?;
     tracing::trace!(">>> command response: {}", ec);
     Ok(CommandResult(ec, result))
+}
+
+/// Download this url to the disk.
+pub fn download_url(url: &url::Url, pkgpath: &Path, force: bool) -> anyhow::Result<()> {
+    use std::io::Write;
+    tracing::debug!("Downloading package from `{url}` (force={force})...");
+    if pkgpath.exists() && !force {
+        tracing::info!("{pkgpath:?} already exists. Reusing it since `force=false`.");
+        return Ok(());
+    }
+    let resp = reqwest::blocking::Client::builder()
+        .timeout(None)
+        .build()?
+        .get(url.as_str())
+        .send()?;
+    resp.error_for_status_ref()?;
+
+    let bytes = resp.bytes()?;
+    tracing::debug!(" ... fetched {} MB.", bytes.len() / 1024 / 1024);
+
+    let mut buffer = std::fs::File::create(pkgpath)?;
+    buffer.write_all(&bytes)?;
+    Ok(())
 }

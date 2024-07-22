@@ -208,6 +208,7 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
         pkg: P,
     ) -> std::process::ExitStatus {
         let mut pkg = pkg.into();
+        tracing::trace!("Got pkg {pkg:?}");
         self.execute_pkg_command(&mut pkg, Operation::Install)
     }
 

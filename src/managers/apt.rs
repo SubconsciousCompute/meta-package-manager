@@ -42,7 +42,7 @@ impl PackageManager for AdvancedPackageTool {
     // Apt doesn't support installing from URL.
     fn reformat_for_command(&self, pkg: &mut Package) -> String {
         if let Some(url) = pkg.url() {
-            if url.scheme() != "file://" {
+            if url.scheme() != "file" {
                 tracing::info!(
                     "Apt doesn't support installing directory from URL. Downloading locally..."
                 );

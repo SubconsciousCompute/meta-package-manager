@@ -113,4 +113,27 @@ mod tests {
         let s = mpm.install(url);
         assert!(s.success());
     }
+
+    #[test]
+    #[tracing_test::traced_test]
+    #[cfg(target_os = "linux")]
+    fn test_local_package_support() {
+        let mpm = MetaPackageManager::new_default().unwrap();
+        let exts = mpm.supported_pkg_formats();
+        let (url, pkgfile) = if exts.contains(&PkgFormat::Deb) {
+            ("https://static-assets-subcom.s3.ap-south-1.amazonaws.com/shepherd/nightly/shepherd_nightly_x86_64.deb", "shepherd.deb")
+        } else if exts.contains(&PkgFormat::Rpm) {
+            ("https://static-assets-subcom.s3.ap-south-1.amazonaws.com/shepherd/nightly/shepherd_nightly_x86_64.rpm", "shepherd.rpm")
+        } else {
+            eprintln!("Only deb/rpm are supported");
+            return;
+        };
+
+        // download the url.
+        let pkgfile = std::path::Path::new(pkgfile);
+        crate::common::download_url(&url.parse().unwrap(), pkgfile, true).unwrap();
+
+        let s = mpm.install(pkgfile);
+        assert!(s.success());
+    }
 }

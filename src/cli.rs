@@ -83,6 +83,7 @@ pub enum MpmPackageManagerCommands {
         all: bool,
     },
 }
+
 /// Function that handles the parsed CLI arguments in one place
 pub fn execute(args: Cli) -> anyhow::Result<()> {
     let mpm = if let Some(manager) = args.manager {
@@ -103,7 +104,12 @@ pub fn execute(args: Cli) -> anyhow::Result<()> {
         }
         MpmPackageManagerCommands::Install { packages } => {
             for pkg in packages {
-                let s = mpm.install(Package::from_str(&pkg)?);
+                let pkg_path = std::path::PathBuf::from(&pkg);
+                let s = if pkg_path.is_file() {
+                    mpm.install(&pkg_path)
+                } else {
+                    mpm.install(pkg.as_str())
+                };
                 anyhow::ensure!(s.success(), "Failed to install {pkg}");
             }
         }

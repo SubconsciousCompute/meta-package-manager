@@ -108,7 +108,7 @@ impl Package {
         };
 
         // download to disk.
-        download_url(&url, &pkgpath, force)?;
+        download_url(url, &pkgpath, force)?;
 
         anyhow::ensure!(pkgpath.is_file(), "Failed to download {url} -> {pkgpath:?}");
         self.url = format!("file://{}", pkgpath.display()).parse().ok();

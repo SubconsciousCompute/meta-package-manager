@@ -295,7 +295,7 @@ pub fn run_command<S: AsRef<str> + std::convert::AsRef<std::ffi::OsStr>>(
 
         for line in stdout_lines.map_while(Result::ok) {
             if stream_to_stdout {
-                println!(">> {line}");
+                println!("[MPM] {line}");
             } else {
                 tracing::debug!(">> {line}");
             }

@@ -13,7 +13,6 @@ jobs:
   linux-build-test:
 
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
 
@@ -30,7 +29,6 @@ jobs:
       run: cargo test --all-features --verbose
 
   mac-build-test:
-
     runs-on: macos-latest
 
     steps:
@@ -41,7 +39,6 @@ jobs:
       run: cargo test --all-features --verbose
 
   windows-build-test:
-
     runs-on: windows-latest
 
     steps:
@@ -53,16 +50,16 @@ jobs:
 
   create-release:
     runs-on: ubuntu-latest
+    if: startsWith(github.event.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v4
       - uses: taiki-e/create-gh-release-action@v1
         with:
-          # (optional) Path to changelog.
           changelog: CHANGELOG.md
-          # (required) GitHub token for creating GitHub Releases.
           token: ${{ secrets.GITHUB_TOKEN }}
 
   upload-assets:
+    if: startsWith(github.event.ref, 'refs/tags/v')
     needs: create-release
     strategy:
       matrix:
@@ -78,22 +75,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: taiki-e/upload-rust-binary-action@v1
         with:
-          # (required) Comma-separated list of binary names (non-extension portion of filename) to build and upload.
-          # Note that glob pattern is not supported yet.
           bin: mpm
-          # (optional) Target triple, default is host triple.
-          # This is optional but it is recommended that this always be set to
-          # clarify which target you are building for if macOS is included in
-          # the matrix because GitHub Actions changed the default architecture
-          # of macos-latest since macos-14.
           target: ${{ matrix.target }}
-          # (optional) On which platform to distribute the `.tar.gz` file.
-          # [default value: unix]
-          # [possible values: all, unix, windows, none]
           tar: unix
-          # (optional) On which platform to distribute the `.zip` file.
-          # [default value: windows]
-          # [possible values: all, unix, windows, none]
           zip: windows
-          # (required) GitHub token for uploading assets to GitHub Releases.
           token: ${{ secrets.GITHUB_TOKEN }}

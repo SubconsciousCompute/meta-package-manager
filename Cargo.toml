@@ -1,6 +1,6 @@
 [package]
 name = "mpm"
-version = "0.7.2"
+version = "0.7.3"
 edition = "2021"
 license = "AGPL-3.0"
 
@@ -16,8 +16,8 @@ tabled = "0.15"
 tracing = "0.1.40"
 reqwest = { version = "0.12", features = ["blocking", "rustls-tls"] }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
-ambassador = "0.3.7"
-serde_json = "1.0.120"
+ambassador = "0.4.1"
+serde_json = "1.0.121"
 serde = "1.0.204"
 url = { version = "2.5.2", features = ["serde"] }
 

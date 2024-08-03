@@ -80,4 +80,4 @@ jobs:
           target: ${{ matrix.target }}
           tar: unix
           zip: windows
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.CARGO_REGISTRY_TOKEN }}

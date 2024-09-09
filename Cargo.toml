@@ -12,7 +12,7 @@ sudo = "0.6"
 xmltree = "0.10"
 os_info = "3.8.2"
 strum = { version = "0.26", features = ["derive"] }
-tabled = "0.15"
+tabled = { version = "0.15", features = ["ansi"] }
 tracing = "0.1.40"
 reqwest = { version = "0.12", features = ["blocking", "rustls-tls"] }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }

@@ -208,6 +208,7 @@ fn install_default_manager() -> anyhow::Result<()> {
 }
 
 #[cfg(target_os = "linux")]
-fn install_default_manager() {
+fn install_default_manager() -> anyhow::Result<()> {
     println!("This command does nothing on linux.");
+    Ok(())
 }

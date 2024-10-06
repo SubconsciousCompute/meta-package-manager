@@ -92,6 +92,20 @@ pub fn execute(args: Cli) -> anyhow::Result<()> {
         crate::MetaPackageManager::new_default()?
     };
 
+    // elevate to root only for specific commands
+    let requires_sudo = matches!(
+        args.command,
+        MpmPackageManagerCommands::Install { .. } |
+        MpmPackageManagerCommands::Uninstall { .. } |
+        MpmPackageManagerCommands::Update { .. } |
+        MpmPackageManagerCommands::Repo { .. } |
+        MpmPackageManagerCommands::Sync
+    );
+
+    if requires_sudo {
+        sudo();
+    }
+
     match args.command {
         MpmPackageManagerCommands::Managers => crate::print::print_managers(),
         MpmPackageManagerCommands::Search { string } => {
@@ -150,4 +164,12 @@ fn print_pkgs(pkgs: &[Package], json: bool) -> anyhow::Result<()> {
         println!("{}", tabled::Table::new(pkgs));
     }
     Ok(())
+}
+
+/// elevates to sudo
+fn sudo() {
+    #[cfg(target_os = "linux")]
+    if let Err(e) = sudo::with_env(&["CARGO_", "RUST_LOG"]) {
+        tracing::warn!("Failed to elevate to sudo: {e}.");
+    }
 }

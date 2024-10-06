@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.7.4] - 2024-10-07
 
 - Adds `--install-default` option to `managers` command. 
+- Removes unneccessary use of `sudo` (#54).
 
 ## [0.7.3] - 2024-07-31
 

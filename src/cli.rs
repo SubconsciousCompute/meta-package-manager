@@ -191,7 +191,7 @@ fn sudo() {
 fn install_default_manager() -> anyhow::Result<()> {
     println!("Installing choco package manager...");
     let script = "Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))";
-    let status = run_script_rs::run_script(&script, false)?;
+    let status = run_script_rs::run_script(script, false)?;
     anyhow::ensure!(status.success(), "Command failed to install choco");
     tracing::info!("{status:?}");
     Ok(())

@@ -100,11 +100,11 @@ pub fn execute(args: Cli) -> anyhow::Result<()> {
     // elevate to root only for specific commands
     let requires_sudo = matches!(
         args.command,
-        MpmPackageManagerCommands::Install { .. } |
-        MpmPackageManagerCommands::Uninstall { .. } |
-        MpmPackageManagerCommands::Update { .. } |
-        MpmPackageManagerCommands::Repo { .. } |
-        MpmPackageManagerCommands::Sync
+        MpmPackageManagerCommands::Install { .. }
+            | MpmPackageManagerCommands::Uninstall { .. }
+            | MpmPackageManagerCommands::Update { .. }
+            | MpmPackageManagerCommands::Repo { .. }
+            | MpmPackageManagerCommands::Sync
     );
 
     if requires_sudo {

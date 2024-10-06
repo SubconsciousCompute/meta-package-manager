@@ -8,8 +8,8 @@ use crate::{Package, PackageManager};
 #[command(
     author,
     version,
-    about = "A generic package manager.",
-    long_about = "A generic package manager for interfacing with multiple distro and platform specific package managers."
+    about = "A meta package manager.",
+    long_about = "A meta package manager for interfacing with multiple distro and platform specific package managers."
 )]
 
 /// Cli for PackageManager.
@@ -26,7 +26,7 @@ pub struct Cli {
     manager: Option<crate::common::AvailablePackageManager>,
 
     // TODO: See issue #33
-    // /// Set interactive mode
+    // Set interactive mode
     // #[arg(long, short, default_value_t = false)]
     // interactive: bool,
     /// Set output to be in json format.
@@ -37,7 +37,12 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum MpmPackageManagerCommands {
     #[command(about = "List supported package managers and display their availability")]
-    Managers,
+    Managers {
+        /// Install default package manager if not found e.g. choco on Windows
+        /// and homebrew on osx.
+        #[arg(long, default_value_t = false)]
+        install_default: bool,
+    },
 
     #[command(about = "Search for a given sub-string and list matching packages")]
     Search { string: String },
@@ -95,11 +100,11 @@ pub fn execute(args: Cli) -> anyhow::Result<()> {
     // elevate to root only for specific commands
     let requires_sudo = matches!(
         args.command,
-        MpmPackageManagerCommands::Install { .. } |
-        MpmPackageManagerCommands::Uninstall { .. } |
-        MpmPackageManagerCommands::Update { .. } |
-        MpmPackageManagerCommands::Repo { .. } |
-        MpmPackageManagerCommands::Sync
+        MpmPackageManagerCommands::Install { .. }
+            | MpmPackageManagerCommands::Uninstall { .. }
+            | MpmPackageManagerCommands::Update { .. }
+            | MpmPackageManagerCommands::Repo { .. }
+            | MpmPackageManagerCommands::Sync
     );
 
     if requires_sudo {
@@ -107,7 +112,14 @@ pub fn execute(args: Cli) -> anyhow::Result<()> {
     }
 
     match args.command {
-        MpmPackageManagerCommands::Managers => crate::print::print_managers(),
+        MpmPackageManagerCommands::Managers { install_default } => {
+            if install_default {
+                if let Err(e) = install_default_manager() {
+                    eprintln!("Failed to install default package manager: {e}");
+                }
+            }
+            crate::print::print_managers();
+        }
         MpmPackageManagerCommands::Search { string } => {
             let pkgs = mpm.search(&string);
             print_pkgs(&pkgs, args.json)?;
@@ -172,4 +184,31 @@ fn sudo() {
     if let Err(e) = sudo::with_env(&["CARGO_", "RUST_LOG"]) {
         tracing::warn!("Failed to elevate to sudo: {e}.");
     }
+}
+
+/// install default package manager.
+#[cfg(windows)]
+fn install_default_manager() -> anyhow::Result<()> {
+    println!("Installing choco package manager...");
+    let script = "Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))";
+    let status = run_script_rs::run_script(script, false)?;
+    anyhow::ensure!(status.success(), "Command failed to install choco");
+    tracing::info!("{status:?}");
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn install_default_manager() -> anyhow::Result<()> {
+    println!("Installing homebrew on this system...");
+    let script = "curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh";
+    let status = run_script_rs::run_script(script, false)?;
+    anyhow::ensure!(status.success(), "Command failed to install homebrew");
+    tracing::info!("{status:?}");
+    Ok(())
+}
+
+#[cfg(target_os = "linux")]
+fn install_default_manager() -> anyhow::Result<()> {
+    println!("This command does nothing on linux.");
+    Ok(())
 }

@@ -55,7 +55,7 @@ impl Listing {
 /// information
 pub fn print_managers() {
     notify!(
-        "a total of {} package managers are supported",
+        "Total {} package managers are supported",
         AvailablePackageManager::COUNT
     );
     let table = Table::new(AvailablePackageManager::iter().map(Listing::new));

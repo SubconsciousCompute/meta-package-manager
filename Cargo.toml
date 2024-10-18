@@ -7,7 +7,7 @@ license = "AGPL-3.0"
 
 [dependencies]
 anyhow = "1.0.89"
-clap = { version = "4.4", features = ["derive"] }
+clap = { version = "<4.5", features = ["derive"] }
 colored = "2.1"
 sudo = "0.6"
 xmltree = "0.11"

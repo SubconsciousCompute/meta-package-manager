@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.5] - 2024-10-18
+
+- Adds MSRV to 1.70.0
+
 ## [0.7.4] - 2024-10-07
 
 - Adds `--install-default` option to `managers` command. 

@@ -212,3 +212,10 @@ fn install_default_manager() -> anyhow::Result<()> {
     println!("This command does nothing on linux.");
     Ok(())
 }
+
+#[cfg(target_os = "android")]
+fn install_default_manager() -> anyhow::Result<()> {
+    println!("This command does nothing on android.");
+    Ok(())
+}
+

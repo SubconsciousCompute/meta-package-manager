@@ -216,6 +216,7 @@ pub enum AvailablePackageManager {
     Brew,
     Choco,
     Dnf,
+    Flatpak,
     Yum,
     Zypper,
 }
@@ -236,6 +237,7 @@ pub enum PkgFormat {
     Msi,
     Rpm,
     Deb,
+    Flatpak,
 }
 
 impl PkgFormat {
@@ -247,6 +249,7 @@ impl PkgFormat {
             Self::Msi => "msi",
             Self::Rpm => "rpm",
             Self::Deb => "deb",
+            Self::Flatpak => "flatpak",
         }
         .to_string()
     }

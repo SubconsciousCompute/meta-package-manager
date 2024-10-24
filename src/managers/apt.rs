@@ -1,4 +1,9 @@
-use std::{fmt::Display, fs, io::Write, process::Command};
+use std::{
+    fmt::Display,
+    fs,
+    io::{BufWriter, Write},
+    process::Command,
+};
 
 use crate::{common::Package, Cmd, PackageManager, PackageManagerCommands, PkgFormat};
 
@@ -54,9 +59,16 @@ impl PackageManager for AdvancedPackageTool {
         pkg.cli_display(self.pkg_delimiter()).to_string()
     }
 
-    fn add_repo(&self, repo: &str) -> anyhow::Result<()> {
-        let mut sources = fs::File::options().append(true).open(Self::SOURCES)?;
-        sources.write_fmt(format_args!("\n{}", repo))?;
+    fn add_repo(&self, repo: &Vec<String>) -> anyhow::Result<()> {
+        let sources = fs::File::options().append(true).open(Self::SOURCES)?;
+        let mut writer = BufWriter::new(sources);
+
+        for line in repo {
+            writeln!(writer, "{}", line)?;
+        }
+
+        writer.flush()?;
+
         Ok(())
     }
 }

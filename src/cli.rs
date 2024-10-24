@@ -72,7 +72,7 @@ pub enum MpmPackageManagerCommands {
         about = "Add the provided third-party repo location to the package manager",
         long_about = "Provide a repo in the form of a URL or package manager specific repo format to add it to the list of repositories of the package manager"
     )]
-    Repo { repo: String },
+    Repo { repo: Vec<String> },
 
     #[command(
         about = "Updates the cached package repository data",
@@ -218,4 +218,3 @@ fn install_default_manager() -> anyhow::Result<()> {
     println!("This command does nothing on android.");
     Ok(())
 }
-

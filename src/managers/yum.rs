@@ -38,7 +38,7 @@ impl PackageManager for YellowdogUpdaterModified {
     fn parse_pkg<'a>(&self, line: &str) -> Option<crate::Package> {
         self.0.parse_pkg(line)
     }
-    fn add_repo(&self, repo: &str) -> anyhow::Result<()> {
+    fn add_repo(&self, repo: &Vec<String>) -> anyhow::Result<()> {
         self.0.add_repo(repo)
     }
 }

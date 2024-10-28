@@ -264,8 +264,8 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     /// Since the implementation might greatly vary among different package
     /// managers this method returns a `Result` instead of the usual
     /// `std::process::ExitStatus`.
-    fn add_repo(&self, repo: &str) -> anyhow::Result<()> {
-        let cmds = self.consolidated(Cmd::AddRepo, None, &[repo.to_string()]);
+    fn add_repo(&self, repo: &Vec<String>) -> anyhow::Result<()> {
+        let cmds = self.consolidated(Cmd::AddRepo, None, repo);
         let s = self.exec_cmds_status(&cmds);
         anyhow::ensure!(s.success(), "Error adding repo");
         Ok(())

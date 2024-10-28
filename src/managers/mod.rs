@@ -12,6 +12,7 @@ pub mod apt;
 pub mod brew;
 pub mod choco;
 pub mod dnf;
+pub mod flatpak;
 pub mod yum;
 pub mod zypper;
 
@@ -19,6 +20,7 @@ use apt::AdvancedPackageTool;
 use brew::Homebrew;
 use choco::Chocolatey;
 use dnf::DandifiedYUM;
+use flatpak::Flatpak;
 use yum::YellowdogUpdaterModified;
 use zypper::Zypper;
 
@@ -33,6 +35,7 @@ pub enum MetaPackageManager {
     Brew(Homebrew),
     Choco(Chocolatey),
     Dnf(DandifiedYUM),
+    Flatpak(Flatpak),
     Yum(YellowdogUpdaterModified),
     Zypper(Zypper),
 }
@@ -46,6 +49,7 @@ impl MetaPackageManager {
             AvailablePackageManager::Brew => Self::Brew(Homebrew),
             AvailablePackageManager::Choco => Self::Choco(Chocolatey),
             AvailablePackageManager::Dnf => Self::Dnf(DandifiedYUM),
+            AvailablePackageManager::Flatpak => Self::Flatpak(Flatpak),
             AvailablePackageManager::Yum => Self::Yum(YellowdogUpdaterModified::default()),
             AvailablePackageManager::Zypper => Self::Zypper(Zypper),
         }
@@ -79,6 +83,7 @@ impl std::fmt::Display for MetaPackageManager {
             MetaPackageManager::Choco(_) => Chocolatey.fmt(f),
             MetaPackageManager::Apt(_) => AdvancedPackageTool.fmt(f),
             MetaPackageManager::Dnf(_) => DandifiedYUM.fmt(f),
+            MetaPackageManager::Flatpak(_) => Flatpak.fmt(f),
             MetaPackageManager::Zypper(_) => Zypper.fmt(f),
             MetaPackageManager::Yum(_) => YellowdogUpdaterModified::default().fmt(f),
         }

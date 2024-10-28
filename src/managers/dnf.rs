@@ -34,14 +34,14 @@ impl PackageManager for DandifiedYUM {
         }
     }
 
-    fn add_repo(&self, repo: &str) -> anyhow::Result<()> {
+    fn add_repo(&self, repo: &Vec<String>) -> anyhow::Result<()> {
         anyhow::ensure!(
             self.install(Package::new("dnf-command(config-manager)", None))
                 .success(),
             "failed to install config-manager plugin"
         );
 
-        let s = self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, None, &[repo]));
+        let s = self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, None, repo));
         anyhow::ensure!(s.success(), "failed to add repo");
         Ok(())
     }

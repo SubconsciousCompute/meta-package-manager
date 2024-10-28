@@ -58,7 +58,7 @@ impl PackageManager for Zypper {
         }
     }
 
-    fn add_repo(&self, repo: &str) -> anyhow::Result<()> {
+    fn add_repo(&self, repo: &Vec<String>) -> anyhow::Result<()> {
         anyhow::ensure!(
             self.install(Package::new("dnf-command(config-manager)", None))
                 .success(),
@@ -66,7 +66,7 @@ impl PackageManager for Zypper {
         );
 
         anyhow::ensure!(
-            self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, None, &[repo]))
+            self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, None, repo))
                 .success(),
             "Failed to add repo"
         );

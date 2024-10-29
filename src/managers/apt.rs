@@ -36,7 +36,7 @@ impl PackageManager for AdvancedPackageTool {
 
     fn parse_pkg<'a>(&self, line: &str) -> Option<Package> {
         let (name, info) = line.split_once('/')?;
-        if matches!(info.split_whitespace().count(), 3 | 4) {
+        if matches!(info.split_whitespace().count(), 3 | 4 | 6) {
             let ver = info.split_whitespace().nth(1)?;
             Some(Package::new(name, Some(ver)))
         } else {
@@ -94,6 +94,7 @@ impl PackageManagerCommands for AdvancedPackageTool {
             Cmd::Sync => vec!["update"],
             Cmd::AddRepo => vec![],
             Cmd::Search => vec!["search"],
+	    Cmd::Outdated => vec!["list", "--upgradable"],
         }
         .iter()
         .map(|x| x.to_string())

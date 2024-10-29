@@ -28,7 +28,10 @@ impl PackageManager for DandifiedYUM {
             return Some(Package::new(name.trim(), Some(ver.trim())));
         }
         if !line.contains("====") {
-            Some(Package::new(line.split_once(':')?.0.trim(), None))
+	    let mut splt = line.split(':');
+	    let name = splt.next()?;
+	    let ver = splt.next()?;
+            Some(Package::new(name.trim(), Some(ver.trim())))
         } else {
             None
         }
@@ -69,6 +72,7 @@ impl PackageManagerCommands for DandifiedYUM {
             // depends on config-manager plugin (handled in add_repo method)
             Cmd::AddRepo => vec!["config-manager", "--add-repo"], // flag must come before repo
             Cmd::Search => vec!["search"],
+	    Cmd::Outdated => vec!["repoquery", "--upgrades"],
         }
         .iter()
         .map(|x| x.to_string())

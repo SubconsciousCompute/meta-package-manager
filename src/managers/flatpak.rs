@@ -23,6 +23,10 @@ impl PackageManager for Flatpak {
         let name = row.nth(0)?;
 
         match count {
+	    4 => {
+		let ver = row.nth(2)?;
+		Some(Package::new(name, Some(ver)))
+	    }
             5 => {
                 let ver = row.nth(1)?;
                 Some(Package::new(name, Some(ver)))
@@ -57,6 +61,7 @@ impl PackageManagerCommands for Flatpak {
             Cmd::Sync => vec![],
             Cmd::AddRepo => vec!["remote-add"],
             Cmd::Search => vec!["search"],
+	    Cmd::Outdated => vec!["remote-ls", "--updates", "flathub"]
         }
         .iter()
         .map(|x| x.to_string())

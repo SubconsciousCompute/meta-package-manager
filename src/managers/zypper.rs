@@ -96,6 +96,7 @@ impl PackageManagerCommands for Zypper {
             Cmd::Sync => vec!["refresh"],
             Cmd::AddRepo => vec!["addrepo"],
             Cmd::Search => vec!["--xmlout", "search"],
+	    Cmd::Outdated => vec!["--xmlout", "list-updates"],
         }
         .iter()
         .map(|x| x.to_string())

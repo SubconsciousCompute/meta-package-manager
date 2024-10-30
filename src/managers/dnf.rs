@@ -73,7 +73,7 @@ impl PackageManagerCommands for DandifiedYUM {
             // depends on config-manager plugin (handled in add_repo method)
             Cmd::AddRepo => vec!["config-manager", "--add-repo"], // flag must come before repo
             Cmd::Search => vec!["search"],
-	    Cmd::Outdated => vec!["repoquery", "--upgrades", "--qf", "%{name}^%{version}"],
+	    Cmd::Outdated => vec!["repoquery", "--upgrades", "--qf", "%{name}^%{version}\n"],
         }
         .iter()
         .map(|x| x.to_string())

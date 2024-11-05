@@ -43,6 +43,7 @@ impl PackageManagerCommands for Chocolatey {
             Cmd::Sync => vec!["upgrade", "chocolatey"],
             Cmd::AddRepo => vec!["source", "add"],
             Cmd::Search => vec!["search"],
+	    Cmd::Outdated => vec!["outdated", "--limit-output"],
         }
         .iter()
         .map(|x| x.to_string())

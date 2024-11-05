@@ -87,6 +87,9 @@ pub enum MpmPackageManagerCommands {
         #[arg(long, short)]
         all: bool,
     },
+
+    #[command(about = "List all of the packages that can be updated")]
+    Outdated,
 }
 
 /// Function that handles the parsed CLI arguments in one place
@@ -162,6 +165,10 @@ pub fn execute(args: Cli) -> anyhow::Result<()> {
         MpmPackageManagerCommands::Sync => {
             let s = mpm.sync();
             anyhow::ensure!(s.success(), "Failed to sync repositories");
+        }
+	MpmPackageManagerCommands::Outdated => {
+            let pkgs = mpm.list_outdated();
+            print_pkgs(&pkgs, args.json)?;
         }
     };
 

@@ -242,6 +242,11 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
         self.parse_output(&out.stdout)
     }
 
+    /// List outdated packages
+    fn list_outdated(&self) -> Vec<Package> {
+        let out = self.exec_cmds(&self.consolidated::<&str>(Cmd::Outdated, None, &[]));
+        self.parse_output(&out.stdout)
+    }
     /// Execute package manager command.
     fn execute_pkg_command(&self, pkg: &mut Package, op: Operation) -> std::process::ExitStatus {
         tracing::debug!("> Operation {op:?} on {pkg:?}...");

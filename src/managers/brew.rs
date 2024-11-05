@@ -32,6 +32,7 @@ impl PackageManagerCommands for Homebrew {
             Cmd::Sync => vec!["update"],
             Cmd::AddRepo => vec!["tap"],
             Cmd::Search => vec!["search"],
+	    Cmd::Outdated => vec!["outdated"],
         }
         .iter()
         .map(|x| x.to_string())

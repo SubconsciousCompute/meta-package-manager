@@ -24,6 +24,7 @@ pub enum Cmd {
     Sync,
     AddRepo,
     Search,
+    Outdated,
 }
 
 /// A representation of a package

@@ -1,6 +1,8 @@
 use std::{fmt::Display, process::Command};
 
-use crate::{Cmd, Package, PackageManager, PackageManagerCommands, PkgFormat};
+use crate::{
+    AvailablePackageManager, Cmd, Package, PackageManager, PackageManagerCommands, PkgFormat,
+};
 
 /// Wrapper for the Homebrew package manager.
 ///
@@ -11,6 +13,10 @@ pub struct Homebrew;
 impl PackageManager for Homebrew {
     fn pkg_delimiter(&self) -> char {
         '@'
+    }
+
+    fn pkg_manager_name(&self) -> String {
+        AvailablePackageManager::Brew.to_string().to_lowercase()
     }
 
     fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
@@ -32,7 +38,7 @@ impl PackageManagerCommands for Homebrew {
             Cmd::Sync => vec!["update"],
             Cmd::AddRepo => vec!["tap"],
             Cmd::Search => vec!["search"],
-	    Cmd::Outdated => vec!["outdated"],
+            Cmd::Outdated => vec!["outdated"],
         }
         .iter()
         .map(|x| x.to_string())

@@ -5,7 +5,10 @@ use std::{
     process::Command,
 };
 
-use crate::{common::Package, Cmd, PackageManager, PackageManagerCommands, PkgFormat};
+use crate::{
+    common::Package, AvailablePackageManager, Cmd, PackageManager, PackageManagerCommands,
+    PkgFormat,
+};
 
 /// Wrapper for Advanced Pacakge Tool (APT), the default package management
 /// user-facing utilities in Debian and Debian-based distributions.
@@ -30,6 +33,10 @@ impl PackageManager for AdvancedPackageTool {
         '='
     }
 
+    fn pkg_manager_name(&self) -> String {
+        AvailablePackageManager::Apt.to_string().to_lowercase()
+    }
+
     fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
         vec![PkgFormat::Deb]
     }
@@ -38,7 +45,7 @@ impl PackageManager for AdvancedPackageTool {
         let (name, info) = line.split_once('/')?;
         if matches!(info.split_whitespace().count(), 3 | 4 | 6) {
             let ver = info.split_whitespace().nth(1)?;
-            Some(Package::new(name, Some(ver)))
+            Some(Package::new(name, self.pkg_manager_name(), Some(ver)))
         } else {
             None
         }
@@ -94,7 +101,7 @@ impl PackageManagerCommands for AdvancedPackageTool {
             Cmd::Sync => vec!["update"],
             Cmd::AddRepo => vec![],
             Cmd::Search => vec!["search"],
-	    Cmd::Outdated => vec!["list", "--upgradable"],
+            Cmd::Outdated => vec!["list", "--upgradable"],
         }
         .iter()
         .map(|x| x.to_string())
@@ -135,12 +142,12 @@ mount/now 2.38.1-5+b1 amd64 [installed,local]
 mysql-common/now 5.8+1.1.0 all [installed,local]"#;
         let apt = AdvancedPackageTool;
         let mut iter = input.lines().filter_map(|l| apt.parse_pkg(l));
-        assert_eq!(iter.next(), Package::from_str("hello@2.10-3").ok());
-        assert_eq!(iter.next(), Package::from_str("iagno@1:3.38.1-2").ok());
-        assert_eq!(iter.next(), Package::from_str("mount@2.38.1-5+b1").ok());
+        assert_eq!(iter.next(), Package::from_str("apt@hello@2.10-3").ok());
+        assert_eq!(iter.next(), Package::from_str("apt@iagno@1:3.38.1-2").ok());
+        assert_eq!(iter.next(), Package::from_str("apt@mount@2.38.1-5+b1").ok());
         assert_eq!(
             iter.next(),
-            Package::from_str("mysql-common@5.8+1.1.0").ok()
+            Package::from_str("apt@mysql-common@5.8+1.1.0").ok()
         );
     }
 

@@ -1,6 +1,8 @@
 use std::{fmt::Display, process::Command};
 
-use crate::{Cmd, Package, PackageManager, PackageManagerCommands, PkgFormat};
+use crate::{
+    AvailablePackageManager, Cmd, Package, PackageManager, PackageManagerCommands, PkgFormat,
+};
 
 /// Wrapper for flatpak, which provides sandboxed, cross-distribution,
 /// and dependency-free application packaging for linux.
@@ -12,6 +14,10 @@ impl PackageManager for Flatpak {
         '-'
     }
 
+    fn pkg_manager_name(&self) -> String {
+        AvailablePackageManager::Flatpak.to_string().to_lowercase()
+    }
+
     fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
         vec![PkgFormat::Flatpak]
     }
@@ -20,20 +26,21 @@ impl PackageManager for Flatpak {
         let mut row = line.split('\t');
         let count = row.clone().count();
 
-        let name = row.nth(0)?;
-
         match count {
-	    4 => {
-		let ver = row.nth(2)?;
-		Some(Package::new(name, Some(ver)))
-	    }
+            4 => {
+                let name = row.nth(2)?;
+                let ver = row.nth(0)?;
+                Some(Package::new(name, self.pkg_manager_name(), Some(ver)))
+            }
             5 => {
-                let ver = row.nth(1)?;
-                Some(Package::new(name, Some(ver)))
+                let name = row.nth(1)?;
+                let ver = row.nth(0)?;
+                Some(Package::new(name, self.pkg_manager_name(), Some(ver)))
             }
             6 => {
-                let ver = row.nth(2)?;
-                Some(Package::new(name, Some(ver)))
+                let name = row.nth(2)?;
+                let ver = row.nth(0)?;
+                Some(Package::new(name, self.pkg_manager_name(), Some(ver)))
             }
             _ => None,
         }
@@ -61,7 +68,7 @@ impl PackageManagerCommands for Flatpak {
             Cmd::Sync => vec![],
             Cmd::AddRepo => vec!["remote-add"],
             Cmd::Search => vec!["search"],
-	    Cmd::Outdated => vec!["remote-ls", "--updates", "flathub"]
+            Cmd::Outdated => vec!["remote-ls", "--updates", "flathub"],
         }
         .iter()
         .map(|x| x.to_string())
@@ -98,10 +105,16 @@ Inkscape	Vector Graphics Editor	org.inkscape.Inkscape	1.3.2	stable	fedora,flathu
         let mut iter = input.lines().filter_map(|l| flatpak.parse_pkg(l));
         assert_eq!(
             iter.next(),
-            Package::from_str("Flatpak Developer Demo@1.1.3").ok()
+            Package::from_str("flatpak@org.flatpak.qtdemo@1.1.3").ok()
         );
-        assert_eq!(iter.next(), Package::from_str("Blender@4.1").ok());
-        assert_eq!(iter.next(), Package::from_str("Inkscape@1.3.2").ok());
+        assert_eq!(
+            iter.next(),
+            Package::from_str("flatpak@org.blender.Blender@4.1").ok()
+        );
+        assert_eq!(
+            iter.next(),
+            Package::from_str("flatpak@org.inkscape.Inkscape@1.3.2").ok()
+        );
     }
 
     // Requires elevated privilages to work
@@ -127,9 +140,7 @@ Inkscape	Vector Graphics Editor	org.inkscape.Inkscape	1.3.2	stable	fedora,flathu
                 .map(|p| p.cli_display(flatpak.pkg_delimiter()))
                 .collect::<Vec<_>>()
         );
-        assert!(found_pkgs
-            .iter()
-            .any(|p| p.name() == "Flatpak Developer Demo"));
+        assert!(found_pkgs.iter().any(|p| p.name() == "org.flatpak.qtdemo"));
 
         // install
         assert!(flatpak.install(pkg).success());
@@ -137,7 +148,7 @@ Inkscape	Vector Graphics Editor	org.inkscape.Inkscape	1.3.2	stable	fedora,flathu
         assert!(flatpak
             .list_installed()
             .iter()
-            .any(|p| p.name() == "Flatpak Developer Demo"));
+            .any(|p| p.name() == "org.flatpak.qtdemo"));
         // update
         assert!(flatpak.update(pkg).success());
         // uninstall

@@ -127,6 +127,9 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     /// formatting, overriding the default trait methods would be the way to go.
     fn pkg_delimiter(&self) -> char;
 
+    /// Returns the current name of the package manager.
+    fn pkg_manager_name(&self) -> String;
+
     /// Return the list of supported package extensions.
     fn supported_pkg_formats(&self) -> Vec<PkgFormat>;
 
@@ -155,9 +158,9 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     /// owned values in this method.
     fn parse_pkg(&self, line: &str) -> Option<Package> {
         let pkg = if let Some((name, version)) = line.split_once(self.pkg_delimiter()) {
-            Package::new(name.trim(), Some(version.trim()))
+            Package::new(name.trim(), self.pkg_manager_name(), Some(version.trim()))
         } else {
-            Package::new(line.trim(), None)
+            Package::new(line.trim(), self.pkg_manager_name(), None)
         };
         Some(pkg)
     }

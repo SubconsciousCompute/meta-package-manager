@@ -2,7 +2,9 @@
 
 use std::{fmt::Display, process::Command};
 
-use crate::{Cmd, Package, PackageManager, PackageManagerCommands, PkgFormat};
+use crate::{
+    AvailablePackageManager, Cmd, Package, PackageManager, PackageManagerCommands, PkgFormat,
+};
 
 /// Wrapper for Zypper package manager. Some openSUSE might support dnf as well.
 #[derive(Debug, Default)]
@@ -11,6 +13,10 @@ pub struct Zypper;
 impl PackageManager for Zypper {
     fn pkg_delimiter(&self) -> char {
         '-'
+    }
+
+    fn pkg_manager_name(&self) -> String {
+        AvailablePackageManager::Zypper.to_string().to_lowercase()
     }
 
     fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
@@ -37,6 +43,7 @@ impl PackageManager for Zypper {
             if let Some(p) = p.as_element() {
                 packages.push(Package::new(
                     p.attributes.get("name").expect("must have name"),
+                    self.pkg_manager_name(),
                     None,
                 ));
             }
@@ -49,10 +56,18 @@ impl PackageManager for Zypper {
             let mut splt = line.split_whitespace();
             let name = splt.next()?;
             let ver = splt.next()?;
-            return Some(Package::new(name.trim(), Some(ver.trim())));
+            return Some(Package::new(
+                name.trim(),
+                self.pkg_manager_name(),
+                Some(ver.trim()),
+            ));
         }
         if !line.contains("====") {
-            Some(Package::new(line.split_once(':')?.0.trim(), None))
+            Some(Package::new(
+                line.split_once(':')?.0.trim(),
+                self.pkg_manager_name(),
+                None,
+            ))
         } else {
             None
         }
@@ -60,8 +75,12 @@ impl PackageManager for Zypper {
 
     fn add_repo(&self, repo: &Vec<String>) -> anyhow::Result<()> {
         anyhow::ensure!(
-            self.install(Package::new("dnf-command(config-manager)", None))
-                .success(),
+            self.install(Package::new(
+                "dnf-command(config-manager)",
+                self.pkg_manager_name(),
+                None
+            ))
+            .success(),
             "failed to install config-manager plugin",
         );
 
@@ -96,7 +115,7 @@ impl PackageManagerCommands for Zypper {
             Cmd::Sync => vec!["refresh"],
             Cmd::AddRepo => vec!["addrepo"],
             Cmd::Search => vec!["--xmlout", "search"],
-	    Cmd::Outdated => vec!["--xmlout", "list-updates"],
+            Cmd::Outdated => vec!["--xmlout", "list-updates"],
         }
         .iter()
         .map(|x| x.to_string())

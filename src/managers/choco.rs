@@ -1,6 +1,9 @@
 use std::{fmt::Display, process::Command};
 
-use crate::{common::Package, Cmd, PackageManager, PackageManagerCommands, PkgFormat};
+use crate::{
+    common::Package, AvailablePackageManager, Cmd, PackageManager, PackageManagerCommands,
+    PkgFormat,
+};
 
 /// Wrapper for the Chocolatey package manager for windows
 ///
@@ -11,6 +14,10 @@ pub struct Chocolatey;
 impl PackageManager for Chocolatey {
     fn pkg_delimiter(&self) -> char {
         '|'
+    }
+
+    fn pkg_manager_name(&self) -> String {
+        AvailablePackageManager::Choco.to_string().to_lowercase()
     }
 
     /// Reformat for chocolatey.
@@ -43,7 +50,7 @@ impl PackageManagerCommands for Chocolatey {
             Cmd::Sync => vec!["upgrade", "chocolatey"],
             Cmd::AddRepo => vec!["source", "add"],
             Cmd::Search => vec!["search"],
-	    Cmd::Outdated => vec!["outdated", "--limit-output"],
+            Cmd::Outdated => vec!["outdated", "--limit-output"],
         }
         .iter()
         .map(|x| x.to_string())
@@ -75,11 +82,11 @@ mod tests {
     #[test]
     fn test_choco_pkg_fmt() {
         assert_eq!(
-            Chocolatey.reformat_for_command(&mut "package".into()),
+            Chocolatey.reformat_for_command(&mut "choco@package".into()),
             "package".to_string()
         );
         assert_eq!(
-            &Chocolatey.reformat_for_command(&mut "package@0.1.0".into()),
+            &Chocolatey.reformat_for_command(&mut "choco@package@0.1.0".into()),
             "package --version 0.1.0"
         );
     }

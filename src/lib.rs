@@ -85,6 +85,9 @@ mod tests {
         fn pkg_delimiter(&self) -> char {
             '+'
         }
+        fn pkg_manager_name(&self) -> String {
+            String::from("")
+        }
         fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
             vec![]
         }
@@ -101,7 +104,7 @@ mod tests {
             let out = br#"
             package1
             package2+1.1.0
-            package3   
+            package3
         "#;
             Output {
                 status: ExitStatus::from_raw(0),
@@ -130,7 +133,7 @@ mod tests {
 
     fn package_assertions(mut listiter: impl Iterator<Item = Package>) {
         assert_eq!(listiter.next(), Package::from_str("package1").ok());
-        assert_eq!(listiter.next(), Package::from_str("package2@1.1.0").ok());
+        assert_eq!(listiter.next(), Package::from_str("@package2@1.1.0").ok());
         assert_eq!(listiter.next(), Package::from_str("package3").ok());
         assert_eq!(listiter.next(), None);
     }
@@ -142,7 +145,7 @@ mod tests {
             "foo"
         );
         assert_eq!(
-            MockPackageManager.reformat_for_command(&mut "foo@0.1.2".into()),
+            MockPackageManager.reformat_for_command(&mut "@foo@0.1.2".into()),
             "foo+0.1.2"
         );
     }

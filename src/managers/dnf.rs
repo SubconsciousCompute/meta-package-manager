@@ -1,6 +1,8 @@
 use std::{fmt::Display, process::Command};
 
-use crate::{Cmd, Package, PackageManager, PackageManagerCommands, PkgFormat};
+use crate::{
+    AvailablePackageManager, Cmd, Package, PackageManager, PackageManagerCommands, PkgFormat,
+};
 
 /// Wrapper for DandifiedYUM or DNF, the next upcoming major version of YUM
 ///
@@ -16,23 +18,39 @@ impl PackageManager for DandifiedYUM {
         '-'
     }
 
+    fn pkg_manager_name(&self) -> String {
+        AvailablePackageManager::Dnf.to_string().to_lowercase()
+    }
+
     fn supported_pkg_formats(&self) -> Vec<PkgFormat> {
         vec![PkgFormat::Rpm]
     }
 
     fn parse_pkg<'a>(&self, line: &str) -> Option<Package> {
-        if line.contains('@') {
+        if line.contains('@') || line.split_whitespace().count() == 3 {
             let mut splt = line.split_whitespace();
             let name = splt.next()?;
             let ver = splt.next()?;
-            return Some(Package::new(name.trim(), Some(ver.trim())));
+            return Some(Package::new(
+                name.trim(),
+                self.pkg_manager_name(),
+                Some(ver.trim()),
+            ));
         }
-	if line.contains('^') {
-	    let (name, ver) = line.split_once('^')?;
-	    return Some(Package::new(name.trim(), Some(ver.trim())));
-	}
+        if line.contains('^') {
+            let (name, ver) = line.split_once('^')?;
+            return Some(Package::new(
+                name.trim(),
+                self.pkg_manager_name(),
+                Some(ver.trim()),
+            ));
+        }
         if !line.contains("====") {
-	    Some(Package::new(line.split_once(':')?.0.trim(), None))
+            Some(Package::new(
+                line.split_once(':')?.0.trim(),
+                self.pkg_manager_name(),
+                None,
+            ))
         } else {
             None
         }
@@ -40,8 +58,12 @@ impl PackageManager for DandifiedYUM {
 
     fn add_repo(&self, repo: &Vec<String>) -> anyhow::Result<()> {
         anyhow::ensure!(
-            self.install(Package::new("dnf-command(config-manager)", None))
-                .success(),
+            self.install(Package::new(
+                "dnf-command(config-manager)",
+                self.pkg_manager_name(),
+                None
+            ))
+            .success(),
             "failed to install config-manager plugin"
         );
 
@@ -73,7 +95,7 @@ impl PackageManagerCommands for DandifiedYUM {
             // depends on config-manager plugin (handled in add_repo method)
             Cmd::AddRepo => vec!["config-manager", "--add-repo"], // flag must come before repo
             Cmd::Search => vec!["search"],
-	    Cmd::Outdated => vec!["repoquery", "--upgrades", "--qf", "%{name}^%{version}\n"],
+            Cmd::Outdated => vec!["repoquery", "--upgrades", "--qf", "%{name}^%{version}\n"],
         }
         .iter()
         .map(|x| x.to_string())
@@ -114,17 +136,17 @@ rubygem-mixlib-shellout-doc.noarch : Documentation for rubygem-mixlib-shellout"#
         let mut iter = input.lines().filter_map(|l| dnf.parse_pkg(l));
         assert_eq!(
             iter.next(),
-            Package::from_str("sudo.x86_64@1.9.13-2.p2.fc38").ok()
+            Package::from_str("dnf@sudo.x86_64@1.9.13-2.p2.fc38").ok()
         );
         assert_eq!(
             iter.next(),
-            Package::from_str("systemd-libs.x86_64@253.10-1.fc38").ok()
+            Package::from_str("dnf@systemd-libs.x86_64@253.10-1.fc38").ok()
         );
 
-        assert_eq!(iter.next(), Package::from_str("hello.x86_64").ok());
+        assert_eq!(iter.next(), Package::from_str("dnf@hello.x86_64").ok());
         assert_eq!(
             iter.next(),
-            Package::from_str("rubygem-mixlib-shellout-doc.noarch").ok()
+            Package::from_str("dnf@rubygem-mixlib-shellout-doc.noarch").ok()
         );
     }
 
@@ -144,17 +166,24 @@ rubygem-mixlib-shellout-doc.noarch : Documentation for rubygem-mixlib-shellout"#
         // sync
         assert!(man.sync().success());
         // search
-        assert!(man
-            .search(pkg)
-            .iter()
-            .any(|p| p.cli_display(man.pkg_delimiter()) == "hello.x86_64"));
+        let found_pkgs = man.search(pkg);
+        tracing::info!("Found packages: {found_pkgs:#?}");
+        tracing::info!(
+            "Found packages: {:#?}",
+            found_pkgs
+                .iter()
+                .map(|p| p.cli_display(man.pkg_delimiter()))
+                .collect::<Vec<_>>()
+        );
+        assert!(found_pkgs.iter().any(|p| p.name() == "hello.x86_64"));
+
         // install
         assert!(man.install(pkg).success());
         // list
         assert!(man
             .list_installed()
             .iter()
-            .any(|p| p.cli_display(man.pkg_delimiter()) == "hello.x86_64"));
+            .any(|p| p.name() == "hello.x86_64"));
         // update
         assert!(man.update(pkg).success());
         // uninstall

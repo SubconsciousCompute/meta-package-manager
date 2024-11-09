@@ -35,6 +35,9 @@ pub struct Package {
     /// name of the package
     name: String,
 
+    /// name of the package manager
+    package_manager: String,
+
     /// Untyped version, might be replaced with a strongly typed one
     version: Option<String>,
 
@@ -44,9 +47,10 @@ pub struct Package {
 
 impl Package {
     /// Create new Package with name and version.
-    pub fn new(name: &str, version: Option<&str>) -> Self {
+    pub fn new(name: &str, pm: String, version: Option<&str>) -> Self {
         Self {
             name: name.to_string(),
+            package_manager: pm.to_string(),
             version: version.map(|v| v.to_string()),
             url: None,
         }
@@ -55,6 +59,11 @@ impl Package {
     /// Name of the package
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    /// Name of the package manager
+    pub fn package_manager(&self) -> &str {
+        &self.package_manager
     }
 
     /// Package name for cli.
@@ -139,15 +148,19 @@ impl std::str::FromStr for Package {
             }
             return Ok(Self {
                 name: name.to_string(),
+                package_manager: "".to_string(),
                 version: fragments.remove("version"),
                 url: Some(url),
             });
         }
 
-        if let Some((name, version)) = s.split_once('@') {
-            Ok(Package::new(name, Some(version)))
-        } else {
-            Ok(Package::new(s, None))
+        match s.split('@').collect::<Vec<&str>>()[..] {
+            [pkg_manager, name, version] => {
+                Ok(Package::new(name, pkg_manager.to_string(), Some(version)))
+            }
+            [pkg_manager, name] => Ok(Package::new(name, pkg_manager.to_string(), None)),
+            [name] => Ok(Package::new(name, "".to_string(), None)),
+            _ => Err(anyhow::Error::msg("Invalid package format")),
         }
     }
 }
@@ -177,9 +190,9 @@ impl Display for Package {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(v) = self.version() {
             // might be changed later for a better format
-            write!(f, "{} - {}", self.name, v)
+            write!(f, "{} - {} - {}", self.name, self.package_manager, v)
         } else {
-            write!(f, "{}", self.name)
+            write!(f, "{} - {}", self.name, self.package_manager)
         }
     }
 }
@@ -190,12 +203,13 @@ impl tabled::Tabled for Package {
     fn fields(&self) -> Vec<Cow<'_, str>> {
         vec![
             self.name.clone().into(),
+            self.package_manager.clone().into(),
             self.version.as_deref().unwrap_or("~").into(),
         ]
     }
 
     fn headers() -> Vec<Cow<'static, str>> {
-        vec!["name".into(), "version".into()]
+        vec!["name".into(), "package manager".into(), "version".into()]
     }
 }
 

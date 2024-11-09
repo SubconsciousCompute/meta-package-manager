@@ -1,8 +1,15 @@
-use std::str::FromStr;
+use std::{
+    collections::{BTreeMap, HashMap, HashSet},
+    path::PathBuf,
+    str::FromStr,
+};
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
+use strum::IntoEnumIterator;
 
-use crate::{Package, PackageManager};
+use crate::{
+    AvailablePackageManager, MetaPackageManager, Package, PackageManager, PackageManagerCommands,
+};
 
 #[derive(Parser)]
 #[command(
@@ -48,15 +55,24 @@ pub enum MpmPackageManagerCommands {
     Search { string: String },
 
     #[command(about = "List all packages that are installed")]
-    List,
+    List {
+        #[arg(long, short)]
+        all: bool,
+
+        #[arg(short, long, value_enum)]
+        output: Option<FileFormat>,
+    },
 
     #[command(
         about = "Install the given package(s)",
         long_about = "Install the given package(s).\nIf a specific version of the package is desired, it can be specified using the format <package_name>@<version>.\nNote: version information is optional."
     )]
     Install {
-        #[clap(required = true)]
+        #[arg(required_unless_present = "input_file")]
         packages: Vec<String>,
+
+        #[arg(short, long, required_unless_present = "packages")]
+        input_file: Option<PathBuf>,
     },
 
     #[command(
@@ -90,6 +106,13 @@ pub enum MpmPackageManagerCommands {
 
     #[command(about = "List all of the packages that can be updated")]
     Outdated,
+}
+
+#[derive(Clone, ValueEnum)]
+pub enum FileFormat {
+    Toml,
+    Json,
+    None,
 }
 
 /// Function that handles the parsed CLI arguments in one place
@@ -127,13 +150,35 @@ pub fn execute(args: Cli) -> anyhow::Result<()> {
             let pkgs = mpm.search(&string);
             print_pkgs(&pkgs, args.json)?;
         }
-        MpmPackageManagerCommands::List => {
-            let pkgs = mpm.list_installed();
-            print_pkgs(&pkgs, args.json)?;
+        MpmPackageManagerCommands::List { all, output } => {
+            let pkgs;
+
+            if all {
+                pkgs = list_all_installed();
+            } else {
+                pkgs = mpm.list_installed();
+            }
+
+            match output {
+                Some(FileFormat::Toml) => pkgs_to_format(&pkgs, FileFormat::Toml)?,
+                Some(FileFormat::Json) => pkgs_to_format(&pkgs, FileFormat::Json)?,
+                Some(FileFormat::None) => (),
+                _ => print_pkgs(&pkgs, args.json)?,
+            };
         }
-        MpmPackageManagerCommands::Install { packages } => {
+        MpmPackageManagerCommands::Install {
+            packages,
+            input_file,
+        } => {
+            if input_file.is_some() {
+                let input = input_file.unwrap();
+                let file_type = get_file_type(&input);
+                install_from_file(&input, file_type)?;
+                return Ok(());
+            }
+
             for pkg in packages {
-                let pkg_path = std::path::PathBuf::from(&pkg);
+                let pkg_path = PathBuf::from(&pkg);
                 let s = if pkg_path.is_file() {
                     mpm.install(&pkg_path)
                 } else {
@@ -166,7 +211,7 @@ pub fn execute(args: Cli) -> anyhow::Result<()> {
             let s = mpm.sync();
             anyhow::ensure!(s.success(), "Failed to sync repositories");
         }
-	MpmPackageManagerCommands::Outdated => {
+        MpmPackageManagerCommands::Outdated => {
             let pkgs = mpm.list_outdated();
             print_pkgs(&pkgs, args.json)?;
         }
@@ -182,6 +227,92 @@ fn print_pkgs(pkgs: &[Package], json: bool) -> anyhow::Result<()> {
     } else {
         println!("{}", tabled::Table::new(pkgs));
     }
+    Ok(())
+}
+
+/// Convert Package to a JSON or TOML format
+fn pkgs_to_format(packages: &[Package], format: FileFormat) -> anyhow::Result<()> {
+    let mut grouped: BTreeMap<String, HashMap<String, String>> = BTreeMap::new();
+
+    for package in packages {
+        if let Some(version) = &package.version() {
+            grouped
+                .entry(package.package_manager().to_string())
+                .or_default()
+                .insert(package.name().to_string(), version.to_string());
+        }
+    }
+
+    let output = match format {
+        FileFormat::Toml => toml::to_string(&grouped)?,
+        FileFormat::Json => serde_json::to_string_pretty(&grouped)?,
+        FileFormat::None => todo!(),
+    };
+
+    println!("{}", output);
+
+    Ok(())
+}
+
+/// List all of the installed packages from all of the available package
+/// managers
+fn list_all_installed() -> Vec<Package> {
+    let mut all_packages = HashSet::new();
+
+    for pm in AvailablePackageManager::iter() {
+        let mpm = MetaPackageManager::new(pm.clone());
+        if mpm.is_available() {
+            let packages = mpm.list_installed();
+            all_packages.extend(packages);
+        }
+    }
+
+    all_packages.into_iter().collect()
+}
+
+/// Get the input file format
+fn get_file_type(file: &PathBuf) -> FileFormat {
+    match file.extension().and_then(|ext| ext.to_str()) {
+        Some("json") => FileFormat::Json,
+        Some("toml") => FileFormat::Toml,
+        _ => FileFormat::None,
+    }
+}
+
+/// Install a list of packages from a given input file
+fn install_from_file(input_file: &PathBuf, file_type: FileFormat) -> anyhow::Result<()> {
+    type PackageMap = HashMap<String, HashMap<String, String>>;
+
+    let file_contents = std::fs::read_to_string(input_file)?;
+
+    let parsed: PackageMap = match file_type {
+        FileFormat::Json => serde_json::from_str(&file_contents)?,
+        FileFormat::Toml => toml::from_str(&file_contents)?,
+        FileFormat::None => todo!(),
+    };
+
+    for (package_manager, packages) in parsed {
+        let pm = match package_manager.as_str() {
+            "apt" => AvailablePackageManager::Apt,
+            "brew" => AvailablePackageManager::Brew,
+            "choco" => AvailablePackageManager::Choco,
+            "dnf" => AvailablePackageManager::Dnf,
+            "flatpak" => AvailablePackageManager::Flatpak,
+            "yum" => AvailablePackageManager::Yum,
+            "zypper" => AvailablePackageManager::Zypper,
+            _ => todo!(),
+        };
+
+        let mpm = MetaPackageManager::new(pm.clone());
+
+        for (name, _version) in packages {
+            if mpm.is_available() {
+                let s = mpm.install(name.as_str());
+                anyhow::ensure!(s.success(), "Failed to install {name}");
+            }
+        }
+    }
+
     Ok(())
 }
 

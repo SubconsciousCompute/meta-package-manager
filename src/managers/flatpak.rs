@@ -28,7 +28,7 @@ impl PackageManager for Flatpak {
 
         match count {
             4 => {
-                let name = row.nth(2)?;
+                let name = row.nth(1)?;
                 let ver = row.nth(0)?;
                 Some(Package::new(name, self.pkg_manager_name(), Some(ver)))
             }

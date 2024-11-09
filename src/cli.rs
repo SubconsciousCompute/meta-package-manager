@@ -105,7 +105,10 @@ pub enum MpmPackageManagerCommands {
     },
 
     #[command(about = "List all of the packages that can be updated")]
-    Outdated,
+    Outdated {
+        #[arg(long, short)]
+        all: bool,
+    },
 }
 
 #[derive(Clone, ValueEnum)]
@@ -211,8 +214,15 @@ pub fn execute(args: Cli) -> anyhow::Result<()> {
             let s = mpm.sync();
             anyhow::ensure!(s.success(), "Failed to sync repositories");
         }
-        MpmPackageManagerCommands::Outdated => {
-            let pkgs = mpm.list_outdated();
+        MpmPackageManagerCommands::Outdated { all } => {
+            let pkgs;
+
+            if all {
+                pkgs = list_all_outdated();
+            } else {
+                pkgs = mpm.list_outdated();
+            }
+
             print_pkgs(&pkgs, args.json)?;
         }
     };
@@ -223,7 +233,7 @@ pub fn execute(args: Cli) -> anyhow::Result<()> {
 /// Print packages
 fn print_pkgs(pkgs: &[Package], json: bool) -> anyhow::Result<()> {
     if json {
-        println!("{}", serde_json::to_string_pretty(pkgs)?);
+        pkgs_to_format(pkgs, FileFormat::Json)?;
     } else {
         println!("{}", tabled::Table::new(pkgs));
     }
@@ -254,20 +264,31 @@ fn pkgs_to_format(packages: &[Package], format: FileFormat) -> anyhow::Result<()
     Ok(())
 }
 
-/// List all of the installed packages from all of the available package
-/// managers
-fn list_all_installed() -> Vec<Package> {
+fn list_all_packages<F>(package_lister: F) -> Vec<Package>
+where
+    F: Fn(&MetaPackageManager) -> Vec<Package>,
+{
     let mut all_packages = HashSet::new();
-
     for pm in AvailablePackageManager::iter() {
         let mpm = MetaPackageManager::new(pm.clone());
         if mpm.is_available() {
-            let packages = mpm.list_installed();
+            let packages = package_lister(&mpm);
             all_packages.extend(packages);
         }
     }
-
     all_packages.into_iter().collect()
+}
+
+/// List all of the installed packages from all of the available package
+/// managers
+fn list_all_installed() -> Vec<Package> {
+    list_all_packages(|mpm| mpm.list_installed())
+}
+
+/// List all of the outdated packages from all of the available package
+/// managers
+fn list_all_outdated() -> Vec<Package> {
+    list_all_packages(|mpm| mpm.list_outdated())
 }
 
 /// Get the input file format

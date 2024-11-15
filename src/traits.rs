@@ -73,10 +73,12 @@ pub trait PackageManagerCommands {
     fn exec_cmds_status<S: AsRef<str> + std::fmt::Debug + std::convert::AsRef<std::ffi::OsStr>>(
         &self,
         cmds: &[S],
+        interactive: Option<bool>,
     ) -> std::process::ExitStatus {
         self.ensure_sudo();
         tracing::debug!("Executing {:?} with args {:?}", self.cmd(), cmds);
-        let res = crate::run_command(self.cmd(), cmds, true).expect("failed to run command");
+        let res =
+            crate::run_command(self.cmd(), cmds, true, interactive).expect("failed to run command");
         res.0
     }
 
@@ -194,12 +196,15 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     /// Sync package manaager repositories
     fn sync(&self) -> std::process::ExitStatus {
         tracing::debug!("Syncing...");
-        self.exec_cmds_status(&self.consolidated::<&str>(Cmd::Sync, None, &[]))
+        self.exec_cmds_status(&self.consolidated::<&str>(Cmd::Sync, None, &[]), None)
     }
 
     /// Update/upgrade all packages
-    fn update_all(&self) -> std::process::ExitStatus {
-        self.exec_cmds_status(&self.consolidated::<&str>(Cmd::UpdateAll, None, &[]))
+    fn update_all(&self, interactive: bool) -> std::process::ExitStatus {
+        self.exec_cmds_status(
+            &self.consolidated::<&str>(Cmd::UpdateAll, None, &[]),
+            Some(interactive),
+        )
     }
 
     /// Install a single package
@@ -209,10 +214,11 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     fn install<P: Into<Package> + Clone + std::fmt::Debug>(
         &self,
         pkg: P,
+        interactive: bool,
     ) -> std::process::ExitStatus {
         let mut pkg = pkg.into();
         tracing::trace!("Got pkg {pkg:?}");
-        self.execute_pkg_command(&mut pkg, Operation::Install)
+        self.execute_pkg_command(&mut pkg, Operation::Install, interactive)
     }
 
     /// Uninstall a single package
@@ -222,9 +228,10 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     fn uninstall<P: Into<Package> + Clone + std::fmt::Debug>(
         &self,
         pkg: P,
+        interactive: bool,
     ) -> std::process::ExitStatus {
         let mut pkg = pkg.into();
-        self.execute_pkg_command(&mut pkg, Operation::Uninstall)
+        self.execute_pkg_command(&mut pkg, Operation::Uninstall, interactive)
     }
 
     /// Update a single package
@@ -234,9 +241,10 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     fn update<P: Into<Package> + Clone + std::fmt::Debug>(
         &self,
         pkg: P,
+        interactive: bool,
     ) -> std::process::ExitStatus {
         let mut pkg = pkg.into();
-        self.execute_pkg_command(&mut pkg, Operation::Update)
+        self.execute_pkg_command(&mut pkg, Operation::Update, interactive)
     }
 
     /// List installed packages
@@ -251,7 +259,12 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
         self.parse_output(&out.stdout)
     }
     /// Execute package manager command.
-    fn execute_pkg_command(&self, pkg: &mut Package, op: Operation) -> std::process::ExitStatus {
+    fn execute_pkg_command(
+        &self,
+        pkg: &mut Package,
+        op: Operation,
+        interactive: bool,
+    ) -> std::process::ExitStatus {
         tracing::debug!("> Operation {op:?} on {pkg:?}...");
         let command = match op {
             Operation::Install => Cmd::Install,
@@ -264,7 +277,7 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
 
         let cmds = self.consolidated(command, Some(pkg), &[fmt.clone()]);
         tracing::debug!(">> {pkg} -> {fmt} -> {cmds:?}");
-        self.exec_cmds_status(&cmds)
+        self.exec_cmds_status(&cmds, Some(interactive))
     }
 
     /// Add third-party repository to the package manager's repository list
@@ -274,7 +287,7 @@ pub trait PackageManager: PackageManagerCommands + std::fmt::Debug + std::fmt::D
     /// `std::process::ExitStatus`.
     fn add_repo(&self, repo: &Vec<String>) -> anyhow::Result<()> {
         let cmds = self.consolidated(Cmd::AddRepo, None, repo);
-        let s = self.exec_cmds_status(&cmds);
+        let s = self.exec_cmds_status(&cmds, None);
         anyhow::ensure!(s.success(), "Error adding repo");
         Ok(())
     }

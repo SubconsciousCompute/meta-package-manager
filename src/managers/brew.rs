@@ -69,17 +69,17 @@ mod tests {
         let mut pkg = "hello".into();
         // install
         assert!(hb
-            .execute_pkg_command(&mut pkg, Operation::Install)
+            .execute_pkg_command(&mut pkg, Operation::Install, false)
             .success());
         // list
         assert!(hb.list_installed().iter().any(|p| p.name() == "hello"));
         // update
         assert!(hb
-            .execute_pkg_command(&mut pkg, Operation::Update)
+            .execute_pkg_command(&mut pkg, Operation::Update, false)
             .success());
         // uninstall
         assert!(hb
-            .execute_pkg_command(&mut pkg, Operation::Uninstall)
+            .execute_pkg_command(&mut pkg, Operation::Uninstall, false)
             .success());
         // TODO: Test AddRepo
     }

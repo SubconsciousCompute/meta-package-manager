@@ -115,7 +115,7 @@ mod tests {
             eprintln!("Only deb/rpm are supported");
             return;
         };
-        let s = mpm.install(url);
+        let s = mpm.install(url, false);
         assert!(s.success());
     }
 
@@ -138,7 +138,7 @@ mod tests {
         let pkgfile = std::path::Path::new(pkgfile);
         crate::common::download_url(&url.parse().unwrap(), pkgfile, true).unwrap();
 
-        let s = mpm.install(pkgfile);
+        let s = mpm.install(pkgfile, false);
         assert!(s.success());
     }
 }

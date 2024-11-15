@@ -101,13 +101,13 @@ mod tests {
         // search
         assert!(choco.search(pkg).iter().any(|p| p.name() == pkg));
         // install
-        assert!(choco.install(pkg).success());
+        assert!(choco.install(pkg, false).success());
         // list
         assert!(choco.list_installed().iter().any(|p| p.name() == pkg));
         // update
-        assert!(choco.update(pkg).success());
+        assert!(choco.update(pkg, false).success());
         // uninstall
-        assert!(choco.uninstall(pkg).success());
+        assert!(choco.uninstall(pkg, false).success());
         // TODO: Test AddRepo
     }
 }

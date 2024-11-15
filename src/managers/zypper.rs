@@ -75,17 +75,16 @@ impl PackageManager for Zypper {
 
     fn add_repo(&self, repo: &Vec<String>) -> anyhow::Result<()> {
         anyhow::ensure!(
-            self.install(Package::new(
-                "dnf-command(config-manager)",
-                self.pkg_manager_name(),
-                None
-            ))
+            self.install(
+                Package::new("dnf-command(config-manager)", self.pkg_manager_name(), None),
+                false
+            )
             .success(),
             "failed to install config-manager plugin",
         );
 
         anyhow::ensure!(
-            self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, None, repo))
+            self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, None, repo), None)
                 .success(),
             "Failed to add repo"
         );

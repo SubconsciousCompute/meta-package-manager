@@ -32,10 +32,9 @@ pub struct Cli {
     #[arg(long, short)]
     manager: Option<crate::common::AvailablePackageManager>,
 
-    // TODO: See issue #33
     // Set interactive mode
-    // #[arg(long, short, default_value_t = false)]
-    // interactive: bool,
+    #[arg(long, short, default_value_t = false)]
+    interactive: bool,
     /// Set output to be in json format.
     #[arg(long, default_value_t = false)]
     json: bool,
@@ -176,33 +175,33 @@ pub fn execute(args: Cli) -> anyhow::Result<()> {
             if input_file.is_some() {
                 let input = input_file.unwrap();
                 let file_type = get_file_type(&input);
-                install_from_file(&input, file_type)?;
+                install_from_file(&input, file_type, args.interactive)?;
                 return Ok(());
             }
 
             for pkg in packages {
                 let pkg_path = PathBuf::from(&pkg);
                 let s = if pkg_path.is_file() {
-                    mpm.install(&pkg_path)
+                    mpm.install(&pkg_path, args.interactive)
                 } else {
-                    mpm.install(pkg.as_str())
+                    mpm.install(pkg.as_str(), args.interactive)
                 };
                 anyhow::ensure!(s.success(), "Failed to install {pkg}");
             }
         }
         MpmPackageManagerCommands::Uninstall { packages } => {
             for pkg in packages {
-                let s = mpm.uninstall(Package::from_str(&pkg)?);
+                let s = mpm.uninstall(Package::from_str(&pkg)?, args.interactive);
                 anyhow::ensure!(s.success(), "Failed to uninstall pacakge {pkg}");
             }
         }
 
         MpmPackageManagerCommands::Update { packages, all } => {
             if all {
-                mpm.update_all();
+                mpm.update_all(args.interactive);
             } else {
                 for pkg in packages {
-                    let s = mpm.update(Package::from_str(&pkg)?);
+                    let s = mpm.update(Package::from_str(&pkg)?, args.interactive);
                     anyhow::ensure!(s.success(), "Failed to update pacakge {pkg}");
                 }
             }
@@ -301,7 +300,11 @@ fn get_file_type(file: &PathBuf) -> FileFormat {
 }
 
 /// Install a list of packages from a given input file
-fn install_from_file(input_file: &PathBuf, file_type: FileFormat) -> anyhow::Result<()> {
+fn install_from_file(
+    input_file: &PathBuf,
+    file_type: FileFormat,
+    interactive: bool,
+) -> anyhow::Result<()> {
     type PackageMap = HashMap<String, HashMap<String, String>>;
 
     let file_contents = std::fs::read_to_string(input_file)?;
@@ -328,7 +331,7 @@ fn install_from_file(input_file: &PathBuf, file_type: FileFormat) -> anyhow::Res
 
         for (name, _version) in packages {
             if mpm.is_available() {
-                let s = mpm.install(name.as_str());
+                let s = mpm.install(name.as_str(), interactive);
                 anyhow::ensure!(s.success(), "Failed to install {name}");
             }
         }

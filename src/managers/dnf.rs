@@ -58,16 +58,15 @@ impl PackageManager for DandifiedYUM {
 
     fn add_repo(&self, repo: &Vec<String>) -> anyhow::Result<()> {
         anyhow::ensure!(
-            self.install(Package::new(
-                "dnf-command(config-manager)",
-                self.pkg_manager_name(),
-                None
-            ))
+            self.install(
+                Package::new("dnf-command(config-manager)", self.pkg_manager_name(), None),
+                false
+            )
             .success(),
             "failed to install config-manager plugin"
         );
 
-        let s = self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, None, repo));
+        let s = self.exec_cmds_status(&self.consolidated(Cmd::AddRepo, None, repo), None);
         anyhow::ensure!(s.success(), "failed to add repo");
         Ok(())
     }
@@ -178,16 +177,16 @@ rubygem-mixlib-shellout-doc.noarch : Documentation for rubygem-mixlib-shellout"#
         assert!(found_pkgs.iter().any(|p| p.name() == "hello.x86_64"));
 
         // install
-        assert!(man.install(pkg).success());
+        assert!(man.install(pkg, false).success());
         // list
         assert!(man
             .list_installed()
             .iter()
             .any(|p| p.name() == "hello.x86_64"));
         // update
-        assert!(man.update(pkg).success());
+        assert!(man.update(pkg, false).success());
         // uninstall
-        assert!(man.uninstall(pkg).success());
+        assert!(man.uninstall(pkg, false).success());
         // TODO: Test AddRepo
     }
 }

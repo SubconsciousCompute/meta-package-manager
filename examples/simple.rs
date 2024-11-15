@@ -13,11 +13,11 @@ fn main() -> anyhow::Result<()> {
 
     // most methods return `ExitStatus` which can be used to check if
     // the operation was successful
-    if !manager.install("gimp").success() {
+    if !manager.install("gimp", false).success() {
         eprintln!("Failed to install gimp");
     }
 
-    if manager.update_all().success() {
+    if manager.update_all(false).success() {
         println!("All packages updated/upgraded");
     }
 

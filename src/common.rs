@@ -9,6 +9,7 @@ use std::{
 };
 
 use anyhow::Context;
+use terminal_size::{terminal_size, Width};
 
 /// Representation of a package manager command
 ///
@@ -297,8 +298,23 @@ pub fn run_command<S: AsRef<str> + std::convert::AsRef<std::ffi::OsStr>>(
     mut cmd: Command,
     args: &[S],
     stream_to_stdout: bool,
+    interactive: Option<bool>,
 ) -> anyhow::Result<CommandResult> {
     let mut result = vec![];
+
+    if interactive == Some(true) {
+        print_header();
+
+        let filtered_args: Vec<&S> = args
+            .iter()
+            .filter(|x| AsRef::<str>::as_ref(x) != "-y")
+            .collect();
+
+        let mut child = cmd.args(filtered_args).spawn()?;
+        let ec = child.wait()?;
+        return Ok(CommandResult(ec, result));
+    }
+
     let mut child = cmd.args(args).stdout(Stdio::piped()).spawn()?;
     {
         let stdout = child.stdout.as_mut().unwrap();
@@ -340,4 +356,19 @@ pub fn download_url(url: &url::Url, pkgpath: &Path, force: bool) -> anyhow::Resu
     let mut buffer = std::fs::File::create(pkgpath)?;
     buffer.write_all(&bytes)?;
     Ok(())
+}
+
+fn print_header() {
+    if let Some((Width(w), _)) = terminal_size() {
+        let text = "[MPM interactive]";
+        let total_width = w as usize;
+        let text_len = text.len();
+        let padding = (total_width - text_len) / 2;
+
+        print!("{:-<width$}", "", width = padding);
+        print!("{}", text);
+        println!("{:-<width$}", "", width = total_width - padding - text_len);
+    } else {
+        println!("-------------------[MPM interactive]----------------");
+    }
 }

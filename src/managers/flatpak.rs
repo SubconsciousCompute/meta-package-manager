@@ -143,15 +143,15 @@ Inkscape	Vector Graphics Editor	org.inkscape.Inkscape	1.3.2	stable	fedora,flathu
         assert!(found_pkgs.iter().any(|p| p.name() == "org.flatpak.qtdemo"));
 
         // install
-        assert!(flatpak.install(pkg).success());
+        assert!(flatpak.install(pkg, false).success());
         // list
         assert!(flatpak
             .list_installed()
             .iter()
             .any(|p| p.name() == "org.flatpak.qtdemo"));
         // update
-        assert!(flatpak.update(pkg).success());
+        assert!(flatpak.update(pkg, false).success());
         // uninstall
-        assert!(flatpak.uninstall(pkg).success());
+        assert!(flatpak.uninstall(pkg, false).success());
     }
 }
